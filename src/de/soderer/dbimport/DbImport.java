@@ -58,7 +58,6 @@ import de.soderer.utilities.worker.WorkerParentDual;
 // TODO: Check for int too large
 // TODO: Console menu: Manage preferences
 // TODO: Errorhandling on createConnection (dbconnection error detection and help messages in errors)
-
 public class DbImport extends UpdateableConsoleApplication implements WorkerParentDual {
 	/** The Constant APPLICATION_NAME. */
 	public static final String APPLICATION_NAME = "DbImport";
