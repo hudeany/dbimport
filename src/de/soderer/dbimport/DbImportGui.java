@@ -60,6 +60,7 @@ import de.soderer.utilities.db.DbDriverSupplier;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.http.HttpUtilities;
+import de.soderer.utilities.json.utilities.NetworkUtilities;
 import de.soderer.utilities.swing.ApplicationConfigurationDialog;
 import de.soderer.utilities.swing.DualProgressDialog;
 import de.soderer.utilities.swing.ProgressDialog;
@@ -67,7 +68,6 @@ import de.soderer.utilities.swing.QuestionDialog;
 import de.soderer.utilities.swing.SecurePreferencesDialog;
 import de.soderer.utilities.swing.SwingColor;
 import de.soderer.utilities.swing.UpdateableGuiApplication;
-import de.soderer.utilities.json.utilities.NetworkUtilities;
 
 /**
  * The GUI for DbImport.
@@ -1083,7 +1083,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		mandatoryParameterScrollPane.getVerticalScrollBar().setUnitIncrement(8);
 		parameterPanel.add(mandatoryParameterScrollPane);
 
-		optionalParametersPanel.setPreferredSize(new Dimension(250, 400));
+		optionalParametersPanel.setPreferredSize(new Dimension(260, 400));
 		parameterPanel.add(optionalParametersPanel);
 		add(parameterPanel);
 		add(Box.createRigidArea(new Dimension(0, 5)));
