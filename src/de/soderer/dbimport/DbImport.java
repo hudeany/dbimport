@@ -61,7 +61,7 @@ import de.soderer.utilities.worker.WorkerParentDual;
 public class DbImport extends UpdateableConsoleApplication implements WorkerParentDual {
 	/** The Constant APPLICATION_NAME. */
 	public static final String APPLICATION_NAME = "DbImport";
-	public static final String APPLICATION_STARTUPCLASS_NAME = "de.soderer.DbImport";
+	public static final String APPLICATION_STARTUPCLASS_NAME = "de-soderer-DbImport";
 
 	/** The Constant VERSION_RESOURCE_FILE, which contains version number and versioninfo download url. */
 	public static final String VERSION_RESOURCE_FILE = "/version.txt";
