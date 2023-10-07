@@ -41,7 +41,7 @@ public class DbImportTest_Oracle {
 
 			try {
 				statement.execute("DROP SEQUENCE test_tbl_seq");
-			} catch (final Exception e) {
+			} catch (@SuppressWarnings("unused") final Exception e) {
 				// do nothing
 			}
 		} catch (final Exception e) {
@@ -63,7 +63,7 @@ public class DbImportTest_Oracle {
 
 			try {
 				statement.execute("DROP SEQUENCE test_tbl_seq");
-			} catch (final Exception e) {
+			} catch (@SuppressWarnings("unused") final Exception e) {
 				// do nothing
 			}
 		} catch (final Exception e) {

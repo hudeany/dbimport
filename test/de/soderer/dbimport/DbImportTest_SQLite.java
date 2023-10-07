@@ -21,10 +21,10 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.xml.XmlUtilities;
 import de.soderer.utilities.json.JsonArray;
 import de.soderer.utilities.json.JsonObject;
 import de.soderer.utilities.json.JsonWriter;
+import de.soderer.utilities.xml.XmlUtilities;
 
 public class DbImportTest_SQLite {
 	public static final String SQLITE_DB_FILE = System.getProperty("user.home") + File.separator + "temp" + File.separator + "test.sqlite";
@@ -41,7 +41,7 @@ public class DbImportTest_SQLite {
 	public static void setupTestClass() throws Exception {
 		try {
 			DbUtilities.deleteDatabase(DbVendor.SQLite, SQLITE_DB_FILE);
-		} catch (final Exception e) {
+		} catch (@SuppressWarnings("unused") final Exception e) {
 			// Do nothing
 		}
 
@@ -98,7 +98,7 @@ public class DbImportTest_SQLite {
 	public static void tearDownTestClass() throws Exception {
 		try {
 			DbUtilities.deleteDatabase(DbVendor.SQLite, SQLITE_DB_FILE);
-		} catch (final Exception e) {
+		} catch (@SuppressWarnings("unused") final Exception e) {
 			// Do nothing
 		}
 	}
