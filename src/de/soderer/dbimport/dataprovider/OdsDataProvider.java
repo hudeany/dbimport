@@ -16,6 +16,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamReader;
 
+import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
@@ -177,7 +178,7 @@ public class OdsDataProvider extends DataProvider {
 								final ZonedDateTime dateValue = DateUtilities.parseIso8601DateTimeString(dateAttributeValue);
 								returnList.add(dateValue);
 							} else {
-								throw new Exception("Unsupported datatype: " + dataType);
+								throw new DbImportException("Unsupported datatype: " + dataType);
 							}
 
 							while (xmlReader.next() > 0) {
@@ -209,7 +210,7 @@ public class OdsDataProvider extends DataProvider {
 									returnList.add(value);
 
 									if (!xmlReader.isEndElement() || !xmlReader.getLocalName().equals("p")) {
-										throw new Exception("Invalid xml data. Missing closing tag 'p'");
+										throw new DbImportException("Invalid xml data. Missing closing tag 'p'");
 									}
 								} else if (xmlReader.isEndElement() && xmlReader.getLocalName().equals("table-cell")) {
 									if (isEmptyCell) {
@@ -319,7 +320,7 @@ public class OdsDataProvider extends DataProvider {
 			}
 
 			if (contentXmlZipInputStream == null) {
-				throw new Exception("Cannot find ods data");
+				throw new DbImportException("Cannot find ods data");
 			}
 
 			final XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
@@ -352,7 +353,7 @@ public class OdsDataProvider extends DataProvider {
 				}
 			}
 			if (currentPath.size() == 0) {
-				throw new Exception("Path '" + dataPath + "' is not part of the xml data");
+				throw new DbImportException("Path '" + dataPath + "' is not part of the xml data");
 			}
 
 			currentRowNumber = 0;

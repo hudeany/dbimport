@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
+import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.CountingInputStream;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.InputStreamWithOtherItemsToClose;
@@ -139,42 +140,42 @@ public abstract class DataProvider implements Closeable {
 	protected InputStream getInputStream() throws Exception {
 		if (isInlineData) {
 			if (Utilities.isBlank(importInlineData)) {
-				throw new Exception("Import inline data is empty");
+				throw new DbImportException("Import inline data is empty");
 			} else {
 				return new ByteArrayInputStream(importInlineData.getBytes(StandardCharsets.UTF_8));
 			}
 		} else {
 			if (!importFile.exists()) {
-				throw new Exception("Import file does not exist: " + importFile.getAbsolutePath());
+				throw new DbImportException("Import file does not exist: " + importFile.getAbsolutePath());
 			} else if (importFile.isDirectory()) {
-				throw new Exception("Import path is a directory: " + importFile.getAbsolutePath());
+				throw new DbImportException("Import path is a directory: " + importFile.getAbsolutePath());
 			} else if (importFile.length() == 0) {
-				throw new Exception("Import file is empty: " + importFile.getAbsolutePath());
+				throw new DbImportException("Import file is empty: " + importFile.getAbsolutePath());
 			} else {
 				try {
 					if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".zip")) {
 						if (zipPassword != null) {
 							if (Zip4jUtilities.getZipFileEntries(importFile, zipPassword).size() != 1) {
-								throw new Exception("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
 							} else {
 								inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(importFile.getAbsolutePath(), zipPassword));
 							}
 						} else {
 							if (ZipUtilities.getZipFileEntries(importFile).size() != 1) {
-								throw new Exception("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
 							} else {
 								inputStream = new CountingInputStream(ZipUtilities.openZipFile(importFile.getAbsolutePath()));
 							}
 						}
 					} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tar.gz")) {
 						if (TarGzUtilities.getFilesCount(importFile) != 1) {
-							throw new Exception("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
+							throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(importFile));
 						}
 					} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tgz")) {
 						if (TarGzUtilities.getFilesCount(importFile) != 1) {
-							throw new Exception("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
+							throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(importFile));
 						}

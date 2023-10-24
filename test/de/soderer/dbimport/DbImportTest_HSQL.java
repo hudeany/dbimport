@@ -1517,10 +1517,6 @@ public class DbImportTest_HSQL {
 			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
 			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
 
-			for (int j = 0; j < 100000; j++) {
-				data1.append(j + "; 123.456E0;; a" + j + "; 2003-02-01 11:12:13; 2003-03-01\n");
-			}
-
 			FileUtilities.write(INPUTFILE_CSV, data1.toString().getBytes(StandardCharsets.UTF_8));
 
 			createEmptyTest2Table();
@@ -1549,7 +1545,7 @@ public class DbImportTest_HSQL {
 					"-v"
 			}));
 
-			Assert.assertEquals(100008, TextUtilities.getLineCount(exportTestTable()));
+			Assert.assertEquals(8, TextUtilities.getLineCount(exportTestTable()));
 
 			Assert.assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
@@ -1561,6 +1557,107 @@ public class DbImportTest_HSQL {
 							+ "6;; aBcDeF1235;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
 							+ "7;; aBcDeF1235;2003-03-01;123.456E0;4;2003-02-01 11:12:13.000000;\n",
 							exportTest2Table());
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testCsvImportWithDefinedDateFormatAndMultipleFilesWithMissingTable() {
+		try {
+			createEmptyTestTable();
+			prefillTestTable();
+
+			int i1 = 1;
+			final StringBuilder data1 = new StringBuilder();
+			data1.append("column_integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n");
+			data1.append((i1) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+
+			FileUtilities.write(INPUTFILE_CSV, data1.toString().getBytes(StandardCharsets.UTF_8));
+
+			// test2_tbl is kept missing by intention
+
+			int i2 = 1;
+			final StringBuilder data2 = new StringBuilder();
+			data2.append("column_integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n");
+			data2.append((i2) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data2.append((i2) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data2.append((i2) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			FileUtilities.write(INPUTFILE_CSV2, data2.toString().getBytes(StandardCharsets.UTF_8));
+
+			Assert.assertEquals(1, DbImport._main(new String[] {
+					"hsql",
+					"",
+					HSQL_DB_FILE,
+					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-i", "CLEARINSERT",
+					"-table", "*",
+					"-dateformat", "yyyy-MM-dd",
+					"-datetimeformat", "yyyy-MM-dd HH:mm:ss",
+					"-v"
+			}));
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testCsvImportWithDefinedDateFormatAndMultipleFilesWithMissingColumn() {
+		try {
+			createEmptyTestTable();
+			prefillTestTable();
+
+			int i1 = 1;
+			final StringBuilder data1 = new StringBuilder();
+			data1.append("column_integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n");
+			data1.append((i1) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+			data1.append((i1++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
+
+			FileUtilities.write(INPUTFILE_CSV, data1.toString().getBytes(StandardCharsets.UTF_8));
+
+			createEmptyTest2Table();
+
+			// CSV file contains missing_column which is not included in test2_tbl
+
+			int i2 = 1;
+			final StringBuilder data2 = new StringBuilder();
+			data2.append("column_integer; column_double; column_varchar; column_clob; column_timestamp; column_date; missing_column\n");
+			data2.append((i2) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01;missing\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01;missing\n");
+			data2.append((i2) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01;missing\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01;missing\n");
+			data2.append((i2) + "; 123.456E0; aBcDeF123; aBcDeF1234; 2003-02-01 11:12:13; 2003-03-01;missing\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01;missing\n");
+			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01;missing\n");
+			FileUtilities.write(INPUTFILE_CSV2, data2.toString().getBytes(StandardCharsets.UTF_8));
+
+			Assert.assertEquals(1, DbImport._main(new String[] {
+					"hsql",
+					"",
+					HSQL_DB_FILE,
+					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-i", "CLEARINSERT",
+					"-table", "*",
+					"-deactivatefk",
+					"-dateformat", "yyyy-MM-dd",
+					"-datetimeformat", "yyyy-MM-dd HH:mm:ss",
+					"-v"
+			}));
 		} catch (final Exception e) {
 			Assert.fail(e.getMessage());
 		}

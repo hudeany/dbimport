@@ -148,7 +148,7 @@ public class DbSqlWorker extends DbImportWorker {
 						} catch (final Exception e) {
 							if (commitOnFullSuccessOnly) {
 								connection.rollback();
-								throw new Exception("Erroneous statement number " + (itemsDone + 1) + " at character index " + sqlScriptReader.getReadCharacters() + ": " + e.getMessage());
+								throw new DbImportException("Erroneous statement number " + (itemsDone + 1) + " at character index " + sqlScriptReader.getReadCharacters() + ": " + e.getMessage());
 							}
 							invalidItems.add((int) itemsDone);
 							if (logErroneousData) {
@@ -239,13 +239,13 @@ public class DbSqlWorker extends DbImportWorker {
 					}
 				} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".tar.gz")) {
 					if (TarGzUtilities.getFilesCount(new File(importFilePathOrData)) != 1) {
-						throw new Exception("Compressed import file does not contain a single compressed file: " + importFilePathOrData);
+						throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFilePathOrData);
 					} else {
 						inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(importFilePathOrData)));
 					}
 				} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".tgz")) {
 					if (TarGzUtilities.getFilesCount(new File(importFilePathOrData)) != 1) {
-						throw new Exception("Compressed import file does not contain a single compressed file: " + importFilePathOrData);
+						throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFilePathOrData);
 					} else {
 						inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(importFilePathOrData)));
 					}

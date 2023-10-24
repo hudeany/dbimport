@@ -283,20 +283,20 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 		for (final String mappingLine : mappingLines) {
 			final int dbColumnEnd = mappingLine.indexOf("=");
 			if (dbColumnEnd <= 0) {
-				throw new Exception("Invalid mapping line: " + mappingLine);
+				throw new DbImportException("Invalid mapping line: " + mappingLine);
 			}
 			final String dbColumn = mappingLine.substring(0, dbColumnEnd).toLowerCase().trim();
 			if (mapping.containsKey(dbColumn)) {
-				throw new Exception("Invalid mapping line with duplicate db column: " + mappingLine);
+				throw new DbImportException("Invalid mapping line with duplicate db column: " + mappingLine);
 			}
 			String rest = mappingLine.substring(dbColumnEnd + 1).trim();
 			if (Utilities.isNotBlank(rest)) {
 				if (rest.length() < 2 || (!rest.startsWith("\"") && !rest.startsWith("'"))) {
-					throw new Exception("Invalid mapping line: " + mappingLine);
+					throw new DbImportException("Invalid mapping line: " + mappingLine);
 				}
 				final int dataColumnEnd = rest.indexOf(rest.charAt(0), 1);
 				if (dataColumnEnd <= 0) {
-					throw new Exception("Invalid mapping line: " + mappingLine);
+					throw new DbImportException("Invalid mapping line: " + mappingLine);
 				}
 				final String dataColumn = rest.substring(1, dataColumnEnd);
 				rest = rest.substring(dataColumnEnd + 1).trim();
@@ -315,7 +315,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				} else if ("uc".equalsIgnoreCase(rest)) {
 					mapping.put(dbColumn, new Tuple<>(dataColumn, "uc"));
 				} else {
-					throw new Exception("Invalid mapping line: " + mappingLine);
+					throw new DbImportException("Invalid mapping line: " + mappingLine);
 				}
 			}
 		}

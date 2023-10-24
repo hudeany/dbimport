@@ -26,6 +26,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.TarGzUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
@@ -464,7 +465,7 @@ public class ExcelDataProvider extends DataProvider {
 							}
 						}
 					} else {
-						throw new Exception("Cannot find data sheet");
+						throw new DbImportException("Cannot find data sheet");
 					}
 				} else {
 					xssfWorkbook = new XSSFWorkbook(excelInputStream);
@@ -496,7 +497,7 @@ public class ExcelDataProvider extends DataProvider {
 							}
 						}
 					} else {
-						throw new Exception("Cannot find data sheet");
+						throw new DbImportException("Cannot find data sheet");
 					}
 				}
 

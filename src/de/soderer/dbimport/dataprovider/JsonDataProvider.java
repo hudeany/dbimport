@@ -197,7 +197,7 @@ public class JsonDataProvider extends DataProvider {
 				}
 				return returnMap;
 			} else {
-				throw new Exception("Invalid json data of type: " + nextJsonNode.getJsonDataType().getName());
+				throw new DbImportException("Invalid json data of type: " + nextJsonNode.getJsonDataType().getName());
 			}
 		}
 	}
@@ -292,7 +292,7 @@ public class JsonDataProvider extends DataProvider {
 					final JsonSchema schema = new JsonSchema(schemaStream);
 					schema.validate(validationStream);
 				} catch (final Exception e) {
-					throw new Exception("JSON data does not comply to JSON schema '" + schemaFilePath + "': " + e.getMessage());
+					throw new DbImportException("JSON data does not comply to JSON schema '" + schemaFilePath + "': " + e.getMessage());
 				}
 			}
 
@@ -302,12 +302,12 @@ public class JsonDataProvider extends DataProvider {
 				JsonUtilities.readUpToJsonPath(jsonReader, dataPath);
 				jsonReader.readNextToken();
 				if (jsonReader.getCurrentToken() != JsonToken.JsonArray_Open) {
-					throw new Exception("Invalid non-array json data for import at: " + dataPath);
+					throw new DbImportException("Invalid non-array json data for import at: " + dataPath);
 				}
 			} else {
 				jsonReader.readNextToken();
 				if (jsonReader.getCurrentToken() != JsonToken.JsonArray_Open) {
-					throw new Exception("Invalid non-array json data for import");
+					throw new DbImportException("Invalid non-array json data for import");
 				}
 			}
 		} catch (final Exception e) {

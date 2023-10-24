@@ -27,6 +27,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.TarGzUtilities;
 import de.soderer.utilities.Tuple;
@@ -146,7 +147,7 @@ public class XmlDataProvider extends DataProvider {
 				if (itemEntryTagName == null) {
 					itemEntryTagName = xmlReader.getLocalName();
 				} else if (!itemEntryTagName.equals(xmlReader.getLocalName())) {
-					throw new Exception("Invalid xml data. tagname: " + xmlReader.getLocalName());
+					throw new DbImportException("Invalid xml data. tagname: " + xmlReader.getLocalName());
 				}
 			} else if (xmlReader.isEndElement()) {
 				return null;
@@ -167,17 +168,17 @@ public class XmlDataProvider extends DataProvider {
 
 						xmlReader.next();
 						if (!xmlReader.isEndElement()) {
-							throw new Exception("Invalid xml data. Missing closing tag for: " + propertyName);
+							throw new DbImportException("Invalid xml data. Missing closing tag for: " + propertyName);
 						}
 					} else if (xmlReader.isEndElement()) {
 						returnMap.put(propertyName, "");
 					} else {
-						throw new Exception("Invalid xml data");
+						throw new DbImportException("Invalid xml data");
 					}
 				} else if (xmlReader.isEndElement()) {
 					break;
 				} else {
-					throw new Exception("Invalid xml data");
+					throw new DbImportException("Invalid xml data");
 				}
 			}
 			return returnMap;
@@ -295,7 +296,7 @@ public class XmlDataProvider extends DataProvider {
 					final Validator validator = schema.newValidator();
 					validator.validate(new StAXSource(xmlStreamReader));
 				} catch (final Exception e) {
-					throw new Exception("XML data does not comply to XSD '" + schemaFilePath + "': " + e.getMessage());
+					throw new DbImportException("XML data does not comply to XSD '" + schemaFilePath + "': " + e.getMessage());
 				} finally {
 					if (xmlStreamReader != null) {
 						xmlStreamReader.close();
@@ -325,7 +326,7 @@ public class XmlDataProvider extends DataProvider {
 					}
 				}
 				if (currentPath.size() == 0) {
-					throw new Exception("Path '" + dataPath + "' is not part of the xml data");
+					throw new DbImportException("Path '" + dataPath + "' is not part of the xml data");
 				}
 			} else {
 				// Read root tag
@@ -333,7 +334,7 @@ public class XmlDataProvider extends DataProvider {
 			}
 			listEnclosingTagName = xmlReader.getLocalName();
 			if (!xmlReader.isStartElement()) {
-				throw new Exception("Invalid xml data. roottagname: " + xmlReader.getLocalName());
+				throw new DbImportException("Invalid xml data. roottagname: " + xmlReader.getLocalName());
 			}
 		} catch (final Exception e) {
 			close();

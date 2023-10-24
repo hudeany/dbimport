@@ -72,7 +72,7 @@ public class DbImportDefinition extends DbDefinition {
 					return importMode;
 				}
 			}
-			throw new Exception("Invalid import mode: " + importModeString);
+			throw new DbImportException("Invalid import mode: " + importModeString);
 		}
 	}
 
@@ -96,7 +96,7 @@ public class DbImportDefinition extends DbDefinition {
 					return duplicateMode;
 				}
 			}
-			throw new Exception("Invalid duplicate mode: " + duplicateModeString);
+			throw new DbImportException("Invalid duplicate mode: " + duplicateModeString);
 		}
 	}
 

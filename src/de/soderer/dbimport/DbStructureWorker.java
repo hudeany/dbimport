@@ -16,12 +16,12 @@ import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.db.SimpleDataType;
-import de.soderer.utilities.worker.WorkerParentSimple;
-import de.soderer.utilities.worker.WorkerSimple;
 import de.soderer.utilities.json.JsonArray;
 import de.soderer.utilities.json.JsonNode;
 import de.soderer.utilities.json.JsonObject;
 import de.soderer.utilities.json.JsonReader;
+import de.soderer.utilities.worker.WorkerParentSimple;
+import de.soderer.utilities.worker.WorkerSimple;
 
 public class DbStructureWorker extends WorkerSimple<Boolean> {
 	// Mandatory parameters
@@ -67,7 +67,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 			final JsonNode dbStructureJsonNode = jsonReader.read();
 
 			if (!dbStructureJsonNode.isJsonObject()) {
-				throw new Exception("Invalid db structure file. Must contain JsonObject with table properties");
+				throw new DbImportException("Invalid db structure file. Must contain JsonObject with table properties");
 			}
 
 			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode.getValue();
@@ -118,12 +118,12 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 
 	private void createTable(final Connection connection, final String tableName, final JsonObject tableJsonObject) throws Exception {
 		if (tableJsonObject == null) {
-			throw new Exception("Cannot create table without table definition");
+			throw new DbImportException("Cannot create table without table definition");
 		}
 
 		final JsonArray columnsJsonArray = (JsonArray) tableJsonObject.get("columns");
 		if (columnsJsonArray == null) {
-			throw new Exception("Cannot create table without columns definition");
+			throw new DbImportException("Cannot create table without columns definition");
 		}
 
 		try (Statement statement = connection.createStatement()) {
@@ -153,7 +153,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 
 	private void createTableColumn(final Connection connection, final String tableName, final JsonObject columnJsonObject) throws Exception {
 		if (columnJsonObject == null) {
-			throw new Exception("Cannot create table column without column definition");
+			throw new DbImportException("Cannot create table column without column definition");
 		}
 
 		try (Statement statement = connection.createStatement()) {

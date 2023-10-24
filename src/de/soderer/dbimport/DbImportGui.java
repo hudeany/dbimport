@@ -1103,9 +1103,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 	protected void createMapping(final DbImportDefinition configurationAsDefinition, final DbImportGui dbImportGui) throws Exception {
 		if (Utilities.isBlank(importFilePathOrDataField.getText())) {
-			throw new Exception("ImportFilePath is needed for mapping");
+			throw new DbImportException("ImportFilePath is needed for mapping");
 		} else if (Utilities.isBlank(tableNameField.getText())) {
-			throw new Exception("TableName is needed for mapping");
+			throw new DbImportException("TableName is needed for mapping");
 		}
 
 		try (Connection connection = DbUtilities.createConnection(configurationAsDefinition, true)) {
@@ -1118,12 +1118,12 @@ public class DbImportGui extends UpdateableGuiApplication {
 					keyColumnsField.setText(Utilities.join(keyColumns, ", "));
 				}
 			} else if (!configurationAsDefinition.isCreateTable()) {
-				throw new Exception("Destination table does not exist: " + configurationAsDefinition.getTableName());
+				throw new DbImportException("Destination table does not exist: " + configurationAsDefinition.getTableName());
 			}
 
 			if (!configurationAsDefinition.isInlineData()) {
 				if (configurationAsDefinition.getImportFilePathOrData().contains("?") || configurationAsDefinition.getImportFilePathOrData().contains("*")) {
-					throw new Exception("ImportFilePath may not contain wildcards for create mapping: " + configurationAsDefinition.getImportFilePathOrData());
+					throw new DbImportException("ImportFilePath may not contain wildcards for create mapping: " + configurationAsDefinition.getImportFilePathOrData());
 				}
 			}
 
@@ -1355,7 +1355,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 			}
 		}
 		if (!importModeFound) {
-			throw new Exception("Invalid import mode");
+			throw new DbImportException("Invalid import mode");
 		}
 
 		boolean duplicateModeFound = false;
@@ -1367,7 +1367,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 			}
 		}
 		if (!duplicateModeFound) {
-			throw new Exception("Invalid duplicate mode");
+			throw new DbImportException("Invalid duplicate mode");
 		}
 
 		importDateFormatField.setText(dbImportDefinition.getDateFormat());
@@ -1720,7 +1720,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		try {
 			dbImportDefinition.checkParameters();
 			if (!new DbDriverSupplier(this, dbImportDefinition.getDbVendor()).supplyDriver(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE)) {
-				throw new Exception("Cannot aquire db driver for db vendor: " + dbImportDefinition.getDbVendor());
+				throw new DbImportException("Cannot aquire db driver for db vendor: " + dbImportDefinition.getDbVendor());
 			}
 		} catch (final Exception e) {
 			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();

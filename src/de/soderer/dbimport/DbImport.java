@@ -42,6 +42,7 @@ import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.console.ConsoleMenu;
 import de.soderer.utilities.console.ConsoleType;
 import de.soderer.utilities.console.ConsoleUtilities;
+import de.soderer.utilities.console.ConsoleUtilities.TextColor;
 import de.soderer.utilities.console.PasswordConsoleInput;
 import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
@@ -896,7 +897,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			}
 
 			if (filesToImport.size() == 0) {
-				throw new Exception("No files for import were found");
+				throw new DbImportException("No files for import were found");
 			} else if (filesToImport.size() == 1) {
 				final File fileToImport = filesToImport.get(0);
 				String tableName = dbImportDefinitionToExecute.getTableName();
@@ -996,7 +997,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			System.out.println();
 			System.out.println("End of multiple file import.\nImported files: " + worker.getItemsDone());
 
-			if (dbImportDefinitionToExecute.isVerbose()) {
+			if (worker.wasErrorneous()) {
+				System.out.println(ConsoleUtilities.getAnsiColoredText(worker.getResult(), TextColor.Light_red));
+			} else if (dbImportDefinitionToExecute.isVerbose()) {
 				System.out.println(worker.getResult());
 			}
 

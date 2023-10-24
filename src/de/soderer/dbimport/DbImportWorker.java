@@ -452,7 +452,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					} else if (duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_JOIN || duplicateMode == DuplicateMode.UPDATE_FIRST_JOIN || duplicateMode == DuplicateMode.UPDATE_ALL_JOIN || duplicateMode == DuplicateMode.MAKE_UNIQUE_JOIN) {
 						duplicatesItems = DbUtilities.joinDuplicates(connection, tempTableName, keyColumns, updateWithNullValues);
 					} else {
-						throw new Exception("Invalid duplicate mode");
+						throw new DbImportException("Invalid duplicate mode");
 					}
 
 					if (cancel) {
@@ -548,7 +548,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 							insertedItems = DbUtilities.insertNotExistingItems(connection, tempTableName, tableName, dbTableColumnsListToInsert, keyColumnsWithFunctions, additionalInsertValues);
 						}
 					} else {
-						throw new Exception("Invalid import mode");
+						throw new DbImportException("Invalid import mode");
 					}
 				}
 
@@ -718,7 +718,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final JsonNode dbStructureJsonNode = jsonReader.read();
 
 			if (!dbStructureJsonNode.isJsonObject()) {
-				throw new Exception("Invalid db structure file. Must contain JsonObject with table properties");
+				throw new DbImportException("Invalid db structure file. Must contain JsonObject with table properties");
 			}
 
 			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode.getValue();
@@ -749,12 +749,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 	private void createTable(final Connection connection, final String tableNameToCreate, final JsonObject tableJsonObject) throws Exception {
 		if (tableJsonObject == null) {
-			throw new Exception("Cannot create table without table definition");
+			throw new DbImportException("Cannot create table without table definition");
 		}
 
 		final JsonArray columnsJsonArray = (JsonArray) tableJsonObject.get("columns");
 		if (columnsJsonArray == null) {
-			throw new Exception("Cannot create table without columns definition");
+			throw new DbImportException("Cannot create table without columns definition");
 		}
 
 		try (Statement statement = connection.createStatement()) {
@@ -1041,32 +1041,32 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				}
 			} else if ("file".equalsIgnoreCase(formatInfo)) {
 				if (!new File(valueString).exists()) {
-					throw new Exception("File does not exist: " + valueString);
+					throw new DbImportException("File does not exist: " + valueString);
 				} else if (simpleDataType == SimpleDataType.Blob) {
 					InputStream inputStream;
 					if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
 						if (dataProvider.getZipPassword() != null) {
 							if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
-								throw new Exception("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
 							} else {
 								inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
 							}
 						} else {
 							if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
-								throw new Exception("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
 							} else {
 								inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
 							}
 						}
 					} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
 						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new Exception("Compressed import file does not contain a single compressed file: " + valueString);
+							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 						}
 					} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
 						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new Exception("Compressed import file does not contain a single compressed file: " + valueString);
+							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 						}
@@ -1090,26 +1090,26 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
 						if (dataProvider.getZipPassword() != null) {
 							if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
-								throw new Exception("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
 							} else {
 								inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
 							}
 						} else {
 							if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
-								throw new Exception("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
 							} else {
 								inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
 							}
 						}
 					} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
 						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new Exception("Compressed import file does not contain a single compressed file: " + valueString);
+							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 						}
 					} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
 						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new Exception("Compressed import file does not contain a single compressed file: " + valueString);
+							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 						}
@@ -1138,7 +1138,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} else if ("email".equalsIgnoreCase(formatInfo)) {
 				valueString = valueString.toLowerCase().trim();
 				if (!NetworkUtilities.isValidEmail(valueString)) {
-					throw new Exception("Invalid email address: " + valueString);
+					throw new DbImportException("Invalid email address: " + valueString);
 				}
 				preparedStatement.setString(columnIndex, valueString);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
@@ -1155,7 +1155,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				final LocalDate localDateValue = LocalDate.parse(valueString.trim(), dateTimeFormatter);
 				preparedStatement.setDate(columnIndex, java.sql.Date.valueOf(localDateValue));
 			} else {
-				throw new Exception("Unknown data type: " + simpleDataType);
+				throw new DbImportException("Unknown data type: " + simpleDataType);
 			}
 		} else if (dataValue instanceof String && simpleDataType == SimpleDataType.DateTime) {
 			final String valueString = ((String) dataValue).trim();
@@ -1309,11 +1309,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {
 				preparedStatement.setString(columnIndex, (String) dataValue);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
-				throw new Exception("Date field to insert without mapping date format");
+				throw new DbImportException("Date field to insert without mapping date format");
 			} else if (simpleDataType == SimpleDataType.Date) {
-				throw new Exception("Date field to insert without mapping date format");
+				throw new DbImportException("Date field to insert without mapping date format");
 			} else {
-				throw new Exception("Unknown data type field to insert without mapping format");
+				throw new DbImportException("Unknown data type field to insert without mapping format");
 			}
 		} else if (simpleDataType == SimpleDataType.Float && dataValue instanceof Number) {
 			// Keep the right precision when inserting a float value to a double column

@@ -67,11 +67,11 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 			availableDataPropertyNames = dataProvider.getAvailableDataPropertyNames();
 		} else {
 			if (duplicateMode != DuplicateMode.UPDATE_ALL_JOIN) {
-				throw new Exception("Invalid duplicate mode for this NoSql import");
+				throw new DbImportException("Invalid duplicate mode for this NoSql import");
 			}
 
 			if (!updateWithNullValues) {
-				throw new Exception("Invalid UpdateWithNullValues mode for this NoSql import");
+				throw new DbImportException("Invalid UpdateWithNullValues mode for this NoSql import");
 			}
 
 			OutputStream logOutputStream = null;
@@ -94,7 +94,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 				logToFile(logOutputStream, "Start: " + DateUtilities.formatDate(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()), getStartTime()));
 
 				if (!DbUtilities.checkTableExist(connection, tableName) && Utilities.isEmpty(keyColumns)) {
-					throw new Exception("Creation of new table needs key column definition in NoSql import");
+					throw new DbImportException("Creation of new table needs key column definition in NoSql import");
 				}
 
 				createTableIfNeeded(connection, tableName, keyColumns);
@@ -105,12 +105,12 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 				}
 				for (final String column : tableKeys) {
 					if (!keyColumns.contains(column)) {
-						throw new Exception("Key columns of import (" + Utilities.join(keyColumns, ", ") + ") and table (" + Utilities.join(tableKeys, ", ") + ") do not match");
+						throw new DbImportException("Key columns of import (" + Utilities.join(keyColumns, ", ") + ") and table (" + Utilities.join(tableKeys, ", ") + ") do not match");
 					}
 				}
 				for (final String column : keyColumns) {
 					if (!tableKeys.contains(column)) {
-						throw new Exception("Key columns of import (" + Utilities.join(keyColumns, ", ") + ") and table (" + Utilities.join(tableKeys, ", ") + ") do not match");
+						throw new DbImportException("Key columns of import (" + Utilities.join(keyColumns, ", ") + ") and table (" + Utilities.join(tableKeys, ", ") + ") do not match");
 					}
 				}
 
@@ -171,7 +171,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 
 					signalProgress(true);
 				} else {
-					throw new Exception("Invalid import mode");
+					throw new DbImportException("Invalid import mode");
 				}
 				connection.commit();
 

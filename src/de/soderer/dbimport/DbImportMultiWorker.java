@@ -76,7 +76,7 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 				}
 
 				if (notFoundTables.size() > 0) {
-					throw new Exception("Import tables not available in database: " + Utilities.join(notFoundTables, ", "));
+					throw new DbImportException("Import tables not available in database: " + Utilities.join(notFoundTables, ", "));
 				}
 			}
 
@@ -85,7 +85,14 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 					parent.changeTitle(LangResources.get("deactivateForeignKeyConstraints"));
 				}
 				constraintsWereDeactivated = true;
-				DbUtilities.setForeignKeyConstraintStatus(dbImportDefinition.getDbVendor(), connection, false);
+				try {
+					DbUtilities.setForeignKeyConstraintStatus(dbImportDefinition.getDbVendor(), connection, false);
+					if (!connection.getAutoCommit()) {
+						connection.commit();
+					}
+				} catch (final Exception e) {
+					throw new DbImportException("Cannot deactivate foreign key constraints: " + e.getMessage());
+				}
 				if (!connection.getAutoCommit()) {
 					connection.commit();
 				}
@@ -96,7 +103,14 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 					parent.changeTitle(LangResources.get("deactivateTriggers"));
 				}
 				triggersWereDeactivated = true;
-				DbUtilities.setTriggerStatus(dbImportDefinition.getDbVendor(), connection, false);
+				try {
+					DbUtilities.setTriggerStatus(dbImportDefinition.getDbVendor(), connection, false);
+					if (!connection.getAutoCommit()) {
+						connection.commit();
+					}
+				} catch (final Exception e) {
+					throw new DbImportException("Cannot deactivate triggers: " + e.getMessage());
+				}
 				if (!connection.getAutoCommit()) {
 					connection.commit();
 				}
@@ -187,8 +201,7 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 				return true;
 			}
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		} finally {
 			if (dbImportDefinition.isDeactivateForeignKeyConstraints() && constraintsWereDeactivated) {
 				parent.changeTitle(LangResources.get("reactivateForeignKeyConstraints"));
@@ -198,8 +211,8 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 						connection.commit();
 					}
 				} catch (final Exception e) {
-					System.err.println("Cannot reactivate foreign key constraints");
-					e.printStackTrace();
+					multiImportHadError = true;
+					multiImportResult.append("ERROR: Cannot reactivate foreign key constraints: " + e.getMessage());
 				}
 			}
 			if (dbImportDefinition.isDeactivateTriggers() && triggersWereDeactivated) {
@@ -210,8 +223,8 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 						connection.commit();
 					}
 				} catch (final Exception e) {
-					System.err.println("Cannot reactivate triggers");
-					e.printStackTrace();
+					multiImportHadError = true;
+					multiImportResult.append("ERROR: Cannot reactivate triggers: " + e.getMessage());
 				}
 			}
 		}
