@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="build_jar" name="Create all Jars for Project DbImport">
-	<property name="version" value="23.7.1" />
+	<property name="version" value="23.7.2" />
 	<echo message="version: ${version}" />
 	
 	<property file="${user.home}/git/signing.properties" />
@@ -50,7 +50,7 @@
 
 		<get src="https://github.com/hudeany/kdbx/releases/download/23.0.1/kdbx-23.0.1.jar" dest="lib/" />
 		<get src="https://github.com/hudeany/csv/releases/download/23.0.1/csv-23.0.1.jar" dest="lib/" />
-		<get src="https://github.com/hudeany/json/releases/download/23.0.1/json-23.0.1.jar" dest="lib/" />
+		<get src="https://github.com/hudeany/json/releases/download/23.2.0/json-23.2.0.jar" dest="lib/" />
 		<get src="https://github.com/hudeany/vcf/releases/download/23.0.1/vcf-23.0.1.jar" dest="lib/" />
 		
 		<mkdir dir="lib_test/" />
