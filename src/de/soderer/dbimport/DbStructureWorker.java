@@ -67,7 +67,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 			final JsonNode dbStructureJsonNode = jsonReader.read();
 
 			if (!dbStructureJsonNode.isJsonObject()) {
-				throw new DbImportException("Invalid db structure file. Must contain JsonObject with table properties");
+				throw new DbImportException("Invalid database structure file. Must contain JsonObject with table properties");
 			}
 
 			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode.getValue();

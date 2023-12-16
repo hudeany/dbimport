@@ -106,7 +106,7 @@ public class DbImportDefinition extends DbDefinition {
 	private String tableName = "*";
 
 	/** The importFilePath or data. */
-	private String importFilePathOrData;
+	private String importFilePathOrData = null;
 
 	private boolean isInlineData = false;
 
@@ -941,5 +941,89 @@ public class DbImportDefinition extends DbDefinition {
 			params += " " + "-dateTimeFormat" + " " + getDateTimeFormat();
 		}
 		return params;
+	}
+
+	@Override
+	public void importParameters(final DbDefinition otherDbDefinition) {
+		super.importParameters(otherDbDefinition);
+
+		if (otherDbDefinition == null) {
+			tableName = "*";
+			importFilePathOrData = null;
+			isInlineData = false;
+			dataType = null;
+			log = false;
+			verbose = false;
+			encoding = StandardCharsets.UTF_8;
+			separator = ';';
+			stringQuote = '"';
+			escapeStringQuote = '"';
+			noHeaders = false;
+			nullValueString = "";
+			completeCommit = false;
+			allowUnderfilledLines = false;
+			removeSurplusEmptyTrailingColumns = false;
+			importMode = ImportMode.INSERT;
+			duplicateMode = DuplicateMode.UPDATE_ALL_JOIN;
+			updateNullData = true;
+			keycolumns = null;
+			createTable = false;
+			structureFilePath = null;
+			trimData = false;
+			mapping = "";
+			additionalInsertValues = null;
+			additionalUpdateValues = null;
+			logErroneousData = false;
+			createNewIndexIfNeeded = true;
+			deactivateForeignKeyConstraints = false;
+			deactivateTriggers = false;
+			dataPath = null;
+			schemaFilePath = null;
+			zipPassword = null;
+			kdbxPassword = null;
+			databaseTimeZone = TimeZone.getDefault().getID();
+			importDataTimeZone = TimeZone.getDefault().getID();
+			dateFormat = null;
+			dateTimeFormat = null;
+		} else if (otherDbDefinition instanceof DbImportDefinition) {
+			final DbImportDefinition otherDbImportDefinition = (DbImportDefinition) otherDbDefinition;
+			tableName = otherDbImportDefinition.getTableName();
+			importFilePathOrData = otherDbImportDefinition.getImportFilePathOrData();
+			isInlineData = otherDbImportDefinition.isInlineData();
+			dataType = otherDbImportDefinition.getDataType();
+			log = otherDbImportDefinition.isLog();
+			verbose = otherDbImportDefinition.isVerbose();
+			encoding = otherDbImportDefinition.getEncoding();
+			separator = otherDbImportDefinition.getSeparator();
+			stringQuote = otherDbImportDefinition.getStringQuote();
+			escapeStringQuote = otherDbImportDefinition.getEscapeStringQuote();
+			noHeaders = otherDbImportDefinition.isNoHeaders();
+			nullValueString = otherDbImportDefinition.getNullValueString();
+			completeCommit = otherDbImportDefinition.isCompleteCommit();
+			allowUnderfilledLines = otherDbImportDefinition.isAllowUnderfilledLines();
+			removeSurplusEmptyTrailingColumns = otherDbImportDefinition.isRemoveSurplusEmptyTrailingColumns();
+			importMode = otherDbImportDefinition.getImportMode();
+			duplicateMode = otherDbImportDefinition.getDuplicateMode();
+			updateNullData = otherDbImportDefinition.isUpdateNullData();
+			keycolumns = otherDbImportDefinition.getKeycolumns();
+			createTable = otherDbImportDefinition.isCreateTable();
+			structureFilePath = otherDbImportDefinition.getStructureFilePath();
+			trimData = otherDbImportDefinition.isTrimData();
+			mapping = otherDbImportDefinition.getMapping();
+			additionalInsertValues = otherDbImportDefinition.getAdditionalInsertValues();
+			additionalUpdateValues = otherDbImportDefinition.getAdditionalUpdateValues();
+			logErroneousData = otherDbImportDefinition.isLogErroneousData();
+			createNewIndexIfNeeded = otherDbImportDefinition.isCreateNewIndexIfNeeded();
+			deactivateForeignKeyConstraints = otherDbImportDefinition.isDeactivateForeignKeyConstraints();
+			deactivateTriggers = otherDbImportDefinition.isDeactivateTriggers();
+			dataPath = otherDbImportDefinition.getDataPath();
+			schemaFilePath = otherDbImportDefinition.getSchemaFilePath();
+			zipPassword = otherDbImportDefinition.getZipPassword();
+			kdbxPassword = otherDbImportDefinition.getKdbxPassword();
+			databaseTimeZone = otherDbImportDefinition.getDatabaseTimeZone();
+			importDataTimeZone = otherDbImportDefinition.getImportDataTimeZone();
+			dateFormat = otherDbImportDefinition.getDateFormat();
+			dateTimeFormat = otherDbImportDefinition.getDateTimeFormat();
+		}
 	}
 }

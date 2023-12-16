@@ -287,7 +287,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			}
 			final String dbColumn = mappingLine.substring(0, dbColumnEnd).toLowerCase().trim();
 			if (mapping.containsKey(dbColumn)) {
-				throw new DbImportException("Invalid mapping line with duplicate db column: " + mappingLine);
+				throw new DbImportException("Invalid mapping line with duplicate database column: " + mappingLine);
 			}
 			String rest = mappingLine.substring(dbColumnEnd + 1).trim();
 			if (Utilities.isNotBlank(rest)) {

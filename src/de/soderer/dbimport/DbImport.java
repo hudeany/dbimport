@@ -28,6 +28,7 @@ import de.soderer.dbimport.console.ConnectionTestMenu;
 import de.soderer.dbimport.console.CreateTrustStoreMenu;
 import de.soderer.dbimport.console.HelpMenu;
 import de.soderer.dbimport.console.ImportMenu;
+import de.soderer.dbimport.console.PreferencesMenu;
 import de.soderer.dbimport.console.UpdateMenu;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
@@ -99,7 +100,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		}
 	}
 
-	/** The db import definition. */
+	/** The database import definition. */
 	private DbImportDefinition dbImportDefinitionToExecute;
 
 	private int previousTerminalWidth = 0;
@@ -849,7 +850,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 	}
 
 	/**
-	 * Instantiates a new db csv import.
+	 * Instantiates a new database csv import.
 	 *
 	 * @throws Exception the exception
 	 */
@@ -860,7 +861,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 	/**
 	 * Import.
 	 *
-	 * @param dbImportDefinitionToExecute the db csv import definition
+	 * @param dbImportDefinitionToExecute the database csv import definition
 	 * @throws Exception the exception
 	 */
 	private void importData(final DbImportDefinition dbImportDefinition) throws Exception {
@@ -1025,7 +1026,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			@SuppressWarnings("resource")
 			Connection testConnection = null;
 			try {
-				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Creating db connection");
+				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Creating database connection");
 				if (connectionTestDefinition.getDbVendor() == DbVendor.Derby || (connectionTestDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(connectionTestDefinition.getHostnameAndPort())) || connectionTestDefinition.getDbVendor() == DbVendor.SQLite) {
 					try {
 						testConnection = DbUtilities.createConnection(connectionTestDefinition, false);
@@ -1036,7 +1037,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					testConnection = DbUtilities.createConnection(connectionTestDefinition, false);
 				}
 
-				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Successfully created db connection");
+				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Successfully created database connection");
 
 				if (Utilities.isNotBlank(connectionTestDefinition.getCheckStatement())) {
 					try (Statement statement = testConnection.createStatement()) {
@@ -1054,19 +1055,19 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 				successfulConnectionCount++;
 			} catch (final SQLException sqle) {
-				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": SQL-Error creating db connection: " + sqle.getMessage() + " (" + sqle.getErrorCode() + " / " + sqle.getSQLState() + ")");
+				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": SQL-Error creating database connection: " + sqle.getMessage() + " (" + sqle.getErrorCode() + " / " + sqle.getSQLState() + ")");
 				returnCode = 1;
 			} catch (final Exception e) {
-				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Error creating db connection: " + e.getClass().getSimpleName() + ":" + e.getMessage());
+				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Error creating database connection: " + e.getClass().getSimpleName() + ":" + e.getMessage());
 				e.printStackTrace();
 				returnCode = 1;
 			} finally {
 				if (testConnection != null) {
 					try {
-						System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Closing db connection");
+						System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Closing database connection");
 						testConnection.close();
 					} catch (final SQLException e) {
-						System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Error closing db connection: " + e.getMessage());
+						System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Error closing database connection: " + e.getMessage());
 						returnCode = 1;
 					}
 				}
@@ -1176,8 +1177,13 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			}
 			final ConnectionTestMenu connectionTestMenu = new ConnectionTestMenu(mainMenu, importMenu.getDbImportDefinition());
 			connectionTestMenu.setConnectionTestDefinition(connectionTestDefinition);
+
+			@SuppressWarnings("unused")
+			final PreferencesMenu preferencesMenu = new PreferencesMenu(mainMenu, importMenu.getDbImportDefinition());
+
 			final CreateTrustStoreMenu createTrustStoreMenu = new CreateTrustStoreMenu(mainMenu, importMenu.getDbImportDefinition());
 			createTrustStoreMenu.setConnectionTestDefinition(connectionTestDefinition);
+
 			@SuppressWarnings("unused")
 			final ConsoleMenu updateMenu = new UpdateMenu(mainMenu);
 			@SuppressWarnings("unused")

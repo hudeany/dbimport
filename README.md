@@ -17,7 +17,7 @@
 - TarGz (.tar.gz)
 - GZip (.gz)
 
-## Supported DB vendors:
+## Supported database vendors:
 - MySQL
 - MariaDB
 - Oracle (use SID, servicename or TNS description)
@@ -31,10 +31,10 @@
 ## Commandline usage
 	Usage: java -jar DbImport.jar [optional parameters] dbtype hostname[:port] dbname, username -table tablename -import importfilepathOrData [password]
 
-## Mandatory parameters for db import
+## Mandatory parameters for database import
     dbtype: mysql | mariadb | oracle | postgresql | firebird | sqlite | derby | hsql | cassandra
     hostname: With optional port (Not needed for sqlite and derby)
-    dbname: Dbname or filepath for sqlite db or derby db
+    dbname: Dbname or filepath for sqlite database or derby db
     username: Username (Not needed for sqlite and derby)
     password: Is asked interactivly, if not given as parameter (Not needed for sqlite and derby)
     
@@ -42,7 +42,7 @@
     -import importfilepathOrData: File to import (?, * as wildcards, automapping only), maybe zipped (.zip, .tar.gz, .tgz, .gz)
                                 or data as text (See optional parameter '-data')
 
-## Optional parameters for db import
+## Optional parameters for database import
 	-data: Declare importfilepathOrData explicitly as inline data (No filepath)
 	-x importDataFormat: Data import format, default format is detected by file extension or, if it cannot be detected, default is CSV
 		importDataFormat: CSV | JSON | XML | SQL | EXCEL | ODS | VCF | KDBX
@@ -77,18 +77,18 @@
 		NO_CHECK: No duplicate check. Only insert
 		CKECK_SOURCE_ONLY_DROP: Check duplicates in import data only. Drop duplicates
 		CKECK_SOURCE_ONLY_JOIN: Check duplicates in import data only. Join duplicates
-		UPDATE_FIRST_DROP: Check duplicates in import data and db data. Only update the first occurrence in db. Drop duplicates
-		UPDATE_FIRST_JOIN: Check duplicates in import data and db data. Only update the first occurrence in db. Join duplicates
-		UPDATE_ALL_DROP: Check duplicates in import data and db data. Update all occurrences in db. Drop duplicates
-		UPDATE_ALL_JOIN: (Default) Check duplicates in import data and db data. Update all occurrences in db. Join duplicates
-		MAKE_UNIQUE_DROP: Check duplicates in import data and db data. Remove duplicate occurrences in db. Drop duplicates
-		MAKE_UNIQUE_JOIN: Check duplicates in import data and db data. Remove duplicate occurrences in db. Join duplicates
+		UPDATE_FIRST_DROP: Check duplicates in import data and database data. Only update the first occurrence in db. Drop duplicates
+		UPDATE_FIRST_JOIN: Check duplicates in import data and database data. Only update the first occurrence in db. Join duplicates
+		UPDATE_ALL_DROP: Check duplicates in import data and database data. Update all occurrences in db. Drop duplicates
+		UPDATE_ALL_JOIN: (Default) Check duplicates in import data and database data. Update all occurrences in db. Join duplicates
+		MAKE_UNIQUE_DROP: Check duplicates in import data and database data. Remove duplicate occurrences in db. Drop duplicates
+		MAKE_UNIQUE_JOIN: Check duplicates in import data and database data. Remove duplicate occurrences in db. Join duplicates
 	-u: Don't update with null values from import data
 	-k 'keycolumnslist': Keycolumns list comma separated
 	-insvalues 'valuelist': Value list semicolon separated: Sometimes values not included in the data file are needed for inserts. E.g.: id=test_seq.NEXTVAL;flag='abc'
 	-updvalues 'valuelist': Value list semicolon separated: Sometimes values not included in the data file are needed for updates. E.g.: create=current_timestamp;flag='abc'
-	-create: Scan data and create suitable table, if not exists. Also creates sqlite, derby and hsql db if needed
-	-structure <structureFilePath>: Optional path to db structure JSON file to be used with "-create" parameter
+	-create: Scan data and create suitable table, if not exists. Also creates sqlite, derby and hsql database if needed
+	-structure <structureFilePath>: Optional path to database structure JSON file to be used with "-create" parameter
 	-logerrors: Log error data items in file
 	-zippassword '<zippassword>' (Only for .zip files)
 	-kdbxpassword '<kdbxpassword>' (Only for .kdbx files)
@@ -97,7 +97,7 @@
 	-dateFormat: set fallback date format, especially for multiple file imports, can be overridden by mapping formats, use Java format characters (YMdhmsS) 
 	-dateTimeFormat: set fallback date time format, especially for multiple file imports, can be overridden by mapping formats, use Java format characters (YMdhmsS)
 	-secure: Use TLS/SSL for secure communication with database
-	-truststore '<truststorefilepath>': Filepath to TrustStore in JKS format for encrypted DB connections of some DB vendors
+	-truststore '<truststorefilepath>': Filepath to TrustStore in JKS format for encrypted database connections of some database vendors
 	-truststorepassword '<password>': Optional password for TrustStore
 
 ## Global standalone parameters

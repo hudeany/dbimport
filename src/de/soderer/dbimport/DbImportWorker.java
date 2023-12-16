@@ -188,14 +188,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			for (String dbColumnToInsert : dbTableColumnsListToInsert) {
 				dbColumnToInsert = DbUtilities.unescapeVendorReservedNames(dbDefinition.getDbVendor(), dbColumnToInsert);
 				if (!dbColumns.containsKey(dbColumnToInsert)) {
-					throw new DbImportException("DB table does not contain mapped column: " + dbColumnToInsert);
+					throw new DbImportException("Database table does not contain mapped column: " + dbColumnToInsert);
 				}
 			}
 
 			final Set<String> mappedDbColumns = new CaseInsensitiveSet();
 			for (final Entry<String, Tuple<String, String>> mappingEntry : mapping.entrySet()) {
 				if (Utilities.isNotBlank(mappingEntry.getKey()) && !mappedDbColumns.add(mappingEntry.getKey())) {
-					throw new DbImportException("Mapping contains db column multiple times: " + mappingEntry.getKey());
+					throw new DbImportException("Mapping contains database column multiple times: " + mappingEntry.getKey());
 				} else if (!dataPropertyNames.contains(mappingEntry.getValue().getFirst())) {
 					throw new DbImportException("Data does not contain mapped property: " + mappingEntry.getValue().getFirst());
 				}
@@ -718,7 +718,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final JsonNode dbStructureJsonNode = jsonReader.read();
 
 			if (!dbStructureJsonNode.isJsonObject()) {
-				throw new DbImportException("Invalid db structure file. Must contain JsonObject with table properties");
+				throw new DbImportException("Invalid database structure file. Must contain JsonObject with table properties");
 			}
 
 			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode.getValue();
@@ -958,7 +958,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						for (int i = 0; i < results.length; i++) {
 							if (results[i] != 1 && results[i] != Statement.SUCCESS_NO_INFO) {
 								invalidItems.add((int) (dataItemsDone - batchBlockSize) + i);
-								invalidItemsReasons.add("Db import data error");
+								invalidItemsReasons.add("DB import data error");
 							}
 						}
 						if (!commitOnFullSuccessOnly) {
@@ -985,7 +985,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				for (int i = 0; i < results.length; i++) {
 					if (results[i] != 1 && results[i] != Statement.SUCCESS_NO_INFO) {
 						invalidItems.add((int) (dataItemsDone - (dataItemsDone % batchBlockSize)) + i);
-						invalidItemsReasons.add("Db import data error");
+						invalidItemsReasons.add("DB import data error");
 					}
 				}
 				if (!commitOnFullSuccessOnly) {

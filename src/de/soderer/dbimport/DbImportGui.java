@@ -82,7 +82,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 	private final ConfigurationProperties applicationConfiguration;
 
-	/** The db type combo. */
+	/** The database type combo. */
 	private final JComboBox<String> dbTypeCombo;
 
 	private final JButton connectionCheckButton;
@@ -90,7 +90,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	/** The host field. */
 	private final JTextField hostField;
 
-	/** The db name field. */
+	/** The database name field. */
 	private final JTextField dbNameField;
 
 	/** The user field. */
@@ -215,10 +215,10 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private char[] temporaryPreferencesPassword = null;
 
 	/**
-	 * Instantiates a new db csv import gui.
+	 * Instantiates a new database csv import gui.
 	 *
 	 * @param dbImportDefinition
-	 *            the db csv import definition
+	 *            the database csv import definition
 	 * @throws Exception
 	 *             the exception
 	 */
@@ -317,7 +317,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		hostPanel.add(hostField);
 		mandatoryParameterPanel.add(hostPanel);
 
-		// DB name Panel
+		// Database name Panel
 		final JPanel dbNamePanel = new JPanel();
 		dbNamePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel dbNameLabel = new JLabel(LangResources.get("dbname"));
@@ -1711,16 +1711,16 @@ public class DbImportGui extends UpdateableGuiApplication {
 	 * Import.
 	 *
 	 * @param dbImportDefinition
-	 *            the db csv import definition
+	 *            the database csv import definition
 	 * @param dbImportGui
-	 *            the db csv import gui
+	 *            the database csv import gui
 	 * @throws Exception
 	 */
 	private void importData(final DbImportDefinition dbImportDefinition, final DbImportGui dbImportGui) throws Exception {
 		try {
 			dbImportDefinition.checkParameters();
 			if (!new DbDriverSupplier(this, dbImportDefinition.getDbVendor()).supplyDriver(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE)) {
-				throw new DbImportException("Cannot aquire db driver for db vendor: " + dbImportDefinition.getDbVendor());
+				throw new DbImportException("Cannot aquire database driver for database vendor: " + dbImportDefinition.getDbVendor());
 			}
 		} catch (final Exception e) {
 			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
