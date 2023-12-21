@@ -54,11 +54,10 @@ import de.soderer.utilities.worker.WorkerParentDual;
 /**
  * The Main-Class of DbImport.
  */
-// TODO: Invalid null in notnull column => error message
+// TODO: Invalid null in not null column => error message
 // TODO: Missing mapping for not null column => error message
 // TODO: Check for string too large
 // TODO: Check for int too large
-// TODO: Console menu: Manage preferences
 // TODO: Errorhandling on createConnection (dbconnection error detection and help messages in errors)
 public class DbImport extends UpdateableConsoleApplication implements WorkerParentDual {
 	/** The Constant APPLICATION_NAME. */
