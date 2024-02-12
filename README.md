@@ -1,7 +1,7 @@
 # Java tool to import data in database from files
 
 ## Supported file formats and datatypes:
-- Comma-Separated-Values (.csv)
+- CSV (Comma-Separated-Values, .csv)
 - JSON (.json)
 - XML (.xml)
 - vCards (.vcf)
