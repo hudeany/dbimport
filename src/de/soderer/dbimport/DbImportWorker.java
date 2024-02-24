@@ -1017,11 +1017,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	protected Closeable setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final String formatInfo) throws Exception {
 		Closeable itemToCloseAfterwards = null;
 		if (dataValue == null) {
-			if (simpleDataType == SimpleDataType.String) {
-				preparedStatement.setNull(columnIndex, java.sql.Types.VARCHAR);
-			} else {
-				preparedStatement.setNull(columnIndex, 0);
-			}
+			setNullParameter(preparedStatement, columnIndex, simpleDataType);
 		} else if (dataValue instanceof String && Utilities.isNotBlank(formatInfo)) {
 			String valueString = (String) dataValue;
 
@@ -1161,7 +1157,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final String valueString = ((String) dataValue).trim();
 			LocalDateTime localDateTimeValueForDb;
 			if (Utilities.isBlank(valueString)) {
-				preparedStatement.setNull(columnIndex, 0);
+				setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
 			} else {
 				if (Utilities.isNotBlank(dateTimeFormatPattern)) {
 					final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
@@ -1203,7 +1199,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final String valueString = ((String) dataValue).trim();
 			LocalDateTime localDateTimeValueForDb;
 			if (Utilities.isBlank(valueString)) {
-				preparedStatement.setNull(columnIndex, 0);
+				setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
 			} else {
 				if (Utilities.isNotBlank(dateFormatPattern)) {
 					try {
@@ -1266,6 +1262,30 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return itemToCloseAfterwards;
 	}
 
+	public void setNullParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType) throws SQLException {
+		if (simpleDataType == SimpleDataType.String) {
+			preparedStatement.setNull(columnIndex, java.sql.Types.VARCHAR);
+		} else if (dbDefinition.getDbVendor() == DbVendor.Oracle) {
+			if (simpleDataType == SimpleDataType.Date) {
+				preparedStatement.setNull(columnIndex, java.sql.Types.TIMESTAMP);
+			} else if (simpleDataType == SimpleDataType.DateTime) {
+				preparedStatement.setNull(columnIndex, java.sql.Types.TIMESTAMP);
+			} else if (simpleDataType == SimpleDataType.Float) {
+				preparedStatement.setNull(columnIndex, java.sql.Types.DOUBLE);
+			} else if (simpleDataType == SimpleDataType.Integer) {
+				preparedStatement.setNull(columnIndex, java.sql.Types.INTEGER);
+			} else if (simpleDataType == SimpleDataType.Clob) {
+				preparedStatement.setNull(columnIndex, java.sql.Types.CLOB);
+			} else if (simpleDataType == SimpleDataType.Blob) {
+				preparedStatement.setNull(columnIndex, java.sql.Types.BLOB);
+			} else {
+				preparedStatement.setNull(columnIndex, 0);
+			}
+		} else {
+			preparedStatement.setNull(columnIndex, 0);
+		}
+	}
+
 	private DateTimeFormatter getConfiguredDateTimeFormatter() {
 		if (dateTimeFormatterCache == null) {
 			final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatPattern);
@@ -1286,19 +1306,19 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return dateFormatterCache;
 	}
 
-	protected static void setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue) throws SQLException, Exception {
+	protected void setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue) throws SQLException, Exception {
 		if (dataValue == null) {
-			if (simpleDataType == SimpleDataType.String) {
-				preparedStatement.setNull(columnIndex, java.sql.Types.VARCHAR);
-			} else {
-				preparedStatement.setNull(columnIndex, 0);
-			}
+			setNullParameter(preparedStatement, columnIndex, simpleDataType);
 		} else if (dataValue instanceof String) {
 			if (simpleDataType == SimpleDataType.Blob) {
 				preparedStatement.setBytes(columnIndex, Utilities.decodeBase64((String) dataValue));
 			} else if (simpleDataType == SimpleDataType.Float) {
 				final String valueString = ((String) dataValue).trim();
-				preparedStatement.setDouble(columnIndex, Double.parseDouble(valueString));
+				if (valueString.contains(".")) {
+					preparedStatement.setDouble(columnIndex, Double.parseDouble(valueString));
+				} else {
+					preparedStatement.setInt(columnIndex, Integer.parseInt(valueString));
+				}
 			} else if (simpleDataType == SimpleDataType.Integer) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.contains(".")) {
