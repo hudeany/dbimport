@@ -21,10 +21,10 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.xml.XmlUtilities;
 import de.soderer.utilities.json.JsonArray;
 import de.soderer.utilities.json.JsonObject;
 import de.soderer.utilities.json.JsonWriter;
+import de.soderer.utilities.xml.XmlUtilities;
 
 public class DbImportTest_Derby {
 	public static final String DERBY_DB_PATH = System.getProperty("user.home") + File.separator + "temp" + File.separator + "test.derby";
@@ -904,6 +904,89 @@ public class DbImportTest_Derby {
 							+ "7;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13.0; aBcDeF123_2\n"
 							+ "8;; aBcDeF1235_4;2003-03-01;123.456;4;2003-02-01 11:12:13.0;\n"
 							+ "9;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01 11:12:13.0; aBcDeF123_5\n",
+							exportTestTable());
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testCsvImportBigWithErrorButNoSingleMode() {
+		try {
+			createEmptyTestTable();
+
+			final StringBuilder dataPart = new StringBuilder();
+			dataPart.append("1" + "\n");
+			for (int i = 0; i < 1025; i++) {
+				dataPart.append("a");
+			}
+			dataPart.append("\n");
+			FileUtilities.write(INPUTFILE_CSV, ("column_varchar\n" + dataPart.toString()).getBytes(StandardCharsets.UTF_8));
+
+			final String mapping = "column_varchar='column_varchar'";
+
+			Assert.assertEquals(1, DbImport._main(new String[] {
+					"derby", DERBY_DB_PATH,
+					"-table", "test_tbl",
+					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-m", mapping,
+					"-batchBlockSize", "10",
+					"-noSingleMode"
+			}));
+
+			final StringBuilder expectedDataPart = new StringBuilder();
+			Assert.assertEquals(
+					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
+							+ expectedDataPart,
+							exportTestTable());
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testCsvImportBigWithErrorWithSingleMode() {
+		try {
+			createEmptyTestTable();
+
+			final StringBuilder dataPart = new StringBuilder();
+			for (int i = 1; i < 100; i++) {
+				dataPart.append(i + "\n");
+			}
+			for (int i = 0; i < 1025; i++) {
+				dataPart.append("a");
+			}
+			for (int i = 0; i < 100; i++) {
+				dataPart.append((100 + i) + "\n");
+			}
+			dataPart.append("\n");
+			FileUtilities.write(INPUTFILE_CSV, ("column_varchar\n" + dataPart.toString()).getBytes(StandardCharsets.UTF_8));
+
+			final String mapping = "column_varchar='column_varchar'";
+
+			Assert.assertEquals(0, DbImport._main(new String[] {
+					"derby", DERBY_DB_PATH,
+					"-table", "test_tbl",
+					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-m", mapping,
+					"-batchBlockSize", "10",
+					"-v"
+			}));
+
+			final StringBuilder expectedDataPart = new StringBuilder();
+			for (int i = 1; i <= 90; i++) {
+				expectedDataPart.append(i + ";;;;;;;" + i + "\n");
+			}
+			for (int i = 91; i <= 99; i++) {
+				expectedDataPart.append((i + 10) + ";;;;;;;" + i + "\n");
+			}
+			for (int i = 101; i <= 199; i++) {
+				expectedDataPart.append((i + 10) + ";;;;;;;" + i + "\n");
+			}
+
+			Assert.assertEquals(
+					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
+							+ expectedDataPart,
 							exportTestTable());
 		} catch (final Exception e) {
 			Assert.fail(e.getMessage());

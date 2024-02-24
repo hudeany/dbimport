@@ -189,6 +189,10 @@ public class DbImportDefinition extends DbDefinition {
 
 	private String dateTimeFormat = null;
 
+	private int batchBlockSize = 1000;
+
+	private boolean preventBatchFallbackToSingleLineOnErrors = false;
+
 	public String getTableName() {
 		return tableName;
 	}
@@ -527,6 +531,22 @@ public class DbImportDefinition extends DbDefinition {
 		this.dateTimeFormat = dateTimeFormat;
 	}
 
+	public int getBatchBlockSize() {
+		return batchBlockSize;
+	}
+
+	public void setBatchBlockSize(final int batchBlockSize) {
+		this.batchBlockSize = batchBlockSize;
+	}
+
+	public boolean isPreventBatchFallbackToSingleLineOnErrors() {
+		return preventBatchFallbackToSingleLineOnErrors;
+	}
+
+	public void setPreventBatchFallbackToSingleLineOnErrors(final boolean preventBatchFallbackToSingleLineOnErrors) {
+		this.preventBatchFallbackToSingleLineOnErrors = preventBatchFallbackToSingleLineOnErrors;
+	}
+
 	public void checkParameters() throws Exception {
 		super.checkParameters(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE);
 
@@ -634,6 +654,10 @@ public class DbImportDefinition extends DbDefinition {
 
 		if (Utilities.isNotEmpty(schemaFilePath) && dataType != DataType.XML && dataType != DataType.JSON) {
 			throw new DbImportException("SchemaFilePath is not supported for data format " + dataType);
+		}
+
+		if (batchBlockSize < 1) {
+			throw new DbImportException("Batch blocksize must be at least 1, but was " + batchBlockSize);
 		}
 	}
 
@@ -806,6 +830,8 @@ public class DbImportDefinition extends DbDefinition {
 		worker.setLogErroneousData(isLogErroneousData());
 		worker.setDatabaseTimeZone(databaseTimeZone);
 		worker.setImportDataTimeZone(importDataTimeZone);
+		worker.setBatchBlockSize(batchBlockSize);
+		worker.setPreventBatchFallbackToSingleLineOnErrors(preventBatchFallbackToSingleLineOnErrors);
 
 		return worker;
 	}
@@ -940,6 +966,12 @@ public class DbImportDefinition extends DbDefinition {
 		if (Utilities.isNotBlank(getDateTimeFormat())) {
 			params += " " + "-dateTimeFormat" + " " + getDateTimeFormat();
 		}
+		if (batchBlockSize != 1000) {
+			params += " " + "-batchBlockSize" + " '" + getBatchBlockSize() + "'";
+		}
+		if (isPreventBatchFallbackToSingleLineOnErrors()) {
+			params += " " + "-noSingleMode";
+		}
 		return params;
 	}
 
@@ -985,6 +1017,8 @@ public class DbImportDefinition extends DbDefinition {
 			importDataTimeZone = TimeZone.getDefault().getID();
 			dateFormat = null;
 			dateTimeFormat = null;
+			batchBlockSize = 1000;
+			preventBatchFallbackToSingleLineOnErrors = false;
 		} else if (otherDbDefinition instanceof DbImportDefinition) {
 			final DbImportDefinition otherDbImportDefinition = (DbImportDefinition) otherDbDefinition;
 			tableName = otherDbImportDefinition.getTableName();
@@ -1024,6 +1058,8 @@ public class DbImportDefinition extends DbDefinition {
 			importDataTimeZone = otherDbImportDefinition.getImportDataTimeZone();
 			dateFormat = otherDbImportDefinition.getDateFormat();
 			dateTimeFormat = otherDbImportDefinition.getDateTimeFormat();
+			batchBlockSize = otherDbImportDefinition.getBatchBlockSize();
+			preventBatchFallbackToSingleLineOnErrors = otherDbImportDefinition.isPreventBatchFallbackToSingleLineOnErrors();
 		}
 	}
 }

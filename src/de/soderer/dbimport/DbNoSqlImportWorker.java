@@ -246,8 +246,12 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 			final int batchBlockSize = 1000;
 			boolean hasUnexecutedData = false;
 
+			final List<List<Object>> batchValues = new ArrayList<>();
 			Map<String, Object> itemData;
 			while ((itemData = dataProvider.getNextItemData()) != null) {
+				final List<Object> batchValueEntry = new ArrayList<>();
+				batchValues.add(batchValueEntry);
+
 				try {
 					int i = 1;
 					for (final String dbColumnToInsert : dbColumnsListToInsert) {
@@ -257,7 +261,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
 						final
-						Closeable itemToClose = setParameter(preparedInsertStatement, i++, simpleDataType, dataValue, formatInfo);
+						Closeable itemToClose = setParameter(preparedInsertStatement, i++, simpleDataType, dataValue, formatInfo, batchValueEntry);
 						if (itemToClose != null) {
 							itemsToCloseAfterwards.add(itemToClose);
 						}
@@ -382,8 +386,12 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 			int itemsToInsert = 0;
 			int invalidItemsToInsert = 0;
 
+			final List<List<Object>> batchValues = new ArrayList<>();
 			Map<String, Object> itemData;
 			while ((itemData = dataProvider.getNextItemData()) != null) {
+				final List<Object> batchValueEntry = new ArrayList<>();
+				batchValues.add(batchValueEntry);
+
 				String insertKey = "";
 				preparedDetectStatement.clearParameters();
 				int keyIndex = 1;
@@ -405,7 +413,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 						// Bug mitigation for Cassandra JDBC driver: Driver does not set apostrophes around strings as key column value in prepared statements
 						keyDataValue = "'" + keyDataValue + "'";
 					}
-					final Closeable keyItemToClose = setParameter(preparedDetectStatement, keyIndex++, simpleDataType, keyDataValue, formatInfo);
+					final Closeable keyItemToClose = setParameter(preparedDetectStatement, keyIndex++, simpleDataType, keyDataValue, formatInfo, batchValueEntry);
 					if (keyItemToClose != null) {
 						detectItemsToCloseAfterwards.add(keyItemToClose);
 					}
@@ -458,7 +466,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 								final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToUpdate).getFirst());
 								final String formatInfo = mappingToUse.get(unescapedDbColumnToUpdate).getSecond();
 
-								final Closeable itemToClose = setParameter(preparedUpdateStatement, i++, simpleDataType, dataValue, formatInfo);
+								final Closeable itemToClose = setParameter(preparedUpdateStatement, i++, simpleDataType, dataValue, formatInfo, batchValueEntry);
 								if (itemToClose != null) {
 									updateItemsToCloseAfterwards.add(itemToClose);
 								}
@@ -471,7 +479,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 							final Object keyDataValue = itemData.get(mappingToUse.get(unescapedDbKeyColumn).getFirst());
 							final String formatInfo = mappingToUse.get(unescapedDbKeyColumn).getSecond();
 
-							final Closeable itemToClose = setParameter(preparedUpdateStatement, i++, simpleDataType, keyDataValue, formatInfo);
+							final Closeable itemToClose = setParameter(preparedUpdateStatement, i++, simpleDataType, keyDataValue, formatInfo, batchValueEntry);
 							if (itemToClose != null) {
 								detectItemsToCloseAfterwards.add(itemToClose);
 							}
@@ -495,7 +503,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 							final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 							final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
-							final Closeable itemToClose = setParameter(preparedInsertStatement, i++, simpleDataType, dataValue, formatInfo);
+							final Closeable itemToClose = setParameter(preparedInsertStatement, i++, simpleDataType, dataValue, formatInfo, batchValueEntry);
 							if (itemToClose != null) {
 								insertItemsToCloseAfterwards.add(itemToClose);
 							}

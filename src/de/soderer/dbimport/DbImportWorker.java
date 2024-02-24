@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -26,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -121,6 +123,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	private DateTimeFormatter dateFormatterCache = null;
 	private DateTimeFormatter dateTimeFormatterCache = null;
 
+	private int batchBlockSize = 1000;
+	private boolean preventBatchFallbackToSingleLineOnErrors = false;
+
 	protected DataProvider dataProvider = null;
 
 	public DbImportWorker(final WorkerParentSimple parent, final DbDefinition dbDefinition, final String tableName, final String dateFormatPattern, final String dateTimeFormatPattern) {
@@ -154,6 +159,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 	public void setImportDataTimeZone(final String importDataTimeZone) {
 		importDataZoneId = ZoneId.of(importDataTimeZone);
+	}
+
+	public void setBatchBlockSize(final int batchBlockSize) {
+		this.batchBlockSize = batchBlockSize;
+	}
+
+	public void setPreventBatchFallbackToSingleLineOnErrors(final boolean preventBatchFallbackToSingleLineOnErrors) {
+		this.preventBatchFallbackToSingleLineOnErrors = preventBatchFallbackToSingleLineOnErrors;
 	}
 
 	public void setMapping(final String mappingString) throws IOException, Exception {
@@ -658,7 +671,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				+ (Utilities.isNotBlank(dateFormatPattern) ? "DateFormatPattern: " + dateFormatPattern + "\n" : "")
 				+ (Utilities.isNotBlank(dateTimeFormatPattern) ? "DateTimeFormatPattern: " + dateTimeFormatPattern + "\n" : "")
 				+ (databaseZoneId != null && !databaseZoneId.equals(importDataZoneId) ? "DatabaseZoneId: " + databaseZoneId + "\nImportDataZoneId: " + importDataZoneId + "\n" : "")
-				+ "Update with null values: " + updateWithNullValues + "\n";
+				+ "Update with null values: " + updateWithNullValues + "\n"
+				+ "BatchBlockSize: " + batchBlockSize + "\n"
+				+ "PreventBatchFallbackToSingleLineOnErrors: " + preventBatchFallbackToSingleLineOnErrors + "\n";
 	}
 
 	protected void createTableIfNeeded(final Connection connection, final String tableNameToUse, final List<String> keyColumnsToUse) throws Exception, DbImportException, SQLException {
@@ -824,7 +839,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		if (invalidItems.size() > 0) {
 			final List<String> errorList = new ArrayList<>();
 			for (int i = 0; i < Math.min(10, invalidItems.size()); i++) {
-				errorList.add(Integer.toString(invalidItems.get(i)));
 				errorList.add(Integer.toString(invalidItems.get(i)) + ": " + invalidItemsReasons.get(i));
 			}
 			if (invalidItems.size() > 10) {
@@ -893,13 +907,15 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		try {
 			preparedStatement = connection.prepareStatement(statementString);
 
-			final int batchBlockSize = 1000;
-			boolean hasUnexecutedData = false;
+			final List<List<Object>> batchValues = new ArrayList<>();
 			Map<String, Object> itemData;
 			while ((itemData = dataProvider.getNextItemData()) != null) {
 				if (cancel) {
 					break;
 				}
+
+				final List<Object> batchValueEntry = new ArrayList<>();
+				batchValues.add(batchValueEntry);
 
 				try {
 					int i = 1;
@@ -909,7 +925,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
-						final Closeable itemToClose = setParameter(preparedStatement, i++, simpleDataType, dataValue, formatInfo);
+						final Closeable itemToClose = setParameter(preparedStatement, i++, simpleDataType, dataValue, formatInfo, batchValueEntry);
 						if (itemToClose != null) {
 							itemsToCloseAfterwards.add(itemToClose);
 						}
@@ -917,7 +933,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 					if (Utilities.isNotBlank(itemIndexColumn)) {
 						// Add additional integer value to identify data item index
-						setParameter(preparedStatement, i++, SimpleDataType.Integer, dataItemsDone + 1);
+						setParameter(preparedStatement, i++, SimpleDataType.Integer, dataItemsDone + 1, batchValueEntry);
 					}
 
 					preparedStatement.addBatch();
@@ -950,47 +966,67 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 				if (validItems > 0) {
 					if (validItems % batchBlockSize == 0) {
-						final int[] results = preparedStatement.executeBatch();
-						for (final Closeable itemToClose : itemsToCloseAfterwards) {
-							Utilities.closeQuietly(itemToClose);
-						}
-						itemsToCloseAfterwards.clear();
-						for (int i = 0; i < results.length; i++) {
-							if (results[i] != 1 && results[i] != Statement.SUCCESS_NO_INFO) {
-								invalidItems.add((int) (dataItemsDone - batchBlockSize) + i);
-								invalidItemsReasons.add("DB import data error");
+						try {
+							final int[] results = preparedStatement.executeBatch();
+							for (final Closeable itemToClose : itemsToCloseAfterwards) {
+								Utilities.closeQuietly(itemToClose);
+							}
+							itemsToCloseAfterwards.clear();
+							for (int i = 0; i < results.length; i++) {
+								if (results[i] != 1 && results[i] != Statement.SUCCESS_NO_INFO) {
+									invalidItems.add((int) (dataItemsDone - batchBlockSize) + i);
+									invalidItemsReasons.add("DB import data error");
+								}
+							}
+							if (!commitOnFullSuccessOnly) {
+								connection.commit();
+								if (dbDefinition.getDbVendor() == DbVendor.Firebird) {
+									preparedStatement.close();
+									preparedStatement = connection.prepareStatement(statementString);
+								}
+							}
+						} catch (final BatchUpdateException e) {
+							connection.rollback();
+							if (commitOnFullSuccessOnly || preventBatchFallbackToSingleLineOnErrors) {
+								throw e;
+							} else {
+								validItems -= executeSingleStepUpdates(connection, preparedStatement, batchValues, (dataItemsDone - (dataItemsDone % batchBlockSize)));
+								connection.commit();
 							}
 						}
-						if (!commitOnFullSuccessOnly) {
-							connection.commit();
-							if (dbDefinition.getDbVendor() == DbVendor.Firebird) {
-								preparedStatement.close();
-								preparedStatement = connection.prepareStatement(statementString);
-							}
-						}
-						hasUnexecutedData = false;
+						batchValues.clear();
 						signalProgress();
-					} else {
-						hasUnexecutedData = true;
 					}
 				}
 			}
 
-			if (hasUnexecutedData) {
-				final int[] results = preparedStatement.executeBatch();
-				for (final Closeable itemToClose : itemsToCloseAfterwards) {
-					Utilities.closeQuietly(itemToClose);
-				}
-				itemsToCloseAfterwards.clear();
-				for (int i = 0; i < results.length; i++) {
-					if (results[i] != 1 && results[i] != Statement.SUCCESS_NO_INFO) {
-						invalidItems.add((int) (dataItemsDone - (dataItemsDone % batchBlockSize)) + i);
-						invalidItemsReasons.add("DB import data error");
+			if (batchValues.size() > 0) {
+				try {
+					final int[] results = preparedStatement.executeBatch();
+					for (final Closeable itemToClose : itemsToCloseAfterwards) {
+						Utilities.closeQuietly(itemToClose);
+					}
+					itemsToCloseAfterwards.clear();
+					for (int i = 0; i < results.length; i++) {
+						if (results[i] != 1 && results[i] != Statement.SUCCESS_NO_INFO) {
+							invalidItems.add((int) (dataItemsDone - (dataItemsDone % batchBlockSize)) + i);
+							invalidItemsReasons.add("DB import data error");
+						}
+					}
+					if (!commitOnFullSuccessOnly) {
+						connection.commit();
+					}
+				} catch (final BatchUpdateException e) {
+					connection.rollback();
+					if (commitOnFullSuccessOnly || preventBatchFallbackToSingleLineOnErrors) {
+						throw e;
+					} else {
+						validItems -= executeSingleStepUpdates(connection, preparedStatement, batchValues, (dataItemsDone - (dataItemsDone % batchBlockSize)));
+						connection.commit();
 					}
 				}
-				if (!commitOnFullSuccessOnly) {
-					connection.commit();
-				}
+				batchValues.clear();
+				signalProgress();
 			}
 
 			if (commitOnFullSuccessOnly) {
@@ -1014,26 +1050,35 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
-	protected Closeable setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final String formatInfo) throws Exception {
+	protected Closeable setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final String formatInfo, final List<Object> batchValueItem) throws Exception {
 		Closeable itemToCloseAfterwards = null;
 		if (dataValue == null) {
 			setNullParameter(preparedStatement, columnIndex, simpleDataType);
+			batchValueItem.add(null);
 		} else if (dataValue instanceof String && Utilities.isNotBlank(formatInfo)) {
 			String valueString = (String) dataValue;
 
 			if (".".equals(formatInfo)) {
 				valueString = valueString.replace(",", "");
 				if (valueString.contains(".")) {
-					preparedStatement.setDouble(columnIndex, Double.parseDouble(valueString));
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
 				} else {
-					preparedStatement.setInt(columnIndex, Integer.parseInt(valueString));
+					final int value = Integer.parseInt(valueString);
+					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
 				}
 			} else if (",".equals(formatInfo)) {
 				valueString = valueString.replace(".", "").replace(",", ".");
 				if (valueString.contains(".")) {
-					preparedStatement.setDouble(columnIndex, Double.parseDouble(valueString));
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
 				} else {
-					preparedStatement.setInt(columnIndex, Integer.parseInt(valueString));
+					final int value = Integer.parseInt(valueString);
+					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
 				}
 			} else if ("file".equalsIgnoreCase(formatInfo)) {
 				if (!new File(valueString).exists()) {
@@ -1076,9 +1121,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						// SQLite ignores "setBinaryStream"
 						final byte[] data = IoUtilities.toByteArray(inputStream);
 						preparedStatement.setBytes(columnIndex, data);
+						batchValueItem.add(data);
 					} else {
 						itemToCloseAfterwards = inputStream;
 						preparedStatement.setBinaryStream(columnIndex, (FileInputStream) itemToCloseAfterwards);
+						batchValueItem.add(itemToCloseAfterwards);
 					}
 					importedDataAmount += new File(valueString).length();
 				} else {
@@ -1119,37 +1166,46 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						// PostgreSQL and SQLite do not read the stream
 						final byte[] data = IoUtilities.toByteArray(inputStream);
 						preparedStatement.setString(columnIndex, new String(data, textFileEncoding));
+						batchValueItem.add(data);
 					} else {
 						itemToCloseAfterwards = new InputStreamReader(inputStream, textFileEncoding);
 						preparedStatement.setCharacterStream(columnIndex, (InputStreamReader) itemToCloseAfterwards);
+						batchValueItem.add(itemToCloseAfterwards);
 					}
 					importedDataAmount += new File(valueString).length();
 				}
 			} else if ("lc".equalsIgnoreCase(formatInfo)) {
 				valueString = valueString.toLowerCase();
 				preparedStatement.setString(columnIndex, valueString);
+				batchValueItem.add(valueString);
 			} else if ("uc".equalsIgnoreCase(formatInfo)) {
 				valueString = valueString.toUpperCase();
 				preparedStatement.setString(columnIndex, valueString);
+				batchValueItem.add(valueString);
 			} else if ("email".equalsIgnoreCase(formatInfo)) {
 				valueString = valueString.toLowerCase().trim();
 				if (!NetworkUtilities.isValidEmail(valueString)) {
 					throw new DbImportException("Invalid email address: " + valueString);
 				}
 				preparedStatement.setString(columnIndex, valueString);
+				batchValueItem.add(valueString);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
 				final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
 				dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 				dateTimeFormatter.withZone(importDataZoneId);
 				final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
 				final LocalDateTime localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-				preparedStatement.setTimestamp(columnIndex, Timestamp.valueOf(localDateTimeValueForDb));
+				final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
+				preparedStatement.setTimestamp(columnIndex, value);
+				batchValueItem.add(value);
 			} else if (simpleDataType == SimpleDataType.Date) {
 				final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
 				dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 				dateTimeFormatter.withZone(importDataZoneId);
 				final LocalDate localDateValue = LocalDate.parse(valueString.trim(), dateTimeFormatter);
-				preparedStatement.setDate(columnIndex, java.sql.Date.valueOf(localDateValue));
+				final java.sql.Date value = java.sql.Date.valueOf(localDateValue);
+				preparedStatement.setDate(columnIndex, value);
+				batchValueItem.add(value);
 			} else {
 				throw new DbImportException("Unknown data type: " + simpleDataType);
 			}
@@ -1158,6 +1214,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			LocalDateTime localDateTimeValueForDb;
 			if (Utilities.isBlank(valueString)) {
 				setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+				batchValueItem.add(null);
 			} else {
 				if (Utilities.isNotBlank(dateTimeFormatPattern)) {
 					final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
@@ -1193,13 +1250,16 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 					}
 				}
-				preparedStatement.setTimestamp(columnIndex, Timestamp.valueOf(localDateTimeValueForDb));
+				final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
+				preparedStatement.setTimestamp(columnIndex, value);
+				batchValueItem.add(value);
 			}
 		} else if (dataValue instanceof String && simpleDataType == SimpleDataType.Date) {
 			final String valueString = ((String) dataValue).trim();
 			LocalDateTime localDateTimeValueForDb;
 			if (Utilities.isBlank(valueString)) {
 				setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+				batchValueItem.add(null);
 			} else {
 				if (Utilities.isNotBlank(dateFormatPattern)) {
 					try {
@@ -1249,15 +1309,21 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 					}
 				}
-				preparedStatement.setTimestamp(columnIndex, Timestamp.valueOf(localDateTimeValueForDb));
+				final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
+				preparedStatement.setTimestamp(columnIndex, value);
+				batchValueItem.add(value);
 			}
 		} else if (dataValue instanceof ZonedDateTime) {
 			final LocalDateTime localDateTimeValueForDb = ((ZonedDateTime) dataValue).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-			preparedStatement.setTimestamp(columnIndex, Timestamp.valueOf(localDateTimeValueForDb));
+			final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
+			preparedStatement.setTimestamp(columnIndex, value);
+			batchValueItem.add(value);
 		} else if (dataValue instanceof LocalDateTime) {
-			preparedStatement.setTimestamp(columnIndex, Timestamp.valueOf((LocalDateTime) dataValue));
+			final Timestamp value = Timestamp.valueOf((LocalDateTime) dataValue);
+			preparedStatement.setTimestamp(columnIndex, value);
+			batchValueItem.add(value);
 		} else {
-			setParameter(preparedStatement, columnIndex, simpleDataType, dataValue);
+			setParameter(preparedStatement, columnIndex, simpleDataType, dataValue, batchValueItem);
 		}
 		return itemToCloseAfterwards;
 	}
@@ -1306,28 +1372,40 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return dateFormatterCache;
 	}
 
-	protected void setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue) throws SQLException, Exception {
+	protected void setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final List<Object> batchValueItem) throws SQLException, Exception {
 		if (dataValue == null) {
 			setNullParameter(preparedStatement, columnIndex, simpleDataType);
+			batchValueItem.add(null);
 		} else if (dataValue instanceof String) {
 			if (simpleDataType == SimpleDataType.Blob) {
-				preparedStatement.setBytes(columnIndex, Utilities.decodeBase64((String) dataValue));
+				final byte[] value = Utilities.decodeBase64((String) dataValue);
+				preparedStatement.setBytes(columnIndex, value);
+				batchValueItem.add(value);
 			} else if (simpleDataType == SimpleDataType.Float) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.contains(".")) {
-					preparedStatement.setDouble(columnIndex, Double.parseDouble(valueString));
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
 				} else {
-					preparedStatement.setInt(columnIndex, Integer.parseInt(valueString));
+					final int value = Integer.parseInt(valueString);
+					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
 				}
 			} else if (simpleDataType == SimpleDataType.Integer) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.contains(".")) {
-					preparedStatement.setDouble(columnIndex, Double.parseDouble(valueString));
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
 				} else {
-					preparedStatement.setInt(columnIndex, Integer.parseInt(valueString));
+					final int value = Integer.parseInt(valueString);
+					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
 				}
 			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {
 				preparedStatement.setString(columnIndex, (String) dataValue);
+				batchValueItem.add(dataValue);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
 				throw new DbImportException("Date field to insert without mapping date format");
 			} else if (simpleDataType == SimpleDataType.Date) {
@@ -1337,12 +1415,50 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			}
 		} else if (simpleDataType == SimpleDataType.Float && dataValue instanceof Number) {
 			// Keep the right precision when inserting a float value to a double column
-			preparedStatement.setDouble(columnIndex, Double.parseDouble(dataValue.toString()));
+			final double value = Double.parseDouble(dataValue.toString());
+			preparedStatement.setDouble(columnIndex, value);
+			batchValueItem.add(value);
 		} else if (simpleDataType == SimpleDataType.String && dataValue instanceof MonthDay) {
-			preparedStatement.setString(columnIndex, dataValue.toString());
+			final String value = dataValue.toString();
+			preparedStatement.setString(columnIndex, value);
+			batchValueItem.add(value);
 		} else {
 			preparedStatement.setObject(columnIndex, dataValue);
+			batchValueItem.add(dataValue);
 		}
+	}
+
+	private int executeSingleStepUpdates(final Connection connection, final PreparedStatement preparedStatement, final List<List<Object>> batchValues, final long startingDataEntryIndex) throws Exception {
+		preparedStatement.clearBatch();
+		int notImportedBySingleMode = 0;
+		for (int entryIndex = 0; entryIndex < batchValues.size(); entryIndex++) {
+			final List<Object> batchValueEntry = batchValues.get(entryIndex);
+			for (int i = 0; i < batchValueEntry.size(); i++) {
+				if (batchValueEntry.get(i) != null
+						&& !(batchValueEntry.get(i) instanceof Timestamp)
+						&& !(batchValueEntry.get(i) instanceof java.sql.Date)
+						&& !(batchValueEntry.get(i) instanceof Date)
+						&& !(batchValueEntry.get(i) instanceof Integer)
+						&& !(batchValueEntry.get(i) instanceof Long)
+						&& !(batchValueEntry.get(i) instanceof Double)
+						&& !(batchValueEntry.get(i) instanceof Float)
+						&& !(batchValueEntry.get(i) instanceof String)) {
+					throw new Exception("Unexpected datatype: " + batchValueEntry.get(i).getClass().getSimpleName());
+				}
+				preparedStatement.setObject(i + 1, batchValueEntry.get(i));
+			}
+			try {
+				preparedStatement.execute();
+				connection.commit();
+			} catch (final SQLException e) {
+				connection.rollback();
+				notImportedBySingleMode++;
+				preparedStatement.clearBatch();
+				invalidItems.add((int) startingDataEntryIndex + entryIndex);
+				invalidItemsReasons.add("DB import data error: " + e.getMessage());
+			}
+		}
+		return notImportedBySingleMode;
 	}
 
 	protected static void logToFile(final OutputStream logOutputStream, final String message) throws Exception {

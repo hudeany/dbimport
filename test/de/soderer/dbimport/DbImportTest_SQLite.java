@@ -1055,4 +1055,85 @@ public class DbImportTest_SQLite {
 			Assert.fail(e.getMessage());
 		}
 	}
+
+	@Test
+	public void testCsvImportBigLimitedBlockSize() {
+		try {
+			createEmptyTestTable();
+
+			final int numberOfLines = 110;
+
+			final StringBuilder dataPart = new StringBuilder();
+			for (int i = 0; i < numberOfLines; i++) {
+				dataPart.append(i + "; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			}
+			FileUtilities.write(INPUTFILE_CSV, ("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n" + dataPart.toString()).getBytes(StandardCharsets.UTF_8));
+
+			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
+
+			Assert.assertEquals(0, DbImport._main(new String[] {
+					"sqlite", SQLITE_DB_FILE,
+					"-table", "test_tbl",
+					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-m", mapping,
+					"-batchBlockSize", "10"
+			}));
+
+			final StringBuilder expectedDataPart = new StringBuilder();
+			for (int i = 0; i < numberOfLines; i++) {
+				expectedDataPart.append((i + 1) + ";; aBcDeF1234;2003-03-01;123.456;" + i + ";2003-02-01T11:12:13; aBcDeF123\n");
+			}
+			Assert.assertEquals(
+					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
+							+ expectedDataPart,
+							exportTestTable());
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testCsvImportBigWithError() {
+		try {
+			createEmptyTestTable();
+
+			final int numberOfLines = 110;
+
+			int count = 1;
+			final StringBuilder dataPart = new StringBuilder();
+			for (int i = 0; i < numberOfLines / 2; i++) {
+				dataPart.append((count++) + "; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			}
+			dataPart.append((count++) + ";abc;;Fehlerhafte Zeile;01.02.2003 11:12:13;01.03.2003 21:22:23\n");
+			for (int i = 0; i < numberOfLines / 2 - 1; i++) {
+				dataPart.append((count++) + "; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			}
+			FileUtilities.write(INPUTFILE_CSV, ("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n" + dataPart.toString()).getBytes(StandardCharsets.UTF_8));
+
+			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
+
+			Assert.assertEquals(0, DbImport._main(new String[] {
+					"sqlite", SQLITE_DB_FILE,
+					"-table", "test_tbl",
+					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-m", mapping,
+					"-batchBlockSize", "10"
+			}));
+
+			final StringBuilder expectedDataPart = new StringBuilder();
+			int checkCount = 1;
+			for (int i = 0; i < numberOfLines - 1; i++) {
+				if (checkCount == numberOfLines / 2 + 1) {
+					checkCount++;
+				}
+				expectedDataPart.append((i + 1) + ";; aBcDeF1234;2003-03-01;123.456;" + (checkCount++) + ";2003-02-01T11:12:13; aBcDeF123\n");
+			}
+			Assert.assertEquals(
+					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
+							+ expectedDataPart,
+							exportTestTable());
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
 }

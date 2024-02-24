@@ -68,6 +68,8 @@ Optional parameters for database import
 	-secure: Use TLS/SSL for secure communication with database
 	-truststore '<truststorefilepath>': Filepath to TrustStore in JKS format for encrypted database connections of some database vendors
 	-truststorepassword '<password>': Optional password for TrustStore
+	-batchBlockSize '<password>': Block size for batch SQL updates (Default 1000)
+	-noSingleMode: Prevent batch SQL updates to fall back to single item update mode when errors occur
 
 Global standalone parameters
 	help: Show this help manual

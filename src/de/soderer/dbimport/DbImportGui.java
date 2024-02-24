@@ -112,6 +112,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 	private final JButton createTrustStoreFileButton;
 
+	/** The batchBlockSize field. */
+	private final JTextField batchBlockSizeField;
+
 	/** The tablename field. */
 	private final JTextField tableNameField;
 
@@ -198,6 +201,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private final JCheckBox trimDataBox;
 
 	private final JCheckBox logErroneousDataBox;
+
+	private final JCheckBox noSingleModeBox;
 
 	private final JComboBox<String> importModeCombo;
 
@@ -918,6 +923,18 @@ public class DbImportGui extends UpdateableGuiApplication {
 		importDateTimeFormatPanel.add(importDateTimeFormatField);
 		mandatoryParameterPanel.add(importDateTimeFormatPanel);
 
+		// BlockSize format
+		final JPanel blockSizePanel = new JPanel();
+		blockSizePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		final JLabel blockSizeLabel = new JLabel(LangResources.get("batchBlockSize"));
+		blockSizePanel.add(blockSizeLabel);
+		batchBlockSizeField = new JTextField();
+		batchBlockSizeField.setText("1000");
+		batchBlockSizeField.setToolTipText(LangResources.get("batchBlockSize_help"));
+		batchBlockSizeField.setPreferredSize(new Dimension(200, batchBlockSizeField.getPreferredSize().height));
+		blockSizePanel.add(batchBlockSizeField);
+		mandatoryParameterPanel.add(blockSizePanel);
+
 		// Optional parameters Panel
 		final JPanel optionalParametersPanel = new JPanel();
 		optionalParametersPanel.setLayout(new BoxLayout(optionalParametersPanel, BoxLayout.PAGE_AXIS));
@@ -973,6 +990,10 @@ public class DbImportGui extends UpdateableGuiApplication {
 		logErroneousDataBox = new JCheckBox(LangResources.get("logErroneousData"));
 		logErroneousDataBox.setToolTipText(LangResources.get("logErroneousData_help"));
 		optionalParametersPanel.add(logErroneousDataBox);
+
+		noSingleModeBox = new JCheckBox(LangResources.get("preventBatchFallbackToSingleLineOnErrors"));
+		noSingleModeBox.setToolTipText(LangResources.get("preventBatchFallbackToSingleLineOnErrors_help"));
+		optionalParametersPanel.add(noSingleModeBox);
 
 		// Button Pane
 		final JPanel buttonPanel = new JPanel();
@@ -1079,11 +1100,11 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(closeButton);
 
 		final JScrollPane mandatoryParameterScrollPane = new JScrollPane(mandatoryParameterPanel);
-		mandatoryParameterScrollPane.setPreferredSize(new Dimension(475, 400));
+		mandatoryParameterScrollPane.setPreferredSize(new Dimension(500, 400));
 		mandatoryParameterScrollPane.getVerticalScrollBar().setUnitIncrement(8);
 		parameterPanel.add(mandatoryParameterScrollPane);
 
-		optionalParametersPanel.setPreferredSize(new Dimension(260, 400));
+		optionalParametersPanel.setPreferredSize(new Dimension(300, 400));
 		parameterPanel.add(optionalParametersPanel);
 		add(parameterPanel);
 		add(Box.createRigidArea(new Dimension(0, 5)));
@@ -1223,6 +1244,18 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		if (Utilities.isNotBlank(importDateTimeFormatField.getText()) && importDateTimeFormatField.isEnabled()) {
 			dbImportDefinition.setDateTimeFormat(importDateTimeFormatField.getText());
+		}
+
+		if (Utilities.isNotBlank(batchBlockSizeField.getText()) && batchBlockSizeField.isEnabled()) {
+			try {
+				dbImportDefinition.setBatchBlockSize(Integer.parseInt(batchBlockSizeField.getText()));
+			} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+				// Do nothing
+			}
+		}
+
+		if (noSingleModeBox.isSelected()) {
+			dbImportDefinition.setPreventBatchFallbackToSingleLineOnErrors(noSingleModeBox.isSelected());
 		}
 
 		return dbImportDefinition;
@@ -1757,7 +1790,6 @@ public class DbImportGui extends UpdateableGuiApplication {
 					importFileOrData(dbImportGui, dbImportDefinition, dbImportDefinition.getTableName(), dbImportDefinition.getImportFilePathOrData());
 				}
 			}
-
 		} else {
 			importFileOrData(dbImportGui, dbImportDefinition, dbImportDefinition.getTableName(), dbImportDefinition.getImportFilePathOrData());
 		}

@@ -556,6 +556,24 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							dbImportDefinition.setTrustStorePassword(Utilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
 						}
 						wasAllowedParam = true;
+					} else if ("-batchblocksize".equalsIgnoreCase(arguments[i])) {
+						i++;
+						if (i >= arguments.length) {
+							throw new ParameterException(arguments[i - 1], "Missing value for parameter batchblocksize");
+						} else {
+							int value;
+							try {
+								value = Integer.parseInt(arguments[i]);
+							} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+								throw new ParameterException(arguments[i - 1], "Invalid value for parameter batchblocksize, must be integer");
+							}
+							dbImportDefinition.setBatchBlockSize(value);
+						}
+						wasAllowedParam = true;
+					} else if ("-noSingleMode".equalsIgnoreCase(arguments[i])) {
+						i++;
+						dbImportDefinition.setPreventBatchFallbackToSingleLineOnErrors(true);
+						wasAllowedParam = true;
 					} else {
 						if (dbImportDefinition.getDbVendor() == null) {
 							dbImportDefinition.setDbVendor(DbVendor.getDbVendorByName(arguments[i]));
