@@ -939,7 +939,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
-						final Closeable itemToClose = setParameter(preparedStatement, i++, simpleDataType, dataValue, formatInfo, batchValueEntry);
+						final Closeable itemToClose = validateAndSetParameter(preparedStatement, i++, simpleDataType, dataValue, formatInfo, batchValueEntry);
 						if (itemToClose != null) {
 							itemsToCloseAfterwards.add(itemToClose);
 						}
@@ -947,7 +947,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 					if (Utilities.isNotBlank(itemIndexColumn)) {
 						// Add additional integer value to identify data item index
-						setParameter(preparedStatement, i++, SimpleDataType.BigInteger, dataItemsDone + 1, batchValueEntry);
+						final long dataValue = dataItemsDone + 1;
+						preparedStatement.setLong(i++, dataValue);
+						batchValueEntry.add(dataValue);
 					}
 
 					preparedStatement.addBatch();
@@ -1064,268 +1066,316 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
-	protected Closeable setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final String formatInfo, final List<Object> batchValueItem) throws Exception {
+	protected Closeable validateAndSetParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final String formatInfo, final List<Object> batchValueItem) throws Exception {
 		Closeable itemToCloseAfterwards = null;
 		if (dataValue == null) {
 			setNullParameter(preparedStatement, columnIndex, simpleDataType);
 			batchValueItem.add(null);
-		} else if (dataValue instanceof String && Utilities.isNotBlank(formatInfo)) {
-			String valueString = (String) dataValue;
+		} else if (dataValue instanceof String) {
+			if (Utilities.isNotBlank(formatInfo)) {
+				String valueString = (String) dataValue;
 
-			if (".".equals(formatInfo)) {
-				valueString = valueString.replace(",", "");
-				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
-					preparedStatement.setDouble(columnIndex, value);
+				if (".".equals(formatInfo)) {
+					valueString = valueString.replace(",", "");
+					if (valueString.contains(".")) {
+						final double value = Double.parseDouble(valueString);
+						preparedStatement.setDouble(columnIndex, value);
+						batchValueItem.add(value);
+					} else {
+						final int value = Integer.parseInt(valueString);
+						preparedStatement.setInt(columnIndex, value);
+						batchValueItem.add(value);
+					}
+				} else if (",".equals(formatInfo)) {
+					valueString = valueString.replace(".", "").replace(",", ".");
+					if (valueString.contains(".")) {
+						final double value = Double.parseDouble(valueString);
+						preparedStatement.setDouble(columnIndex, value);
+						batchValueItem.add(value);
+					} else {
+						final int value = Integer.parseInt(valueString);
+						preparedStatement.setInt(columnIndex, value);
+						batchValueItem.add(value);
+					}
+				} else if ("file".equalsIgnoreCase(formatInfo)) {
+					if (!new File(valueString).exists()) {
+						throw new DbImportException("File does not exist: " + valueString);
+					} else if (simpleDataType == SimpleDataType.Blob) {
+						InputStream inputStream;
+						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
+							if (dataProvider.getZipPassword() != null) {
+								if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
+									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								} else {
+									inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
+								}
+							} else {
+								if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
+									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								} else {
+									inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
+								}
+							}
+						} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
+							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+							} else {
+								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
+							}
+						} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
+							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+							} else {
+								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
+							}
+						} else if (Utilities.endsWithIgnoreCase(valueString, ".gz")) {
+							inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(new File(valueString))));
+						} else {
+							inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(new File(valueString)), valueString));
+						}
+
+						if (dbDefinition.getDbVendor() == DbVendor.SQLite) {
+							// SQLite ignores "setBinaryStream"
+							final byte[] data = IoUtilities.toByteArray(inputStream);
+							preparedStatement.setBytes(columnIndex, data);
+							batchValueItem.add(data);
+						} else {
+							itemToCloseAfterwards = inputStream;
+							preparedStatement.setBinaryStream(columnIndex, (FileInputStream) itemToCloseAfterwards);
+							batchValueItem.add(itemToCloseAfterwards);
+						}
+						importedDataAmount += new File(valueString).length();
+					} else {
+						InputStream inputStream;
+						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
+							if (dataProvider.getZipPassword() != null) {
+								if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
+									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								} else {
+									inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
+								}
+							} else {
+								if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
+									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+								} else {
+									inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
+								}
+							}
+						} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
+							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+							} else {
+								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
+							}
+						} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
+							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
+								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+							} else {
+								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
+							}
+						} else if (Utilities.endsWithIgnoreCase(valueString, ".gz")) {
+							inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(new File(valueString))));
+						} else {
+							inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(new File(valueString)), valueString));
+						}
+
+						if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
+							// PostgreSQL and SQLite do not read the stream
+							final byte[] data = IoUtilities.toByteArray(inputStream);
+							preparedStatement.setString(columnIndex, new String(data, textFileEncoding));
+							batchValueItem.add(data);
+						} else {
+							itemToCloseAfterwards = new InputStreamReader(inputStream, textFileEncoding);
+							preparedStatement.setCharacterStream(columnIndex, (InputStreamReader) itemToCloseAfterwards);
+							batchValueItem.add(itemToCloseAfterwards);
+						}
+						importedDataAmount += new File(valueString).length();
+					}
+				} else if ("lc".equalsIgnoreCase(formatInfo)) {
+					valueString = valueString.toLowerCase();
+					preparedStatement.setString(columnIndex, valueString);
+					batchValueItem.add(valueString);
+				} else if ("uc".equalsIgnoreCase(formatInfo)) {
+					valueString = valueString.toUpperCase();
+					preparedStatement.setString(columnIndex, valueString);
+					batchValueItem.add(valueString);
+				} else if ("email".equalsIgnoreCase(formatInfo)) {
+					valueString = valueString.toLowerCase().trim();
+					if (!NetworkUtilities.isValidEmail(valueString)) {
+						throw new DbImportException("Invalid email address: " + valueString);
+					}
+					preparedStatement.setString(columnIndex, valueString);
+					batchValueItem.add(valueString);
+				} else if (simpleDataType == SimpleDataType.DateTime) {
+					final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
+					dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
+					dateTimeFormatter.withZone(importDataZoneId);
+					final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
+					final LocalDateTime localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
+					final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
+					preparedStatement.setTimestamp(columnIndex, value);
+					batchValueItem.add(value);
+				} else if (simpleDataType == SimpleDataType.Date) {
+					final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
+					dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
+					dateTimeFormatter.withZone(importDataZoneId);
+					final LocalDate localDateValue = LocalDate.parse(valueString.trim(), dateTimeFormatter);
+					final java.sql.Date value = java.sql.Date.valueOf(localDateValue);
+					preparedStatement.setDate(columnIndex, value);
 					batchValueItem.add(value);
 				} else {
-					final int value = Integer.parseInt(valueString);
-					preparedStatement.setInt(columnIndex, value);
-					batchValueItem.add(value);
+					throw new DbImportException("Unknown data type: " + simpleDataType);
 				}
-			} else if (",".equals(formatInfo)) {
-				valueString = valueString.replace(".", "").replace(",", ".");
-				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
-					preparedStatement.setDouble(columnIndex, value);
-					batchValueItem.add(value);
-				} else {
-					final int value = Integer.parseInt(valueString);
-					preparedStatement.setInt(columnIndex, value);
-					batchValueItem.add(value);
-				}
-			} else if ("file".equalsIgnoreCase(formatInfo)) {
-				if (!new File(valueString).exists()) {
-					throw new DbImportException("File does not exist: " + valueString);
-				} else if (simpleDataType == SimpleDataType.Blob) {
-					InputStream inputStream;
-					if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
-						if (dataProvider.getZipPassword() != null) {
-							if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
-							} else {
-								inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
-							}
-						} else {
-							if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
-							} else {
-								inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
-							}
-						}
-					} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
-						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
-						} else {
-							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
-						}
-					} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
-						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
-						} else {
-							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
-						}
-					} else if (Utilities.endsWithIgnoreCase(valueString, ".gz")) {
-						inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(new File(valueString))));
-					} else {
-						inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(new File(valueString)), valueString));
-					}
-
-					if (dbDefinition.getDbVendor() == DbVendor.SQLite) {
-						// SQLite ignores "setBinaryStream"
-						final byte[] data = IoUtilities.toByteArray(inputStream);
-						preparedStatement.setBytes(columnIndex, data);
-						batchValueItem.add(data);
-					} else {
-						itemToCloseAfterwards = inputStream;
-						preparedStatement.setBinaryStream(columnIndex, (FileInputStream) itemToCloseAfterwards);
-						batchValueItem.add(itemToCloseAfterwards);
-					}
-					importedDataAmount += new File(valueString).length();
-				} else {
-					InputStream inputStream;
-					if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
-						if (dataProvider.getZipPassword() != null) {
-							if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
-							} else {
-								inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
-							}
-						} else {
-							if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
-							} else {
-								inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
-							}
-						}
-					} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
-						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
-						} else {
-							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
-						}
-					} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
-						if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-							throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
-						} else {
-							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
-						}
-					} else if (Utilities.endsWithIgnoreCase(valueString, ".gz")) {
-						inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(new File(valueString))));
-					} else {
-						inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(new File(valueString)), valueString));
-					}
-
-					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
-						// PostgreSQL and SQLite do not read the stream
-						final byte[] data = IoUtilities.toByteArray(inputStream);
-						preparedStatement.setString(columnIndex, new String(data, textFileEncoding));
-						batchValueItem.add(data);
-					} else {
-						itemToCloseAfterwards = new InputStreamReader(inputStream, textFileEncoding);
-						preparedStatement.setCharacterStream(columnIndex, (InputStreamReader) itemToCloseAfterwards);
-						batchValueItem.add(itemToCloseAfterwards);
-					}
-					importedDataAmount += new File(valueString).length();
-				}
-			} else if ("lc".equalsIgnoreCase(formatInfo)) {
-				valueString = valueString.toLowerCase();
-				preparedStatement.setString(columnIndex, valueString);
-				batchValueItem.add(valueString);
-			} else if ("uc".equalsIgnoreCase(formatInfo)) {
-				valueString = valueString.toUpperCase();
-				preparedStatement.setString(columnIndex, valueString);
-				batchValueItem.add(valueString);
-			} else if ("email".equalsIgnoreCase(formatInfo)) {
-				valueString = valueString.toLowerCase().trim();
-				if (!NetworkUtilities.isValidEmail(valueString)) {
-					throw new DbImportException("Invalid email address: " + valueString);
-				}
-				preparedStatement.setString(columnIndex, valueString);
-				batchValueItem.add(valueString);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
-				final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
-				dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-				dateTimeFormatter.withZone(importDataZoneId);
-				final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
-				final LocalDateTime localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-				final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
-				preparedStatement.setTimestamp(columnIndex, value);
-				batchValueItem.add(value);
-			} else if (simpleDataType == SimpleDataType.Date) {
-				final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
-				dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-				dateTimeFormatter.withZone(importDataZoneId);
-				final LocalDate localDateValue = LocalDate.parse(valueString.trim(), dateTimeFormatter);
-				final java.sql.Date value = java.sql.Date.valueOf(localDateValue);
-				preparedStatement.setDate(columnIndex, value);
-				batchValueItem.add(value);
-			} else {
-				throw new DbImportException("Unknown data type: " + simpleDataType);
-			}
-		} else if (dataValue instanceof String && simpleDataType == SimpleDataType.DateTime) {
-			final String valueString = ((String) dataValue).trim();
-			LocalDateTime localDateTimeValueForDb;
-			if (Utilities.isBlank(valueString)) {
-				setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
-				batchValueItem.add(null);
-			} else {
-				if (Utilities.isNotBlank(dateTimeFormatPattern)) {
-					final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
-					localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
+				final String valueString = ((String) dataValue).trim();
+				LocalDateTime localDateTimeValueForDb;
+				if (Utilities.isBlank(valueString)) {
+					setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+					batchValueItem.add(null);
 				} else {
-					try {
-						final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()));
-						dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-						dateTimeFormatter.withZone(importDataZoneId);
-						final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
+					if (Utilities.isNotBlank(dateTimeFormatPattern)) {
+						final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
 						localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-					} catch (@SuppressWarnings("unused") final DateTimeParseException e) {
+					} else {
 						try {
-							final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatPattern(Locale.getDefault()));
+							final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()));
 							dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 							dateTimeFormatter.withZone(importDataZoneId);
 							final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
 							localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-						} catch (@SuppressWarnings("unused") final DateTimeParseException e1) {
+						} catch (@SuppressWarnings("unused") final DateTimeParseException e) {
 							try {
-								final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateFormatPattern(Locale.getDefault()));
+								final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatPattern(Locale.getDefault()));
 								dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-								localDateTimeValueForDb = LocalDate.parse(valueString.trim(), dateTimeFormatter).atStartOfDay();
-							} catch (@SuppressWarnings("unused") final DateTimeParseException e2) {
+								dateTimeFormatter.withZone(importDataZoneId);
+								final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
+								localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
+							} catch (@SuppressWarnings("unused") final DateTimeParseException e1) {
 								try {
-									final LocalDateTime localDateTimeValueFromData = DateUtilities.parseIso8601DateTimeString(valueString, importDataZoneId).toLocalDateTime();
-									localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-								} catch (@SuppressWarnings("unused") final DateTimeException e3) {
-									final ZonedDateTime zonedDateTimeValueFromData = DateUtilities.parseUnknownDateFormat(valueString, importDataZoneId);
-									localDateTimeValueForDb = zonedDateTimeValueFromData.withZoneSameInstant(databaseZoneId).toLocalDateTime();
+									final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateFormatPattern(Locale.getDefault()));
+									dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
+									localDateTimeValueForDb = LocalDate.parse(valueString.trim(), dateTimeFormatter).atStartOfDay();
+								} catch (@SuppressWarnings("unused") final DateTimeParseException e2) {
+									try {
+										final LocalDateTime localDateTimeValueFromData = DateUtilities.parseIso8601DateTimeString(valueString, importDataZoneId).toLocalDateTime();
+										localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
+									} catch (@SuppressWarnings("unused") final DateTimeException e3) {
+										final ZonedDateTime zonedDateTimeValueFromData = DateUtilities.parseUnknownDateFormat(valueString, importDataZoneId);
+										localDateTimeValueForDb = zonedDateTimeValueFromData.withZoneSameInstant(databaseZoneId).toLocalDateTime();
+									}
 								}
 							}
 						}
 					}
+					final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
+					preparedStatement.setTimestamp(columnIndex, value);
+					batchValueItem.add(value);
 				}
-				final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
-				preparedStatement.setTimestamp(columnIndex, value);
-				batchValueItem.add(value);
-			}
-		} else if (dataValue instanceof String && simpleDataType == SimpleDataType.Date) {
-			final String valueString = ((String) dataValue).trim();
-			LocalDateTime localDateTimeValueForDb;
-			if (Utilities.isBlank(valueString)) {
-				setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
-				batchValueItem.add(null);
-			} else {
-				if (Utilities.isNotBlank(dateFormatPattern)) {
-					try {
-						final LocalDateTime localDateTimeValueFromData = LocalDate.parse(valueString.trim(), getConfiguredDateFormatter()).atStartOfDay();
-						localDateTimeValueForDb = localDateTimeValueFromData;
-					} catch (final DateTimeParseException e) {
-						// Try fallback to DateTime format if set, because some databases export dates with time even for DATE datatype (e.g. Oracle)
-						if (Utilities.isNotBlank(dateTimeFormatPattern)) {
-							try {
-								final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
-								localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-							} catch (@SuppressWarnings("unused") final Exception e1) {
+			} else if (simpleDataType == SimpleDataType.Date) {
+				final String valueString = ((String) dataValue).trim();
+				LocalDateTime localDateTimeValueForDb;
+				if (Utilities.isBlank(valueString)) {
+					setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+					batchValueItem.add(null);
+				} else {
+					if (Utilities.isNotBlank(dateFormatPattern)) {
+						try {
+							final LocalDateTime localDateTimeValueFromData = LocalDate.parse(valueString.trim(), getConfiguredDateFormatter()).atStartOfDay();
+							localDateTimeValueForDb = localDateTimeValueFromData;
+						} catch (final DateTimeParseException e) {
+							// Try fallback to DateTime format if set, because some databases export dates with time even for DATE datatype (e.g. Oracle)
+							if (Utilities.isNotBlank(dateTimeFormatPattern)) {
+								try {
+									final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
+									localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
+								} catch (@SuppressWarnings("unused") final Exception e1) {
+									throw e;
+								}
+							} else {
 								throw e;
 							}
-						} else {
-							throw e;
 						}
-					}
-				} else {
-					try {
-						final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()));
-						dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-						dateTimeFormatter.withZone(importDataZoneId);
-						final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
-						localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-					} catch (@SuppressWarnings("unused") final DateTimeParseException e) {
+					} else {
 						try {
-							final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatPattern(Locale.getDefault()));
+							final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()));
 							dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 							dateTimeFormatter.withZone(importDataZoneId);
 							final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
 							localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-						} catch (@SuppressWarnings("unused") final DateTimeParseException e1) {
+						} catch (@SuppressWarnings("unused") final DateTimeParseException e) {
 							try {
-								final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateFormatPattern(Locale.getDefault()));
+								final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatPattern(Locale.getDefault()));
 								dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-								localDateTimeValueForDb = LocalDate.parse(valueString.trim(), dateTimeFormatter).atStartOfDay();
-							} catch (@SuppressWarnings("unused") final DateTimeParseException e2) {
+								dateTimeFormatter.withZone(importDataZoneId);
+								final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
+								localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
+							} catch (@SuppressWarnings("unused") final DateTimeParseException e1) {
 								try {
-									final LocalDateTime localDateTimeValueFromData = DateUtilities.parseIso8601DateTimeString(valueString, importDataZoneId).toLocalDateTime();
-									localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
-								} catch (@SuppressWarnings("unused") final DateTimeException e3) {
-									final ZonedDateTime zonedDateTimeValueFromData = DateUtilities.parseUnknownDateFormat(valueString, importDataZoneId);
-									localDateTimeValueForDb = zonedDateTimeValueFromData.withZoneSameInstant(databaseZoneId).toLocalDateTime();
+									final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateFormatPattern(Locale.getDefault()));
+									dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
+									localDateTimeValueForDb = LocalDate.parse(valueString.trim(), dateTimeFormatter).atStartOfDay();
+								} catch (@SuppressWarnings("unused") final DateTimeParseException e2) {
+									try {
+										final LocalDateTime localDateTimeValueFromData = DateUtilities.parseIso8601DateTimeString(valueString, importDataZoneId).toLocalDateTime();
+										localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
+									} catch (@SuppressWarnings("unused") final DateTimeException e3) {
+										final ZonedDateTime zonedDateTimeValueFromData = DateUtilities.parseUnknownDateFormat(valueString, importDataZoneId);
+										localDateTimeValueForDb = zonedDateTimeValueFromData.withZoneSameInstant(databaseZoneId).toLocalDateTime();
+									}
 								}
 							}
 						}
 					}
+					final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
+					preparedStatement.setTimestamp(columnIndex, value);
+					batchValueItem.add(value);
 				}
-				final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
-				preparedStatement.setTimestamp(columnIndex, value);
+			} else if (simpleDataType == SimpleDataType.Blob) {
+				final byte[] value = Utilities.decodeBase64((String) dataValue);
+				preparedStatement.setBytes(columnIndex, value);
 				batchValueItem.add(value);
+			} else if (simpleDataType == SimpleDataType.Float) {
+				final String valueString = ((String) dataValue).trim();
+				if (valueString.contains(".")) {
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
+				} else {
+					final int value = Integer.parseInt(valueString);
+					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
+				}
+			} else if (simpleDataType == SimpleDataType.Integer) {
+				final String valueString = ((String) dataValue).trim();
+				if (valueString.contains(".")) {
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
+				} else {
+					final int value = Integer.parseInt(valueString);
+					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
+				}
+			} else if (simpleDataType == SimpleDataType.BigInteger) {
+				final String valueString = ((String) dataValue).trim();
+				if (valueString.contains(".")) {
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
+				} else {
+					final long value = Long.parseLong(valueString);
+					preparedStatement.setLong(columnIndex, value);
+					batchValueItem.add(value);
+				}
+			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {
+				preparedStatement.setString(columnIndex, (String) dataValue);
+				batchValueItem.add(dataValue);
+			} else if (simpleDataType == SimpleDataType.DateTime) {
+				throw new DbImportException("Date field to insert without mapping date format");
+			} else if (simpleDataType == SimpleDataType.Date) {
+				throw new DbImportException("Date field to insert without mapping date format");
+			} else {
+				throw new DbImportException("Unknown data type field to insert without mapping format");
 			}
 		} else if (dataValue instanceof ZonedDateTime) {
 			final LocalDateTime localDateTimeValueForDb = ((ZonedDateTime) dataValue).withZoneSameInstant(databaseZoneId).toLocalDateTime();
@@ -1336,8 +1386,18 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final Timestamp value = Timestamp.valueOf((LocalDateTime) dataValue);
 			preparedStatement.setTimestamp(columnIndex, value);
 			batchValueItem.add(value);
+		} else if (dataValue instanceof Number && simpleDataType == SimpleDataType.Float) {
+			// Keep the right precision when inserting a float value to a double column
+			final double value = Double.parseDouble(dataValue.toString());
+			preparedStatement.setDouble(columnIndex, value);
+			batchValueItem.add(value);
+		} else if (dataValue instanceof MonthDay && simpleDataType == SimpleDataType.String) {
+			final String value = dataValue.toString();
+			preparedStatement.setString(columnIndex, value);
+			batchValueItem.add(value);
 		} else {
-			setParameter(preparedStatement, columnIndex, simpleDataType, dataValue, batchValueItem);
+			preparedStatement.setObject(columnIndex, dataValue);
+			batchValueItem.add(dataValue);
 		}
 		return itemToCloseAfterwards;
 	}
@@ -1386,73 +1446,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			dateFormatterCache = dateFormatter;
 		}
 		return dateFormatterCache;
-	}
-
-	protected void setParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final List<Object> batchValueItem) throws SQLException, Exception {
-		if (dataValue == null) {
-			setNullParameter(preparedStatement, columnIndex, simpleDataType);
-			batchValueItem.add(null);
-		} else if (dataValue instanceof String) {
-			if (simpleDataType == SimpleDataType.Blob) {
-				final byte[] value = Utilities.decodeBase64((String) dataValue);
-				preparedStatement.setBytes(columnIndex, value);
-				batchValueItem.add(value);
-			} else if (simpleDataType == SimpleDataType.Float) {
-				final String valueString = ((String) dataValue).trim();
-				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
-					preparedStatement.setDouble(columnIndex, value);
-					batchValueItem.add(value);
-				} else {
-					final int value = Integer.parseInt(valueString);
-					preparedStatement.setInt(columnIndex, value);
-					batchValueItem.add(value);
-				}
-			} else if (simpleDataType == SimpleDataType.Integer) {
-				final String valueString = ((String) dataValue).trim();
-				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
-					preparedStatement.setDouble(columnIndex, value);
-					batchValueItem.add(value);
-				} else {
-					final int value = Integer.parseInt(valueString);
-					preparedStatement.setInt(columnIndex, value);
-					batchValueItem.add(value);
-				}
-			} else if (simpleDataType == SimpleDataType.BigInteger) {
-				final String valueString = ((String) dataValue).trim();
-				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
-					preparedStatement.setDouble(columnIndex, value);
-					batchValueItem.add(value);
-				} else {
-					final long value = Long.parseLong(valueString);
-					preparedStatement.setLong(columnIndex, value);
-					batchValueItem.add(value);
-				}
-			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {
-				preparedStatement.setString(columnIndex, (String) dataValue);
-				batchValueItem.add(dataValue);
-			} else if (simpleDataType == SimpleDataType.DateTime) {
-				throw new DbImportException("Date field to insert without mapping date format");
-			} else if (simpleDataType == SimpleDataType.Date) {
-				throw new DbImportException("Date field to insert without mapping date format");
-			} else {
-				throw new DbImportException("Unknown data type field to insert without mapping format");
-			}
-		} else if (simpleDataType == SimpleDataType.Float && dataValue instanceof Number) {
-			// Keep the right precision when inserting a float value to a double column
-			final double value = Double.parseDouble(dataValue.toString());
-			preparedStatement.setDouble(columnIndex, value);
-			batchValueItem.add(value);
-		} else if (simpleDataType == SimpleDataType.String && dataValue instanceof MonthDay) {
-			final String value = dataValue.toString();
-			preparedStatement.setString(columnIndex, value);
-			batchValueItem.add(value);
-		} else {
-			preparedStatement.setObject(columnIndex, dataValue);
-			batchValueItem.add(dataValue);
-		}
 	}
 
 	private int executeSingleStepUpdates(final Connection connection, final PreparedStatement preparedStatement, final List<List<Object>> batchValues, final long startingDataEntryIndex) throws Exception {
