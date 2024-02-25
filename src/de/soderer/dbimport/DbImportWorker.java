@@ -939,7 +939,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
-						final Closeable itemToClose = validateAndSetParameter(preparedStatement, i++, simpleDataType, dataValue, formatInfo, batchValueEntry);
+						final Closeable itemToClose = validateAndSetParameter(preparedStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry);
 						if (itemToClose != null) {
 							itemsToCloseAfterwards.add(itemToClose);
 						}
@@ -1066,11 +1066,15 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
-	protected Closeable validateAndSetParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType, final Object dataValue, final String formatInfo, final List<Object> batchValueItem) throws Exception {
+	protected Closeable validateAndSetParameter(final PreparedStatement preparedStatement, final int columnIndex, final String columnName, final SimpleDataType simpleDataType, final boolean isNullable, final Object dataValue, final String formatInfo, final List<Object> batchValueItem) throws Exception {
 		Closeable itemToCloseAfterwards = null;
 		if (dataValue == null) {
-			setNullParameter(preparedStatement, columnIndex, simpleDataType);
-			batchValueItem.add(null);
+			if (!isNullable) {
+				throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
+			} else {
+				setNullParameter(preparedStatement, columnIndex, simpleDataType);
+				batchValueItem.add(null);
+			}
 		} else if (dataValue instanceof String) {
 			if (Utilities.isNotBlank(formatInfo)) {
 				String valueString = (String) dataValue;
@@ -1078,7 +1082,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				if (".".equals(formatInfo)) {
 					valueString = valueString.replace(",", "");
 					if (valueString.contains(".")) {
-						final double value = Double.parseDouble(valueString);
+						double value;
+						try {
+							value = Double.parseDouble(valueString);
+						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+							throw new DbImportException("Invalid value for numeric column '" + columnName + "': " + valueString);
+						}
 						preparedStatement.setDouble(columnIndex, value);
 						batchValueItem.add(value);
 					} else if (simpleDataType == SimpleDataType.Integer) {
@@ -1086,7 +1095,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						try {
 							value = Integer.parseInt(valueString);
 						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
-							throw new DbImportException("Numeric value is invalid for integer: " + valueString);
+							throw new DbImportException("Invalid value for integer column '" + columnName + "': " + valueString);
 						}
 						preparedStatement.setInt(columnIndex, value);
 						batchValueItem.add(value);
@@ -1095,17 +1104,22 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						try {
 							value = Long.parseLong(valueString);
 						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
-							throw new DbImportException("Numeric value is invalid for big integer: " + valueString);
+							throw new DbImportException("Invalid value for big integer column '" + columnName + "': " + valueString);
 						}
 						preparedStatement.setLong(columnIndex, value);
 						batchValueItem.add(value);
 					} else {
-						throw new DbImportException("Numeric value is invalid for " + simpleDataType.name() + " data column: " + valueString);
+						throw new DbImportException("Invalid value for " + simpleDataType.name() + " data column '" + columnName + "': " + valueString);
 					}
 				} else if (",".equals(formatInfo)) {
 					valueString = valueString.replace(".", "").replace(",", ".");
 					if (valueString.contains(".")) {
-						final double value = Double.parseDouble(valueString);
+						double value;
+						try {
+							value = Double.parseDouble(valueString);
+						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+							throw new DbImportException("Invalid value for numeric column '" + columnName + "': " + valueString);
+						}
 						preparedStatement.setDouble(columnIndex, value);
 						batchValueItem.add(value);
 					} else if (simpleDataType == SimpleDataType.Integer) {
@@ -1113,7 +1127,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						try {
 							value = Integer.parseInt(valueString);
 						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
-							throw new DbImportException("Numeric value is invalid for integer: " + valueString);
+							throw new DbImportException("Invalid value for integer column '" + columnName + "': " + valueString);
 						}
 						preparedStatement.setInt(columnIndex, value);
 						batchValueItem.add(value);
@@ -1122,41 +1136,41 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						try {
 							value = Long.parseLong(valueString);
 						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
-							throw new DbImportException("Numeric value is invalid for big integer: " + valueString);
+							throw new DbImportException("Invalid value for big integer column '" + columnName + "': " + valueString);
 						}
 						preparedStatement.setLong(columnIndex, value);
 						batchValueItem.add(value);
 					} else {
-						throw new DbImportException("Numeric value is invalid for " + simpleDataType.name() + " data column: " + valueString);
+						throw new DbImportException("Invalid value for " + simpleDataType.name() + " data column '" + columnName + "': " + valueString);
 					}
 				} else if ("file".equalsIgnoreCase(formatInfo)) {
 					if (!new File(valueString).exists()) {
-						throw new DbImportException("File does not exist: " + valueString);
+						throw new DbImportException("File does not exist for column '" + columnName + "': " + valueString);
 					} else if (simpleDataType == SimpleDataType.Blob) {
 						InputStream inputStream;
 						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
 							if (dataProvider.getZipPassword() != null) {
 								if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
-									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+									throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + new File(valueString).getAbsolutePath());
 								} else {
 									inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
 								}
 							} else {
 								if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
-									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+									throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + new File(valueString).getAbsolutePath());
 								} else {
 									inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
 								}
 							}
 						} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
 						} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
@@ -1182,26 +1196,26 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
 							if (dataProvider.getZipPassword() != null) {
 								if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
-									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+									throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + new File(valueString).getAbsolutePath());
 								} else {
 									inputStream = new CountingInputStream(Zip4jUtilities.openPasswordSecuredZipFile(new File(valueString).getAbsolutePath(), dataProvider.getZipPassword()));
 								}
 							} else {
 								if (ZipUtilities.getZipFileEntries(new File(valueString)).size() != 1) {
-									throw new DbImportException("Compressed import file does not contain a single compressed file: " + new File(valueString).getAbsolutePath());
+									throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + new File(valueString).getAbsolutePath());
 								} else {
 									inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
 								}
 							}
 						} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
 						} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
-								throw new DbImportException("Compressed import file does not contain a single compressed file: " + valueString);
+								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
@@ -1234,7 +1248,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				} else if ("email".equalsIgnoreCase(formatInfo)) {
 					valueString = valueString.toLowerCase().trim();
 					if (!NetworkUtilities.isValidEmail(valueString)) {
-						throw new DbImportException("Invalid email address: " + valueString);
+						throw new DbImportException("Invalid email address for column '" + columnName + "': " + valueString);
 					}
 					preparedStatement.setString(columnIndex, valueString);
 					batchValueItem.add(valueString);
@@ -1256,14 +1270,18 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setDate(columnIndex, value);
 					batchValueItem.add(value);
 				} else {
-					throw new DbImportException("Unknown data type: " + simpleDataType);
+					throw new DbImportException("Unknown data type for column '" + columnName + "': " + simpleDataType);
 				}
 			} else if (simpleDataType == SimpleDataType.DateTime) {
 				final String valueString = ((String) dataValue).trim();
 				LocalDateTime localDateTimeValueForDb;
 				if (Utilities.isBlank(valueString)) {
-					setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
-					batchValueItem.add(null);
+					if (!isNullable) {
+						throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
+					} else {
+						setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+						batchValueItem.add(null);
+					}
 				} else {
 					if (Utilities.isNotBlank(dateTimeFormatPattern)) {
 						final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
@@ -1307,8 +1325,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				final String valueString = ((String) dataValue).trim();
 				LocalDateTime localDateTimeValueForDb;
 				if (Utilities.isBlank(valueString)) {
-					setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
-					batchValueItem.add(null);
+					if (!isNullable) {
+						throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
+					} else {
+						setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+						batchValueItem.add(null);
+					}
 				} else {
 					if (Utilities.isNotBlank(dateFormatPattern)) {
 						try {
@@ -1369,18 +1391,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} else if (simpleDataType == SimpleDataType.Float) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
-					preparedStatement.setDouble(columnIndex, value);
-					batchValueItem.add(value);
-				} else {
-					final int value = Integer.parseInt(valueString);
-					preparedStatement.setInt(columnIndex, value);
-					batchValueItem.add(value);
-				}
-			} else if (simpleDataType == SimpleDataType.Integer) {
-				final String valueString = ((String) dataValue).trim();
-				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
+					double value;
+					try {
+						value = Double.parseDouble(valueString);
+					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+						throw new DbImportException("Invalid value for numeric column '" + columnName + "': " + valueString);
+					}
 					preparedStatement.setDouble(columnIndex, value);
 					batchValueItem.add(value);
 				} else {
@@ -1388,7 +1404,28 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					try {
 						value = Integer.parseInt(valueString);
 					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
-						throw new DbImportException("Numeric value is invalid for integer: " + valueString);
+						throw new DbImportException("Invalid value for numeric column '" + columnName + "': " + valueString);
+					}
+					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
+				}
+			} else if (simpleDataType == SimpleDataType.Integer) {
+				final String valueString = ((String) dataValue).trim();
+				if (valueString.contains(".")) {
+					double value;
+					try {
+						value = Double.parseDouble(valueString);
+					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+						throw new DbImportException("Invalid value for numeric column '" + columnName + "': " + valueString);
+					}
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
+				} else {
+					int value;
+					try {
+						value = Integer.parseInt(valueString);
+					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+						throw new DbImportException("Invalid value for integer column '" + columnName + "': " + valueString);
 					}
 					preparedStatement.setInt(columnIndex, value);
 					batchValueItem.add(value);
@@ -1396,7 +1433,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} else if (simpleDataType == SimpleDataType.BigInteger) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.contains(".")) {
-					final double value = Double.parseDouble(valueString);
+					double value;
+					try {
+						value = Double.parseDouble(valueString);
+					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+						throw new DbImportException("Invalid value for numeric column '" + columnName + "': " + valueString);
+					}
 					preparedStatement.setDouble(columnIndex, value);
 					batchValueItem.add(value);
 				} else {
@@ -1404,7 +1446,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					try {
 						value = Long.parseLong(valueString);
 					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
-						throw new DbImportException("Value is invalid for big integer: " + valueString);
+						throw new DbImportException("Value is invalid for big integer column '" + columnName + "': " + valueString);
 					}
 					preparedStatement.setLong(columnIndex, value);
 					batchValueItem.add(value);
@@ -1413,11 +1455,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				preparedStatement.setString(columnIndex, (String) dataValue);
 				batchValueItem.add(dataValue);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
-				throw new DbImportException("Date field to insert without mapping date format");
+				throw new DbImportException("Date field to insert without mapping date format for column '" + columnName + "'");
 			} else if (simpleDataType == SimpleDataType.Date) {
-				throw new DbImportException("Date field to insert without mapping date format");
+				throw new DbImportException("Date field to insert without mapping date format for column '" + columnName + "'");
 			} else {
-				throw new DbImportException("Unknown data type field to insert without mapping format");
+				throw new DbImportException("Unknown data type field to insert without mapping format for column '" + columnName + "'");
 			}
 		} else if (dataValue instanceof ZonedDateTime) {
 			final LocalDateTime localDateTimeValueForDb = ((ZonedDateTime) dataValue).withZoneSameInstant(databaseZoneId).toLocalDateTime();
@@ -1430,7 +1472,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			batchValueItem.add(value);
 		} else if (dataValue instanceof Number && simpleDataType == SimpleDataType.Float) {
 			// Keep the right precision when inserting a float value to a double column
-			final double value = Double.parseDouble(dataValue.toString());
+			double value;
+			try {
+				value = Double.parseDouble(dataValue.toString());
+			} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+				throw new DbImportException("Invalid value for numeric column '" + columnName + "': " + dataValue.toString());
+			}
 			preparedStatement.setDouble(columnIndex, value);
 			batchValueItem.add(value);
 		} else if (dataValue instanceof MonthDay && simpleDataType == SimpleDataType.String) {
