@@ -1384,13 +1384,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setDouble(columnIndex, value);
 					batchValueItem.add(value);
 				} else {
-					long value;
+					int value;
 					try {
-						value = Long.parseLong(valueString);
+						value = Integer.parseInt(valueString);
 					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
 						throw new DbImportException("Numeric value is invalid for integer: " + valueString);
 					}
-					preparedStatement.setLong(columnIndex, value);
+					preparedStatement.setInt(columnIndex, value);
 					batchValueItem.add(value);
 				}
 			} else if (simpleDataType == SimpleDataType.BigInteger) {

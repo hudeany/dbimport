@@ -1136,4 +1136,40 @@ public class DbImportTest_SQLite {
 			Assert.fail(e.getMessage());
 		}
 	}
+
+	@Test
+	public void testCsvImportTooBigIntegerError() {
+		try {
+			createEmptyTestTable();
+
+			final StringBuilder dataPart = new StringBuilder();
+			dataPart.append("12345678; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			dataPart.append("1234567890; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			dataPart.append("2147483647; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			dataPart.append("2147483648; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			dataPart.append("2147483649; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			dataPart.append("123456789012345678; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			dataPart.append("123456789012345678901; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
+			FileUtilities.write(INPUTFILE_CSV, ("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n" + dataPart.toString()).getBytes(StandardCharsets.UTF_8));
+
+			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
+
+			Assert.assertEquals(0, DbImport._main(new String[] {
+					"sqlite", SQLITE_DB_FILE,
+					"-table", "test_tbl",
+					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-m", mapping
+			}));
+
+			final StringBuilder expectedDataPart = new StringBuilder();
+			expectedDataPart.append("id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n");
+			expectedDataPart.append("1;; aBcDeF1234;2003-03-01;123.456;12345678;2003-02-01T11:12:13; aBcDeF123\n");
+			expectedDataPart.append("2;; aBcDeF1234;2003-03-01;123.456;1234567890;2003-02-01T11:12:13; aBcDeF123\n");
+			expectedDataPart.append("3;; aBcDeF1234;2003-03-01;123.456;2147483647;2003-02-01T11:12:13; aBcDeF123\n");
+
+			Assert.assertEquals(expectedDataPart.toString(), exportTestTable());
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
 }
