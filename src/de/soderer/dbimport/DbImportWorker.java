@@ -102,6 +102,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	protected List<Integer> invalidItems = new ArrayList<>();
 	protected List<String> invalidItemsReasons = new ArrayList<>();
 	protected long importedDataAmount = 0;
+	protected long singleImportModeBlocks = 0;
 	protected long deletedItems = 0;
 	protected long insertedItems = 0;
 	protected long updatedItems = 0;
@@ -329,6 +330,19 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	@SuppressWarnings("resource")
 	@Override
 	public Boolean work() throws Exception {
+		dataItemsDone = 0;
+		validItems = 0;
+		duplicatesItems = 0;
+		invalidItems = new ArrayList<>();
+		invalidItemsReasons = new ArrayList<>();
+		importedDataAmount = 0;
+		singleImportModeBlocks = 0;
+		deletedItems = 0;
+		insertedItems = 0;
+		updatedItems = 0;
+		countItems = 0;
+		deletedDuplicatesInDB = 0;
+
 		signalUnlimitedProgress();
 
 		if (analyseDataOnly) {
@@ -354,10 +368,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 				previousAutoCommit = connection.getAutoCommit();
 				connection.setAutoCommit(false);
-
-				validItems = 0;
-				invalidItems = new ArrayList<>();
-				invalidItemsReasons = new ArrayList<>();
 
 				if (logFile != null) {
 					logOutputStream = new FileOutputStream(logFile);
@@ -855,6 +865,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 
 		statistics.append("Imported data amount: " + Utilities.getHumanReadableNumber(importedDataAmount, "Byte", false, 5, false, Locale.ENGLISH) + "\n");
+
+		if (singleImportModeBlocks > 0) {
+			statistics.append("Number of blocks using fallback to single item mode: " + singleImportModeBlocks + "\n");
+		}
 
 		if (importMode == ImportMode.CLEARINSERT) {
 			statistics.append("Deleted items from db: " + deletedItems + "\n");
@@ -1429,6 +1443,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	}
 
 	private int executeSingleStepUpdates(final Connection connection, final PreparedStatement preparedStatement, final List<List<Object>> batchValues, final long startingDataEntryIndex) throws Exception {
+		singleImportModeBlocks++;
 		preparedStatement.clearBatch();
 		int notImportedBySingleMode = 0;
 		for (int entryIndex = 0; entryIndex < batchValues.size(); entryIndex++) {

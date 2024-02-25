@@ -325,6 +325,11 @@ public class ImportMenu extends ConsoleMenu {
 				System.out.println("  " + Utilities.rightPad("idtz)", bulletSize) + " " + Utilities.rightPad("ImportDataTimeZone:", nameSize) + dbImportDefinition.getImportDataTimeZone());
 				autoCompletionStrings.add("idtz");
 
+				System.out.println("  " + Utilities.rightPad("batchblocksize)", bulletSize) + " " + Utilities.rightPad("BatchBlockSize:", nameSize) + dbImportDefinition.getBatchBlockSize());
+				autoCompletionStrings.add("batchBlockSize");
+				System.out.println("  " + Utilities.rightPad("nosinglemode)", bulletSize) + " " + Utilities.rightPad("NoSingleMode:", nameSize) + dbImportDefinition.isPreventBatchFallbackToSingleLineOnErrors());
+				autoCompletionStrings.add("noSingleMode");
+
 				System.out.println();
 				System.out.println("  " + Utilities.rightPad("params)", bulletSize) + " " + "Print parameters for later use (Includes passwords)");
 				autoCompletionStrings.add("params");
@@ -592,6 +597,26 @@ public class ImportMenu extends ConsoleMenu {
 							}
 						}
 					}
+				} else if ("batchblocksize".equalsIgnoreCase(choice)) {
+					while (true) {
+						System.out.println();
+						System.out.println("Please enter Batchblocksize");
+						String batchblocksizeString = new SimpleConsoleInput().setPrompt(" > ").readInput();
+						batchblocksizeString = batchblocksizeString == null ? "" : batchblocksizeString.trim();
+						if (Utilities.isBlank(batchblocksizeString)) {
+							getParentMenu().getMessages().add("Canceled by user");
+							return 0;
+						} else {
+							try {
+								dbImportDefinition.setBatchBlockSize(Integer.parseInt(batchblocksizeString));
+								break;
+							} catch (@SuppressWarnings("unused") final Exception e) {
+								System.out.println(ConsoleUtilities.getAnsiColoredText("Invalid batch blocksize: " + batchblocksizeString, TextColor.Light_red));
+							}
+						}
+					}
+				} else if ("nosinglemode".equalsIgnoreCase(choice)) {
+					dbImportDefinition.setPreventBatchFallbackToSingleLineOnErrors(!dbImportDefinition.isPreventBatchFallbackToSingleLineOnErrors());
 				} else if ("params".equalsIgnoreCase(choice)) {
 					getParentMenu().getMessages().add("Parameters: " + dbImportDefinition.toParamsString());
 					return 0;
