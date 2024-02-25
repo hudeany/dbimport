@@ -947,7 +947,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 					if (Utilities.isNotBlank(itemIndexColumn)) {
 						// Add additional integer value to identify data item index
-						setParameter(preparedStatement, i++, SimpleDataType.Integer, dataItemsDone + 1, batchValueEntry);
+						setParameter(preparedStatement, i++, SimpleDataType.BigInteger, dataItemsDone + 1, batchValueEntry);
 					}
 
 					preparedStatement.addBatch();
@@ -1354,6 +1354,8 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				preparedStatement.setNull(columnIndex, java.sql.Types.DOUBLE);
 			} else if (simpleDataType == SimpleDataType.Integer) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.INTEGER);
+			} else if (simpleDataType == SimpleDataType.BigInteger) {
+				preparedStatement.setNull(columnIndex, java.sql.Types.BIGINT);
 			} else if (simpleDataType == SimpleDataType.Clob) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.CLOB);
 			} else if (simpleDataType == SimpleDataType.Blob) {
@@ -1415,6 +1417,17 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				} else {
 					final int value = Integer.parseInt(valueString);
 					preparedStatement.setInt(columnIndex, value);
+					batchValueItem.add(value);
+				}
+			} else if (simpleDataType == SimpleDataType.BigInteger) {
+				final String valueString = ((String) dataValue).trim();
+				if (valueString.contains(".")) {
+					final double value = Double.parseDouble(valueString);
+					preparedStatement.setDouble(columnIndex, value);
+					batchValueItem.add(value);
+				} else {
+					final long value = Long.parseLong(valueString);
+					preparedStatement.setLong(columnIndex, value);
 					batchValueItem.add(value);
 				}
 			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {

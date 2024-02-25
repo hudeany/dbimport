@@ -16,6 +16,7 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.FileUtilities;
+import de.soderer.utilities.NumberUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.console.ConsoleMenu;
 import de.soderer.utilities.console.ConsoleUtilities;
@@ -607,11 +608,16 @@ public class ImportMenu extends ConsoleMenu {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
-							try {
-								dbImportDefinition.setBatchBlockSize(Integer.parseInt(batchblocksizeString));
-								break;
-							} catch (@SuppressWarnings("unused") final Exception e) {
+							if (!NumberUtilities.isInteger(batchblocksizeString)) {
 								System.out.println(ConsoleUtilities.getAnsiColoredText("Invalid batch blocksize: " + batchblocksizeString, TextColor.Light_red));
+							} else {
+								final int value = Integer.parseInt(batchblocksizeString);
+								if (value < 1){
+									System.out.println(ConsoleUtilities.getAnsiColoredText("Invalid batch blocksize: " + batchblocksizeString, TextColor.Light_red));
+								} else {
+									dbImportDefinition.setBatchBlockSize(Integer.parseInt(batchblocksizeString));
+									break;
+								}
 							}
 						}
 					}

@@ -114,7 +114,9 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 			JComboBox<String> optionalComboBox = null;
-			if (dbColumnType.getSimpleDataType() == SimpleDataType.Float || dbColumnType.getSimpleDataType() == SimpleDataType.Integer) {
+			if (dbColumnType.getSimpleDataType() == SimpleDataType.Float
+					|| dbColumnType.getSimpleDataType() == SimpleDataType.Integer
+					|| dbColumnType.getSimpleDataType() == SimpleDataType.BigInteger) {
 				optionalComboBox = new JComboBox<>();
 				optionalComboBox.addItem(".");
 				optionalComboBox.addItem(",");
