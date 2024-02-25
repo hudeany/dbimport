@@ -1081,10 +1081,26 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						final double value = Double.parseDouble(valueString);
 						preparedStatement.setDouble(columnIndex, value);
 						batchValueItem.add(value);
-					} else {
-						final int value = Integer.parseInt(valueString);
+					} else if (simpleDataType == SimpleDataType.Integer) {
+						int value;
+						try {
+							value = Integer.parseInt(valueString);
+						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+							throw new DbImportException("Numeric value is invalid for integer: " + valueString);
+						}
 						preparedStatement.setInt(columnIndex, value);
 						batchValueItem.add(value);
+					} else if (simpleDataType == SimpleDataType.BigInteger) {
+						long value;
+						try {
+							value = Long.parseLong(valueString);
+						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+							throw new DbImportException("Numeric value is invalid for big integer: " + valueString);
+						}
+						preparedStatement.setLong(columnIndex, value);
+						batchValueItem.add(value);
+					} else {
+						throw new DbImportException("Numeric value is invalid for " + simpleDataType.name() + " data column: " + valueString);
 					}
 				} else if (",".equals(formatInfo)) {
 					valueString = valueString.replace(".", "").replace(",", ".");
@@ -1092,10 +1108,26 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						final double value = Double.parseDouble(valueString);
 						preparedStatement.setDouble(columnIndex, value);
 						batchValueItem.add(value);
-					} else {
-						final int value = Integer.parseInt(valueString);
+					} else if (simpleDataType == SimpleDataType.Integer) {
+						int value;
+						try {
+							value = Integer.parseInt(valueString);
+						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+							throw new DbImportException("Numeric value is invalid for integer: " + valueString);
+						}
 						preparedStatement.setInt(columnIndex, value);
 						batchValueItem.add(value);
+					} else if (simpleDataType == SimpleDataType.BigInteger) {
+						long value;
+						try {
+							value = Long.parseLong(valueString);
+						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+							throw new DbImportException("Numeric value is invalid for big integer: " + valueString);
+						}
+						preparedStatement.setLong(columnIndex, value);
+						batchValueItem.add(value);
+					} else {
+						throw new DbImportException("Numeric value is invalid for " + simpleDataType.name() + " data column: " + valueString);
 					}
 				} else if ("file".equalsIgnoreCase(formatInfo)) {
 					if (!new File(valueString).exists()) {
@@ -1352,8 +1384,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setDouble(columnIndex, value);
 					batchValueItem.add(value);
 				} else {
-					final int value = Integer.parseInt(valueString);
-					preparedStatement.setInt(columnIndex, value);
+					long value;
+					try {
+						value = Long.parseLong(valueString);
+					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+						throw new DbImportException("Numeric value is invalid for integer: " + valueString);
+					}
+					preparedStatement.setLong(columnIndex, value);
 					batchValueItem.add(value);
 				}
 			} else if (simpleDataType == SimpleDataType.BigInteger) {
@@ -1363,7 +1400,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setDouble(columnIndex, value);
 					batchValueItem.add(value);
 				} else {
-					final long value = Long.parseLong(valueString);
+					long value;
+					try {
+						value = Long.parseLong(valueString);
+					} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+						throw new DbImportException("Value is invalid for big integer: " + valueString);
+					}
 					preparedStatement.setLong(columnIndex, value);
 					batchValueItem.add(value);
 				}

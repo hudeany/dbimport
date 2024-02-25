@@ -57,7 +57,6 @@ import de.soderer.utilities.worker.WorkerParentDual;
 // TODO: Invalid null in not null column => error message
 // TODO: Missing mapping for not null column => error message
 // TODO: Check for string too large
-// TODO: Check for int too large
 // TODO: Errorhandling on createConnection (dbconnection error detection and help messages in errors)
 // TODO: Dateien blob import export
 public class DbImport extends UpdateableConsoleApplication implements WorkerParentDual {
