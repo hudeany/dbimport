@@ -1225,8 +1225,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 							inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(new File(valueString)), valueString));
 						}
 
-						if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
-							// PostgreSQL and SQLite do not read the stream
+						if (dbDefinition.getDbVendor() == DbVendor.SQLite) {
+							// SQLite does not read the stream
+							final byte[] data = IoUtilities.toByteArray(inputStream);
+							preparedStatement.setString(columnIndex, new String(data, textFileEncoding));
+							batchValueItem.add(data);
+						} else if (dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
+							// PostgreSQL does not read the stream
 							final byte[] data = IoUtilities.toByteArray(inputStream);
 							preparedStatement.setNString(columnIndex, new String(data, textFileEncoding));
 							batchValueItem.add(data);
@@ -1239,18 +1244,30 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					}
 				} else if ("lc".equalsIgnoreCase(formatInfo)) {
 					valueString = valueString.toLowerCase();
-					preparedStatement.setNString(columnIndex, valueString);
+					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby) {
+						preparedStatement.setString(columnIndex, valueString);
+					} else {
+						preparedStatement.setNString(columnIndex, valueString);
+					}
 					batchValueItem.add(valueString);
 				} else if ("uc".equalsIgnoreCase(formatInfo)) {
 					valueString = valueString.toUpperCase();
-					preparedStatement.setNString(columnIndex, valueString);
+					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby) {
+						preparedStatement.setString(columnIndex, valueString);
+					} else {
+						preparedStatement.setNString(columnIndex, valueString);
+					}
 					batchValueItem.add(valueString);
 				} else if ("email".equalsIgnoreCase(formatInfo)) {
 					valueString = valueString.toLowerCase().trim();
 					if (!NetworkUtilities.isValidEmail(valueString)) {
 						throw new DbImportException("Invalid email address for column '" + columnName + "': " + valueString);
 					}
-					preparedStatement.setNString(columnIndex, valueString);
+					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby) {
+						preparedStatement.setString(columnIndex, valueString);
+					} else {
+						preparedStatement.setNString(columnIndex, valueString);
+					}
 					batchValueItem.add(valueString);
 				} else if (simpleDataType == SimpleDataType.DateTime) {
 					final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
@@ -1452,7 +1469,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					batchValueItem.add(value);
 				}
 			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {
-				preparedStatement.setNString(columnIndex, (String) dataValue);
+				if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby) {
+					preparedStatement.setString(columnIndex, (String) dataValue);
+				} else {
+					preparedStatement.setNString(columnIndex, (String) dataValue);
+				}
 				batchValueItem.add(dataValue);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
 				throw new DbImportException("Date field to insert without mapping date format for column '" + columnName + "'");
@@ -1482,7 +1503,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			batchValueItem.add(value);
 		} else if (dataValue instanceof MonthDay && simpleDataType == SimpleDataType.String) {
 			final String value = dataValue.toString();
-			preparedStatement.setNString(columnIndex, value);
+			if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby) {
+				preparedStatement.setString(columnIndex, value);
+			} else {
+				preparedStatement.setNString(columnIndex, value);
+			}
 			batchValueItem.add(value);
 		} else {
 			preparedStatement.setObject(columnIndex, dataValue);
@@ -1557,7 +1582,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					throw new Exception("Unexpected datatype: " + dataValue.getClass().getSimpleName());
 				}
 				if (dataValue != null && dataValue instanceof String) {
-					preparedStatement.setNString(i + 1, (String) dataValue);
+					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby) {
+						preparedStatement.setString(i + 1, (String) dataValue);
+					} else {
+						preparedStatement.setNString(i + 1, (String) dataValue);
+					}
 				} else {
 					preparedStatement.setObject(i + 1, dataValue);
 				}
