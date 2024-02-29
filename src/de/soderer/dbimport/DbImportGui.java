@@ -1426,6 +1426,10 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		logErroneousDataBox.setSelected(dbImportDefinition.isLogErroneousData());
 
+		batchBlockSizeField.setText(Integer.toString(dbImportDefinition.getBatchBlockSize()));
+
+		noSingleModeBox.setSelected(dbImportDefinition.isPreventBatchFallbackToSingleLineOnErrors());
+
 		checkButtonStatus();
 	}
 

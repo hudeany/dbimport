@@ -1228,7 +1228,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
 							// PostgreSQL and SQLite do not read the stream
 							final byte[] data = IoUtilities.toByteArray(inputStream);
-							preparedStatement.setString(columnIndex, new String(data, textFileEncoding));
+							preparedStatement.setNString(columnIndex, new String(data, textFileEncoding));
 							batchValueItem.add(data);
 						} else {
 							itemToCloseAfterwards = new InputStreamReader(inputStream, textFileEncoding);
@@ -1239,18 +1239,18 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					}
 				} else if ("lc".equalsIgnoreCase(formatInfo)) {
 					valueString = valueString.toLowerCase();
-					preparedStatement.setString(columnIndex, valueString);
+					preparedStatement.setNString(columnIndex, valueString);
 					batchValueItem.add(valueString);
 				} else if ("uc".equalsIgnoreCase(formatInfo)) {
 					valueString = valueString.toUpperCase();
-					preparedStatement.setString(columnIndex, valueString);
+					preparedStatement.setNString(columnIndex, valueString);
 					batchValueItem.add(valueString);
 				} else if ("email".equalsIgnoreCase(formatInfo)) {
 					valueString = valueString.toLowerCase().trim();
 					if (!NetworkUtilities.isValidEmail(valueString)) {
 						throw new DbImportException("Invalid email address for column '" + columnName + "': " + valueString);
 					}
-					preparedStatement.setString(columnIndex, valueString);
+					preparedStatement.setNString(columnIndex, valueString);
 					batchValueItem.add(valueString);
 				} else if (simpleDataType == SimpleDataType.DateTime) {
 					final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
@@ -1452,7 +1452,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					batchValueItem.add(value);
 				}
 			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {
-				preparedStatement.setString(columnIndex, (String) dataValue);
+				preparedStatement.setNString(columnIndex, (String) dataValue);
 				batchValueItem.add(dataValue);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
 				throw new DbImportException("Date field to insert without mapping date format for column '" + columnName + "'");
@@ -1482,7 +1482,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			batchValueItem.add(value);
 		} else if (dataValue instanceof MonthDay && simpleDataType == SimpleDataType.String) {
 			final String value = dataValue.toString();
-			preparedStatement.setString(columnIndex, value);
+			preparedStatement.setNString(columnIndex, value);
 			batchValueItem.add(value);
 		} else {
 			preparedStatement.setObject(columnIndex, dataValue);
@@ -1544,18 +1544,23 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		for (int entryIndex = 0; entryIndex < batchValues.size(); entryIndex++) {
 			final List<Object> batchValueEntry = batchValues.get(entryIndex);
 			for (int i = 0; i < batchValueEntry.size(); i++) {
-				if (batchValueEntry.get(i) != null
-						&& !(batchValueEntry.get(i) instanceof Timestamp)
-						&& !(batchValueEntry.get(i) instanceof java.sql.Date)
-						&& !(batchValueEntry.get(i) instanceof Date)
-						&& !(batchValueEntry.get(i) instanceof Integer)
-						&& !(batchValueEntry.get(i) instanceof Long)
-						&& !(batchValueEntry.get(i) instanceof Double)
-						&& !(batchValueEntry.get(i) instanceof Float)
-						&& !(batchValueEntry.get(i) instanceof String)) {
-					throw new Exception("Unexpected datatype: " + batchValueEntry.get(i).getClass().getSimpleName());
+				final Object dataValue = batchValueEntry.get(i);
+				if (dataValue != null
+						&& !(dataValue instanceof Timestamp)
+						&& !(dataValue instanceof java.sql.Date)
+						&& !(dataValue instanceof Date)
+						&& !(dataValue instanceof Integer)
+						&& !(dataValue instanceof Long)
+						&& !(dataValue instanceof Double)
+						&& !(dataValue instanceof Float)
+						&& !(dataValue instanceof String)) {
+					throw new Exception("Unexpected datatype: " + dataValue.getClass().getSimpleName());
 				}
-				preparedStatement.setObject(i + 1, batchValueEntry.get(i));
+				if (dataValue != null && dataValue instanceof String) {
+					preparedStatement.setNString(i + 1, (String) dataValue);
+				} else {
+					preparedStatement.setObject(i + 1, dataValue);
+				}
 			}
 			try {
 				preparedStatement.execute();
