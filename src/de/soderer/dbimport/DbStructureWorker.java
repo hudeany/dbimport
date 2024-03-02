@@ -103,9 +103,11 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 			setEndTime(LocalDateTime.now());
 		} finally {
 			if (connection != null) {
-				connection.rollback();
-				connection.setAutoCommit(previousAutoCommit);
-				connection.close();
+				if (!connection.isClosed()) {
+					connection.rollback();
+					connection.setAutoCommit(previousAutoCommit);
+					connection.close();
+				}
 				connection = null;
 				if (dbDefinition.getDbVendor() == DbVendor.Derby) {
 					DbUtilities.shutDownDerbyDb(dbDefinition.getDbName());

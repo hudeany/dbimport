@@ -57,7 +57,6 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	@Override
 	public Boolean work() throws Exception {
 		signalUnlimitedProgress();
@@ -214,9 +213,11 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 				Utilities.closeQuietly(logOutputStream);
 
 				if (connection != null) {
-					connection.rollback();
-					connection.setAutoCommit(previousAutoCommit);
-					connection.close();
+					if (!connection.isClosed()) {
+						connection.rollback();
+						connection.setAutoCommit(previousAutoCommit);
+						connection.close();
+					}
 					connection = null;
 				}
 			}

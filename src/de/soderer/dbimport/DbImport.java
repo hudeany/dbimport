@@ -1039,7 +1039,6 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		for (int i = 1; i <= connectionTestDefinition.getIterations() || connectionTestDefinition.getIterations() == 0; i++) {
 			connectionCheckCount++;
 			System.out.println("Connection test " + i + (connectionTestDefinition.getIterations() > 0 ? " / " + connectionTestDefinition.getIterations() : ""));
-			@SuppressWarnings("resource")
 			Connection testConnection = null;
 			try {
 				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Creating database connection");
@@ -1081,7 +1080,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				if (testConnection != null) {
 					try {
 						System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Closing database connection");
-						testConnection.close();
+						if (!testConnection.isClosed()) {
+							testConnection.close();
+						}
 					} catch (final SQLException e) {
 						System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Error closing database connection: " + e.getMessage());
 						returnCode = 1;

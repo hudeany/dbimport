@@ -99,7 +99,6 @@ public class DbSqlWorker extends DbImportWorker {
 		sqlScriptReader = null;
 	}
 
-	@SuppressWarnings("resource")
 	@Override
 	public Boolean work() throws Exception {
 		OutputStream logOutputStream = null;
@@ -199,9 +198,11 @@ public class DbSqlWorker extends DbImportWorker {
 			throw e;
 		} finally {
 			if (connection != null) {
-				connection.rollback();
-				connection.setAutoCommit(previousAutoCommit);
-				connection.close();
+				if (!connection.isClosed()) {
+					connection.rollback();
+					connection.setAutoCommit(previousAutoCommit);
+					connection.close();
+				}
 			}
 		}
 	}

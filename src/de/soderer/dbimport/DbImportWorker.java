@@ -327,7 +327,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		this.logErroneousData = logErroneousData;
 	}
 
-	@SuppressWarnings("resource")
 	@Override
 	public Boolean work() throws Exception {
 		dataItemsDone = 0;
@@ -631,9 +630,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				DbUtilities.dropTableIfExists(connection, tempTableName);
 
 				if (connection != null) {
-					connection.rollback();
-					connection.setAutoCommit(previousAutoCommit);
-					connection.close();
+					if (!connection.isClosed()) {
+						connection.rollback();
+						connection.setAutoCommit(previousAutoCommit);
+						connection.close();
+					}
 					connection = null;
 					if (dbDefinition.getDbVendor() == DbVendor.Derby) {
 						DbUtilities.shutDownDerbyDb(dbDefinition.getDbName());
@@ -1187,7 +1188,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 							batchValueItem.add(data);
 						} else {
 							itemToCloseAfterwards = inputStream;
-							preparedStatement.setBinaryStream(columnIndex, (FileInputStream) itemToCloseAfterwards);
+							preparedStatement.setBinaryStream(columnIndex, inputStream);
 							batchValueItem.add(itemToCloseAfterwards);
 						}
 						importedDataAmount += new File(valueString).length();
