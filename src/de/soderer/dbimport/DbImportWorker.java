@@ -922,6 +922,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		try {
 			preparedStatement = connection.prepareStatement(statementString);
 
+			long maxBlobSize = -1;
+			if (dbDefinition.getDbVendor() == DbVendor.MySQL) {
+				maxBlobSize = DbUtilities.getMysqlConnectionNumericVariable(connection, "max_allowed_packet");
+			} else if (dbDefinition.getDbVendor() == DbVendor.MariaDB) {
+				maxBlobSize = DbUtilities.getMariaDBConnectionNumericVariable(connection, "max_allowed_packet");
+			}
+
 			final List<List<Object>> batchValues = new ArrayList<>();
 			Map<String, Object> itemData;
 			while ((itemData = dataProvider.getNextItemData()) != null) {
@@ -940,7 +947,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
-						final Closeable itemToClose = validateAndSetParameter(preparedStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry);
+						final Closeable itemToClose = validateAndSetParameter(preparedStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry, maxBlobSize);
 						if (itemToClose != null) {
 							itemsToCloseAfterwards.add(itemToClose);
 						}
@@ -1067,7 +1074,16 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
-	protected Closeable validateAndSetParameter(final PreparedStatement preparedStatement, final int columnIndex, final String columnName, final SimpleDataType simpleDataType, final boolean isNullable, final Object dataValue, final String formatInfo, final List<Object> batchValueItem) throws Exception {
+	protected Closeable validateAndSetParameter(
+			final PreparedStatement preparedStatement,
+			final int columnIndex,
+			final String columnName,
+			final SimpleDataType simpleDataType,
+			final boolean isNullable,
+			final Object dataValue,
+			final String formatInfo,
+			final List<Object> batchValueItem,
+			final long maxBlobSize) throws Exception {
 		Closeable itemToCloseAfterwards = null;
 		if (dataValue == null) {
 			if (!isNullable) {
@@ -1147,6 +1163,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				} else if ("file".equalsIgnoreCase(formatInfo)) {
 					if (!new File(valueString).exists()) {
 						throw new DbImportException("File does not exist for column '" + columnName + "': " + valueString);
+					} else if (maxBlobSize >= 0 && maxBlobSize < new File(valueString).length()) {
+						if (dbDefinition.getDbVendor() == DbVendor.MySQL) {
+							throw new Exception("File size is too big for current database settings. Please adjust MySQL server variable 'max_allowed_packet' to at least " + new File(valueString).length());
+						} else if (dbDefinition.getDbVendor() == DbVendor.MariaDB) {
+							throw new Exception("File size is too big for current database settings. Please adjust MariaDB server variable 'max_allowed_packet' to at least " + new File(valueString).length());
+						}
 					} else if (simpleDataType == SimpleDataType.Blob) {
 						InputStream inputStream;
 						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {

@@ -570,7 +570,6 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						}
 						wasAllowedParam = true;
 					} else if ("-noSingleMode".equalsIgnoreCase(arguments[i])) {
-						i++;
 						dbImportDefinition.setPreventBatchFallbackToSingleLineOnErrors(true);
 						wasAllowedParam = true;
 					} else {
@@ -598,8 +597,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter value for updatesql");
-						} else if (!arguments[i - 1].contains("?")) {
-							throw new ParameterException(arguments[i - 1], "Updatesql does not contain mandatory '?' placeholder");
+						} else if (!arguments[i].contains("?")) {
+							throw new ParameterException(arguments[i], "Updatesql does not contain mandatory '?' placeholder");
 						} else {
 							blobImportDefinition.setBlobImportStatement(arguments[i]);
 						}
@@ -608,8 +607,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter value for blobfile");
-						} else if (!new File(arguments[i - 1]).exists()) {
-							throw new ParameterException(arguments[i - 1], "Blob import file does not exist");
+						} else if (!new File(arguments[i]).exists()) {
+							throw new ParameterException(arguments[i], "Blob import file does not exist");
 						} else {
 							blobImportDefinition.setImportFilePath(arguments[i]);
 						}

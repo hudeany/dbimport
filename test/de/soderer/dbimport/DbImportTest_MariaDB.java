@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.Random;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -33,7 +34,7 @@ public class DbImportTest_MariaDB {
 	public static final String USERNAME = System.getenv().get("USERNAME_MARIADB_TEST");
 	public static final String PASSWORD = System.getenv().get("PASSWORD_MARIADB_TEST");
 
-	public static final String[] DATA_TYPES = new String[] { "INTEGER", "DOUBLE", "VARCHAR(1024)", "BLOB", "LONGTEXT", "TIMESTAMP NULL", "DATE" };
+	public static final String[] DATA_TYPES = new String[] { "INTEGER", "DOUBLE", "VARCHAR(1024)", "LONGBLOB", "LONGTEXT", "TIMESTAMP NULL", "DATE" };
 
 	public static File INPUTFILE_CSV = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.csv"));
 	public static File INPUTFILE_JSON = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.json"));
@@ -91,6 +92,7 @@ public class DbImportTest_MariaDB {
 					columnName = columnName.substring(0, columnName.indexOf("("));
 				}
 				columnName = columnName.replace("longtext", "clob");
+				columnName = columnName.replace("longblob", "blob");
 				columnName = columnName.replace("timestamp null", "timestamp");
 
 				if (dataColumnsPart.length() > 0) {
@@ -921,6 +923,30 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "193 Byte");
 			assertLogContains(logData, "Inserted items", "0");
 			assertLogContains(logData, "Updated items", "1");
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testCsvImportInsertBigBlobFile() {
+		try {
+			createEmptyTestTable();
+			prefillTestTable();
+
+			final byte[] randomByteArray = new byte[20 * 1024 * 1024];
+			new Random().nextBytes(randomByteArray);
+			FileUtilities.write(BLOB_DATA_FILE, randomByteArray);
+
+			Assert.assertEquals(0, DbImport._main(new String[] {
+					"importblob",
+					"mariadb",
+					HOSTNAME,
+					DBNAME,
+					USERNAME,
+					"-updatesql", "UPDATE test_tbl SET column_blob = ? WHERE column_integer = 1",
+					"-blobfile", BLOB_DATA_FILE.getAbsolutePath(),
+					PASSWORD }));
 		} catch (final Exception e) {
 			Assert.fail(e.getMessage());
 		}

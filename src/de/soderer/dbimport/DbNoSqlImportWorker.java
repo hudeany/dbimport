@@ -262,7 +262,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
 						final
-						Closeable itemToClose = validateAndSetParameter(preparedInsertStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry);
+						Closeable itemToClose = validateAndSetParameter(preparedInsertStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry, -1);
 						if (itemToClose != null) {
 							itemsToCloseAfterwards.add(itemToClose);
 						}
@@ -414,7 +414,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 						// Bug mitigation for Cassandra JDBC driver: Driver does not set apostrophes around strings as key column value in prepared statements
 						keyDataValue = "'" + keyDataValue + "'";
 					}
-					final Closeable keyItemToClose = validateAndSetParameter(preparedDetectStatement, keyIndex++, keyColumn, simpleDataType, dbColumns.get(keyColumn).isNullable(), keyDataValue, formatInfo, batchValueEntry);
+					final Closeable keyItemToClose = validateAndSetParameter(preparedDetectStatement, keyIndex++, keyColumn, simpleDataType, dbColumns.get(keyColumn).isNullable(), keyDataValue, formatInfo, batchValueEntry, -1);
 					if (keyItemToClose != null) {
 						detectItemsToCloseAfterwards.add(keyItemToClose);
 					}
@@ -467,7 +467,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 								final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToUpdate).getFirst());
 								final String formatInfo = mappingToUse.get(unescapedDbColumnToUpdate).getSecond();
 
-								final Closeable itemToClose = validateAndSetParameter(preparedUpdateStatement, i++, dbColumnToUpdate, simpleDataType, dbColumns.get(dbColumnToUpdate).isNullable(), dataValue, formatInfo, batchValueEntry);
+								final Closeable itemToClose = validateAndSetParameter(preparedUpdateStatement, i++, dbColumnToUpdate, simpleDataType, dbColumns.get(dbColumnToUpdate).isNullable(), dataValue, formatInfo, batchValueEntry, -1);
 								if (itemToClose != null) {
 									updateItemsToCloseAfterwards.add(itemToClose);
 								}
@@ -480,7 +480,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 							final Object keyDataValue = itemData.get(mappingToUse.get(unescapedDbKeyColumn).getFirst());
 							final String formatInfo = mappingToUse.get(unescapedDbKeyColumn).getSecond();
 
-							final Closeable itemToClose = validateAndSetParameter(preparedUpdateStatement, i++, keyColumn, simpleDataType, dbColumns.get(keyColumn).isNullable(), keyDataValue, formatInfo, batchValueEntry);
+							final Closeable itemToClose = validateAndSetParameter(preparedUpdateStatement, i++, keyColumn, simpleDataType, dbColumns.get(keyColumn).isNullable(), keyDataValue, formatInfo, batchValueEntry, -1);
 							if (itemToClose != null) {
 								detectItemsToCloseAfterwards.add(itemToClose);
 							}
@@ -504,7 +504,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 							final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 							final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
-							final Closeable itemToClose = validateAndSetParameter(preparedInsertStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry);
+							final Closeable itemToClose = validateAndSetParameter(preparedInsertStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry, -1);
 							if (itemToClose != null) {
 								insertItemsToCloseAfterwards.add(itemToClose);
 							}
