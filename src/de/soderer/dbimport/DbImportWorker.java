@@ -1451,7 +1451,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				}
 			} else if (simpleDataType == SimpleDataType.Integer) {
 				final String valueString = ((String) dataValue).trim();
-				if (valueString.contains(".")) {
+				if (valueString.equalsIgnoreCase("true")) {
+					preparedStatement.setInt(columnIndex, 1);
+					batchValueItem.add(1);
+				} else if (valueString.equalsIgnoreCase("false")) {
+					preparedStatement.setInt(columnIndex, 0);
+					batchValueItem.add(0);
+				} else if (valueString.contains(".")) {
 					double value;
 					try {
 						value = Double.parseDouble(valueString);
