@@ -58,6 +58,8 @@ import de.soderer.utilities.worker.WorkerParentDual;
 // TODO: Check for string too large
 // TODO: Errorhandling on createConnection (dbconnection error detection and help messages in errors)
 // TODO: Multiple file blob import export
+// TODO: Get a list of tables
+// TODO: Single Blob Upload GUI
 public class DbImport extends UpdateableConsoleApplication implements WorkerParentDual {
 	/** The Constant APPLICATION_NAME. */
 	public static final String APPLICATION_NAME = "DbImport";
