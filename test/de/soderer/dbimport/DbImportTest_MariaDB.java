@@ -43,6 +43,8 @@ public class DbImportTest_MariaDB {
 
 	@Before
 	public void setup() throws Exception {
+		BLOB_DATA_FILE.getParentFile().mkdirs();
+
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
 		INPUTFILE_XML.delete();
@@ -145,8 +147,10 @@ public class DbImportTest_MariaDB {
 		final File dir = new File(System.getProperty("user.home") + File.separator + "temp" + File.separator + "importlogs");
 		final FileFilter fileFilter = new WildcardFilenameFilter("test_tbl*.log");
 		final File[] files = dir.listFiles(fileFilter);
-		for (final File logFile : files) {
-			logFile.delete();
+		if (dir.exists()) {
+			for (final File logFile : files) {
+				logFile.delete();
+			}
 		}
 	}
 
