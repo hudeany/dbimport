@@ -917,7 +917,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			statementString = "INSERT INTO " + tableNameToUse + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbTableColumnsListToInsert) + ", " + itemIndexColumn + ") VALUES (" + additionalInsertValuesSqlValues + Utilities.repeat("?", dbTableColumnsListToInsert.size(), ", ") + ", ?)";
 		}
 
-		@SuppressWarnings("resource")
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = connection.prepareStatement(statementString);

@@ -244,7 +244,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 			setDailyUpdateCheckStatus(true);
 			try {
 				if (ApplicationUpdateUtilities.checkForNewVersionAvailable(this, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.APPLICATION_NAME, VersionInfo.getApplicationVersion()) != null) {
-					ApplicationUpdateUtilities.executeUpdate(this, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATE, null, null, "gui", true);
+					ApplicationUpdateUtilities.executeUpdate(this, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, "gui", true);
 				}
 			} catch (final Exception e) {
 				new QuestionDialog(this, DbImport.APPLICATION_NAME + " " + LangResources.get("updateCheck") + " ERROR", LangResources.get("error.cannotCheckForUpdate") + "\n" + "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
@@ -1074,7 +1074,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						iconImage = ImageIO.read(getClass().getClassLoader().getResource("DbImport_Icon.png"));
 					}
 
-					final ApplicationConfigurationDialog applicationConfigurationDialog = new ApplicationConfigurationDialog(dbImportGui, DbImport.APPLICATION_NAME, DbImport.APPLICATION_STARTUPCLASS_NAME, DbImport.VERSION, DbImport.VERSION_BUILDTIME, applicationConfiguration, iconData, iconImage, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.TRUSTED_UPDATE_CA_CERTIFICATE);
+					final ApplicationConfigurationDialog applicationConfigurationDialog = new ApplicationConfigurationDialog(dbImportGui, DbImport.APPLICATION_NAME, DbImport.APPLICATION_STARTUPCLASS_NAME, DbImport.VERSION, DbImport.VERSION_BUILDTIME, applicationConfiguration, iconData, iconImage, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES);
 					final Result result = applicationConfigurationDialog.open();
 					if (result == Result.OK) {
 						applicationConfiguration.save();
