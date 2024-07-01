@@ -30,6 +30,7 @@ import de.soderer.dbimport.console.HelpMenu;
 import de.soderer.dbimport.console.ImportMenu;
 import de.soderer.dbimport.console.PreferencesMenu;
 import de.soderer.dbimport.console.UpdateMenu;
+import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
@@ -49,6 +50,9 @@ import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.http.HttpUtilities;
+import de.soderer.utilities.http.ProxyConfiguration;
+import de.soderer.utilities.http.ProxyConfiguration.ProxyConfigurationType;
+import de.soderer.utilities.swing.ApplicationConfigurationDialog;
 import de.soderer.utilities.worker.WorkerParentDual;
 
 /**
@@ -143,6 +147,19 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			return 1;
 		}
 
+		ConfigurationProperties applicationConfiguration;
+		try {
+			applicationConfiguration = new ConfigurationProperties(DbImport.APPLICATION_NAME, true);
+			DbImportGui.setupDefaultConfig(applicationConfiguration);
+		} catch (@SuppressWarnings("unused") final Exception e) {
+			System.err.println("Invalid application configuration");
+			return 1;
+		}
+
+		final ProxyConfigurationType proxyConfigurationType = ProxyConfigurationType.getFromString(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE));
+		final String proxyUrl = applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_URL);
+		final ProxyConfiguration proxyConfiguration = new ProxyConfiguration(proxyConfigurationType, proxyUrl);
+
 		try {
 			String[] arguments = args;
 
@@ -171,13 +188,13 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					} else if ("update".equalsIgnoreCase(arguments[i]) && arguments.length == 1) {
 						if (arguments.length > i + 2) {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, false);
 						} else if (arguments.length > i + 1) {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, false);
 						} else {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, false);
 						}
 						return 1;
 					} else if ("gui".equalsIgnoreCase(arguments[i])) {
@@ -723,7 +740,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				}
 
 				if (createTrustStore) {
-					HttpUtilities.createTrustStoreFile(arguments[0], 443, new File(arguments[1]), Utilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null);
+					HttpUtilities.createTrustStoreFile(arguments[0], 443, new File(arguments[1]), Utilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null, null);
 				}
 
 				if (!wasAllowedParam) {
@@ -770,11 +787,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				} else if (consoleMenuExecutionCode == -4) {
 					// Update application
 					final DbImport dbImport = new DbImport();
-					ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, false);
+					ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, false);
 					return 0;
 				} else if (consoleMenuExecutionCode == -5) {
 					// Create TrustStore
-					HttpUtilities.createTrustStoreFile(connectionTestDefinition.getHostnameAndPort(), 443, connectionTestDefinition.getTrustStoreFile(), connectionTestDefinition.getTrustStorePassword());
+					HttpUtilities.createTrustStoreFile(connectionTestDefinition.getHostnameAndPort(), 443, connectionTestDefinition.getTrustStoreFile(), connectionTestDefinition.getTrustStorePassword(), null);
 					System.out.println();
 					System.out.println("Created TrustStore in file '" + connectionTestDefinition.getTrustStoreFile().getAbsolutePath() + "'");
 					return 0;
