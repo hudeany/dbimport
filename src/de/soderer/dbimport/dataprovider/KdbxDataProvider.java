@@ -260,7 +260,7 @@ public class KdbxDataProvider extends DataProvider {
 			throw new Exception("KdbxDatabase was already opened before");
 		}
 
-		try (final KdbxReader kdbxReader = new KdbxReader(getInputStream())) {
+		try (KdbxReader kdbxReader = new KdbxReader(getInputStream())) {
 			kdbxDatabase = kdbxReader.readKdbxDatabase(password);
 			kdbxEntryIterator = kdbxDatabase.getAllEntries().iterator();
 		} catch (final Exception e) {
