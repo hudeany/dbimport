@@ -896,7 +896,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return statistics.toString();
 	}
 
-	protected void insertIntoTable(final Connection connection, final String tableNameToUse, final Map<String, DbColumnType> dbColumns, final String itemIndexColumn, final String additionalInsertValuesToUse, final Map<String, Tuple<String, String>> mappingToUse) throws SQLException, Exception {
+	private void insertIntoTable(final Connection connection, final String tableNameToUse, final Map<String, DbColumnType> dbColumns, final String itemIndexColumn, final String additionalInsertValuesToUse, final Map<String, Tuple<String, String>> mappingToUse) throws SQLException, Exception {
 		final List<Closeable> itemsToCloseAfterwards = new ArrayList<>();
 
 		String additionalInsertValuesSqlColumns = "";
@@ -1544,7 +1544,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return itemToCloseAfterwards;
 	}
 
-	public void setNullParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType) throws SQLException {
+	private void setNullParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType) throws SQLException {
 		if (simpleDataType == SimpleDataType.String) {
 			preparedStatement.setNull(columnIndex, java.sql.Types.VARCHAR);
 		} else if (dbDefinition.getDbVendor() == DbVendor.Oracle) {
@@ -1683,7 +1683,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return availableDataPropertyNames;
 	}
 
-	public static String convertMappingToString(final Map<String, Tuple<String, String>> mapping) {
+	private static String convertMappingToString(final Map<String, Tuple<String, String>> mapping) {
 		final StringBuilder returnValue = new StringBuilder();
 
 		if (mapping != null) {

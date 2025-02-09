@@ -36,6 +36,7 @@
 	<classpathentry kind="lib" path="lib_db/orai18n-23.3.0.23.09.jar"/>
 	<classpathentry kind="lib" path="lib_db/mariadb-java-client-3.3.3.jar"/>
 	<classpathentry kind="lib" path="lib_db/mysql-connector-j-8.3.0.jar"/>
-	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-24.1.17.jar" sourcepath="lib_soderer/soderer-utilities-24.1.17-sources.jar"/>
+	<classpathentry kind="lib" path="lib_db/mongodb-jdbc-2.2.0-all.jar"/>
+	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-25.1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
