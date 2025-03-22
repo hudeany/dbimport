@@ -15,7 +15,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import de.soderer.utilities.DateUtilities;
-import de.soderer.utilities.TarGzUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbColumnType;
@@ -23,6 +22,7 @@ import de.soderer.utilities.db.SimpleDataType;
 import de.soderer.utilities.vcf.VcfCard;
 import de.soderer.utilities.vcf.VcfReader;
 import de.soderer.utilities.vcf.VcfWriter;
+import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 

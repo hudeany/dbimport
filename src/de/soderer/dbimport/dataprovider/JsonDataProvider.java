@@ -18,7 +18,6 @@ import java.util.zip.ZipOutputStream;
 
 import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.DateUtilities;
-import de.soderer.utilities.TarGzUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbColumnType;
@@ -30,6 +29,7 @@ import de.soderer.utilities.json.JsonReader.JsonToken;
 import de.soderer.utilities.json.JsonUtilities;
 import de.soderer.utilities.json.JsonWriter;
 import de.soderer.utilities.json.schema.JsonSchema;
+import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 

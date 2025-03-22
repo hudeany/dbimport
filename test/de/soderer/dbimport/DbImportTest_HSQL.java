@@ -16,7 +16,6 @@ import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.utilities.FileUtilities;
-import de.soderer.utilities.TarGzUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
@@ -26,6 +25,7 @@ import de.soderer.utilities.json.JsonArray;
 import de.soderer.utilities.json.JsonObject;
 import de.soderer.utilities.json.JsonWriter;
 import de.soderer.utilities.xml.XmlUtilities;
+import de.soderer.utilities.zip.TarGzUtilities;
 
 public class DbImportTest_HSQL {
 	public static final String HSQL_DB_FILE = System.getProperty("user.home") + File.separator + "temp" + File.separator + "test.hsql";

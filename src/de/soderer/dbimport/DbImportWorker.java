@@ -46,7 +46,6 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.InputStreamWithOtherItemsToClose;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.TarGzUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
@@ -65,6 +64,7 @@ import de.soderer.utilities.json.JsonReader;
 import de.soderer.utilities.json.utilities.NetworkUtilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
+import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 

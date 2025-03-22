@@ -37,6 +37,8 @@
 	<classpathentry kind="lib" path="lib_db/mongodb-jdbc-2.2.0-all.jar"/>
 	<classpathentry kind="lib" path="lib/json-25.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/kdbx-25.1.0.jar"/>
-	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-25.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/network-25.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/proxyautoconfig-25.1.2.jar"/>
+	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-25.1.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

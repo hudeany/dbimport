@@ -15,7 +15,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import de.soderer.utilities.DateUtilities;
-import de.soderer.utilities.TarGzUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbColumnType;
@@ -24,6 +23,7 @@ import de.soderer.utilities.kdbx.KdbxDatabase;
 import de.soderer.utilities.kdbx.KdbxReader;
 import de.soderer.utilities.kdbx.KdbxWriter;
 import de.soderer.utilities.kdbx.data.KdbxEntry;
+import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 

@@ -19,10 +19,10 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.xml.XmlUtilities;
 import de.soderer.utilities.json.JsonArray;
 import de.soderer.utilities.json.JsonObject;
 import de.soderer.utilities.json.JsonWriter;
+import de.soderer.utilities.xml.XmlUtilities;
 
 public class DbImportTest_PostgreSQL {
 	public static final String HOSTNAME = System.getenv().get("HOSTNAME_POSTGRESQL_TEST");
