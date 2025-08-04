@@ -33,7 +33,6 @@
 	<classpathentry kind="lib" path="lib_db/orai18n-23.3.0.23.09.jar"/>
 	<classpathentry kind="lib" path="lib_db/mariadb-java-client-3.3.3.jar"/>
 	<classpathentry kind="lib" path="lib_db/mysql-connector-j-8.3.0.jar"/>
-	<classpathentry kind="lib" path="lib_db/mongodb-jdbc-2.2.0-all.jar"/>
 	<classpathentry kind="lib" path="lib/json-25.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/kdbx-25.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/network-25.1.2.jar"/>
