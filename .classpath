@@ -28,7 +28,6 @@
 	<classpathentry kind="lib" path="lib_db/mssql-jdbc-12.4.1.jre11.jar"/>
 	<classpathentry kind="lib" path="lib_db/postgresql-42.6.0.jar"/>
 	<classpathentry kind="lib" path="lib_db/sqlite-jdbc-3.43.0.0.jar"/>
-	<classpathentry kind="lib" path="lib/csv-24.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/vcf-24.1.0.jar"/>
 	<classpathentry kind="lib" path="lib_db/ojdbc11-23.3.0.23.09.jar"/>
 	<classpathentry kind="lib" path="lib_db/orai18n-23.3.0.23.09.jar"/>
@@ -37,8 +36,9 @@
 	<classpathentry kind="lib" path="lib_db/mongodb-jdbc-2.2.0-all.jar"/>
 	<classpathentry kind="lib" path="lib/json-25.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/kdbx-25.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/network-25.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/proxyautoconfig-25.1.2.jar"/>
-	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-25.1.6.jar"/>
+	<classpathentry kind="lib" path="lib/network-25.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/csv-25.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/proxyautoconfig-25.1.8.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-25.1.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

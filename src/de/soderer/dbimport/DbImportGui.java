@@ -45,6 +45,7 @@ import de.soderer.dbimport.DbImportDefinition.DataType;
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.network.TrustManagerUtilities;
+import de.soderer.pac.PacScriptParser;
 import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
@@ -240,6 +241,15 @@ public class DbImportGui extends UpdateableGuiApplication {
 			Locale.setDefault(Locale.GERMAN);
 		} else {
 			Locale.setDefault(Locale.ENGLISH);
+		}
+
+		if (!applicationConfiguration.containsKey(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE)) {
+			if (PacScriptParser.findPacFileUrlByWpad() != null) {
+				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.WPAD.name());
+			} else {
+				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.None.name());
+			}
+			applicationConfiguration.save();
 		}
 
 		final ProxyConfigurationType proxyConfigurationType = ProxyConfigurationType.getFromString(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE));
