@@ -27,6 +27,7 @@
 - Derby
 - Hsql
 - Cassandra
+- MsSQL
 
 ## Commandline usage
 	Usage: java -jar DbImport.jar [optional parameters] dbtype hostname[:port] dbname, username -table tablename -import importfilepathOrData [password]
