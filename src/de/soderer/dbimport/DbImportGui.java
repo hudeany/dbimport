@@ -1472,7 +1472,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 			secureConnectionBox.setEnabled(
 					DbVendor.Oracle.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
 					|| DbVendor.MySQL.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-					|| DbVendor.MariaDB.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem()));
+					|| DbVendor.MariaDB.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
+					|| DbVendor.MsSQL.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem()));
 			trustStoreFilePathField.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
 			trustStoreFileButton.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
 			createTrustStoreFileButton.setEnabled(DbVendor.Oracle.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
