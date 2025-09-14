@@ -1215,7 +1215,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setUsername(userField.isEnabled() ? userField.getText() : null);
 		dbImportDefinition.setPassword(passwordField.isEnabled() ? passwordField.getPassword() : null);
 		dbImportDefinition.setSecureConnection(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
-		dbImportDefinition.setTrustStoreFile(trustStoreFilePathField.isEnabled() ? new File(trustStoreFilePathField.getText()) : null);
+		dbImportDefinition.setTrustStoreFile(trustStoreFilePathField.isEnabled() && Utilities.isNotBlank(trustStoreFilePathField.getText()) ? new File(trustStoreFilePathField.getText()) : null);
 		dbImportDefinition.setTableName(tableNameField.getText());
 		dbImportDefinition.setImportFilePathOrData(importFilePathOrDataField.getText(), false);
 		if (dataTypeCombo.getSelectedIndex() > 0) {
