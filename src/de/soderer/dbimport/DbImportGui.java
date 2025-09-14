@@ -1305,6 +1305,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 		tableNameField.setText(dbImportDefinition.getTableName());
 		importFilePathOrDataField.setText(dbImportDefinition.getImportFilePathOrData());
 
+		structureFilePathField.setText(dbImportDefinition.getStructureFilePath());
+
 		boolean dataTypeFound = false;
 		if (dbImportDefinition.getDataType() != null) {
 			for (int i = 0; i < dataTypeCombo.getItemCount(); i++) {
