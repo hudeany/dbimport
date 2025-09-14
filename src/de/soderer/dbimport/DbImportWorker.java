@@ -795,10 +795,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				columnsPart = columnsPart + getColumnNameAndType(columnJsonObject);
 			}
 
-			final List<String> keyColumnsToSet = ((JsonArray) tableJsonObject.get("keycolumns")).stream().map(String.class::cast).collect(Collectors.toList());
+			List<String> keyColumnsToSet = null;
+			if (tableJsonObject.containsPropertyKey("keycolumns")) {
+				keyColumnsToSet = ((JsonArray) tableJsonObject.get("keycolumns")).stream().map(String.class::cast).collect(Collectors.toList());
+			}
 
 			String primaryKeyPart = "";
-			if (Utilities.isNotEmpty(keyColumnsToSet)) {
+			if (keyColumnsToSet != null && Utilities.isNotEmpty(keyColumnsToSet)) {
 				primaryKeyPart = ", PRIMARY KEY (" + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), keyColumnsToSet) + ")";
 			}
 			statement.execute("CREATE TABLE " + tableNameToCreate + " (" + columnsPart + primaryKeyPart + ")");
