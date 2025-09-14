@@ -839,6 +839,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 		// "databasevendorspecific_datatype"
 
+		if (simpleDataType == SimpleDataType.String && characterByteSize < 0) {
+			// Fallback for extremely large VARCHAR in PostgreSQL. Maybe better use CLOB
+			characterByteSize = 4000;
+		}
+
 		return name + " " + DbUtilities.getDataType(dbDefinition.getDbVendor(), simpleDataType) + (characterByteSize > -1 ? "(" + characterByteSize + ")" : "") + defaultvaluePart;
 	}
 
