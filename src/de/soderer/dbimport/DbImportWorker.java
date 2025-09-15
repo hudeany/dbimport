@@ -804,7 +804,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			if (keyColumnsToSet != null && Utilities.isNotEmpty(keyColumnsToSet)) {
 				primaryKeyPart = ", PRIMARY KEY (" + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), keyColumnsToSet) + ")";
 			}
-			statement.execute("CREATE TABLE " + tableNameToCreate + " (" + columnsPart + primaryKeyPart + ")");
+			final String sqlStatementString = "CREATE TABLE " + tableNameToCreate + " (" + columnsPart + primaryKeyPart + ")";
+			// TODO: Remove soon
+			System.out.println(sqlStatementString);
+			statement.execute(sqlStatementString);
 			if (dbDefinition.getDbVendor() == DbVendor.Derby) {
 				connection.commit();
 			}
@@ -819,19 +822,19 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			characterByteSize = (Integer) columnJsonObject.get("datasize");
 		}
 
-		String defaultvalue = null;
+		Object defaultvalue = null;
 		if (columnJsonObject.containsPropertyKey("defaultvalue")) {
-			defaultvalue = (String) columnJsonObject.get("defaultvalue");
+			defaultvalue = columnJsonObject.get("defaultvalue");
 		}
 		String defaultvaluePart = "";
 		if (defaultvalue != null) {
 			if (simpleDataType == SimpleDataType.String) {
-				defaultvaluePart = defaultvalue;
+				defaultvaluePart = defaultvalue.toString();
 				if (!defaultvaluePart.startsWith("'") || !defaultvaluePart.endsWith("'")) {
 					defaultvaluePart = "'" + defaultvaluePart + "'";
 				}
 			} else {
-				defaultvaluePart = defaultvalue;
+				defaultvaluePart = defaultvalue.toString();
 			}
 
 			defaultvaluePart = " DEFAULT " + defaultvaluePart;
