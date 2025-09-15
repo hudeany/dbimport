@@ -591,6 +591,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				} catch (final Exception e1) {
 					e1.printStackTrace();
 				}
+
+				// TODO remove soon
+				System.err.println(sqle.getMessage());
+				sqle.printStackTrace();
+
 				throw new DbImportException("SQL error: " + sqle.getMessage());
 			} catch (final Exception e) {
 				try {
@@ -727,8 +732,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						connection.commit();
 					}
 				}
-			} else {
-				throw new DbImportException("Table does not exist: " + tableNameToUse);
 			}
 		}
 	}
