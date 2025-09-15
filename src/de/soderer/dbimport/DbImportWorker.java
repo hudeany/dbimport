@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.BatchUpdateException;
@@ -588,18 +589,19 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} catch (final SQLException sqle) {
 				try {
 					logToFile(logOutputStream, "SQL Error: " + sqle.getMessage());
+					try (PrintStream printStream = new PrintStream(logOutputStream)) {
+						sqle.printStackTrace(printStream);
+					}
 				} catch (final Exception e1) {
 					e1.printStackTrace();
 				}
-
-				// TODO remove soon
-				System.err.println(sqle.getMessage());
-				sqle.printStackTrace();
-
 				throw new DbImportException("SQL error: " + sqle.getMessage());
 			} catch (final Exception e) {
 				try {
 					logToFile(logOutputStream, "Error: " + e.getMessage());
+					try (PrintStream printStream = new PrintStream(logOutputStream)) {
+						e.printStackTrace(printStream);
+					}
 				} catch (final Exception e1) {
 					e1.printStackTrace();
 				}
