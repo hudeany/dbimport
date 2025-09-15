@@ -78,7 +78,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	protected String tableName;
 	protected boolean createTableIfNotExists = false;
 	protected String structureFilePath;
-	protected boolean tableWasCreated = false;
 	protected boolean commitOnFullSuccessOnly = true;
 	protected boolean createNewIndexIfNeeded = true;
 	protected boolean deactivateForeignKeyConstraints = false;
@@ -690,10 +689,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	protected void createTableIfNeeded(final Connection connection, final String tableNameToUse, final List<String> keyColumnsToUse) throws Exception, DbImportException, SQLException {
 		if (!DbUtilities.checkTableExist(connection, tableNameToUse)) {
 			if (createTableIfNotExists) {
-				if (structureFilePath != null) {
+				if (structureFilePath != null && Utilities.isNotBlank(structureFilePath)) {
 					try {
 						createTableFromStructureFile(connection, tableNameToUse, structureFilePath);
-						tableWasCreated = true;
 					} catch (final Exception e) {
 						throw new DbImportException("Cannot create new table '" + tableNameToUse + "' by structure file: " + e.getMessage(), e);
 					}
@@ -721,7 +719,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					}
 					try {
 						DbUtilities.createTable(connection, tableNameToUse, dbDataTypes, keyColumnsToUse);
-						tableWasCreated = true;
 					} catch (final Exception e) {
 						throw new DbImportException("Cannot create new table '" + tableNameToUse + "': " + e.getMessage(), e);
 					}
@@ -770,6 +767,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 			signalProgress(true);
 			setEndTime(LocalDateTime.now());
+		} catch (final Exception e) {
+			System.err.println("Cannot create table '" + tableNameToUse + "': " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -805,8 +805,6 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				primaryKeyPart = ", PRIMARY KEY (" + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), keyColumnsToSet) + ")";
 			}
 			final String sqlStatementString = "CREATE TABLE " + tableNameToCreate + " (" + columnsPart + primaryKeyPart + ")";
-			// TODO: Remove soon
-			System.out.println(sqlStatementString);
 			statement.execute(sqlStatementString);
 			if (dbDefinition.getDbVendor() == DbVendor.Derby) {
 				connection.commit();
