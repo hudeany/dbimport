@@ -709,8 +709,8 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			if (createTableIfNotExists) {
 				if (structureFilePath != null && Utilities.isNotBlank(structureFilePath)) {
 					try {
-						createTableFromStructureFile(connection, tableNameToUse, structureFilePath);
-						return true;
+						final boolean tableWasCreated = createTableFromStructureFile(connection, tableNameToUse, structureFilePath);
+						return tableWasCreated;
 					} catch (final Exception e) {
 						throw new DbImportException("Cannot create new table '" + tableNameToUse + "' by structure file: " + e.getMessage(), e);
 					}
@@ -755,7 +755,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
-	private void createTableFromStructureFile(final Connection connection, final String tableNameToUse, final String structureFilePathToLookIn) throws Exception {
+	private boolean createTableFromStructureFile(final Connection connection, final String tableNameToUse, final String structureFilePathToLookIn) throws Exception {
 		try (FileInputStream jsonStructureDataInputStream = new FileInputStream(structureFilePathToLookIn);
 				JsonReader jsonReader = new JsonReader(jsonStructureDataInputStream)) {
 			parent.changeTitle(LangResources.get("creatingMissingTablesAndColumns"));
@@ -782,20 +782,23 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				}
 			}
 
+			boolean tableWasCreated;
 			if (foundTableJsonObject != null) {
 				parent.changeTitle(LangResources.get("workingOnTable", tableNameToUse));
-				createTable(connection, tableNameToUse, foundTableJsonObject);
+				tableWasCreated = createTable(connection, tableNameToUse, foundTableJsonObject);
+			} else {
+				throw new Exception("Cannot find definition of table '" + tableNameToUse + "' in structure file '" + structureFilePathToLookIn + "'");
 			}
 
 			signalProgress(true);
 			setEndTime(LocalDateTime.now());
+			return tableWasCreated;
 		} catch (final Exception e) {
-			System.err.println("Cannot create table '" + tableNameToUse + "': " + e.getMessage());
-			e.printStackTrace();
+			throw new Exception("Cannot create table '" + tableNameToUse + "': " + e.getMessage(), e);
 		}
 	}
 
-	private void createTable(final Connection connection, final String tableNameToCreate, final JsonObject tableJsonObject) throws Exception {
+	private boolean createTable(final Connection connection, final String tableNameToCreate, final JsonObject tableJsonObject) throws Exception {
 		if (tableJsonObject == null) {
 			throw new DbImportException("Cannot create table without table definition");
 		}
@@ -831,6 +834,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			if (dbDefinition.getDbVendor() == DbVendor.Derby) {
 				connection.commit();
 			}
+			return true;
 		}
 	}
 
