@@ -191,6 +191,9 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 
 			multiImportResult.append("End: " + DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, endDate) + "\n");
 			multiImportResult.append("Time elapsed: " + DateUtilities.getHumanReadableTimespan(Duration.between(startDate, endDate), true) + "\n");
+			if ("*".equals(tableName)) {
+				multiImportResult.append("Number of imported files: " + Utilities.getHumanReadableNumber(filesToImport.size(), null, false, 5, false, Locale.getDefault()) + "\n");
+			}
 			multiImportResult.append("Imported dataamount: " + Utilities.getHumanReadableNumber(importedDataSize, "Byte", false, 5, false, Locale.getDefault()) + "\n");
 
 			if (multiImportHadError) {
