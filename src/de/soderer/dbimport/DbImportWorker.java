@@ -830,14 +830,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				primaryKeyPart = ", PRIMARY KEY (" + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), keyColumnsToSet) + ")";
 			}
 			final String sqlStatementString = "CREATE TABLE " + tableNameToCreate + " (" + columnsPart + primaryKeyPart + ")";
-			// TODO remove
-			System.out.println("Creating: " + sqlStatementString);
 			statement.execute(sqlStatementString);
 			if (dbDefinition.getDbVendor() == DbVendor.Derby || dbDefinition.getDbVendor() == DbVendor.MsSQL) {
 				connection.commit();
 			}
-			// TODO remove
-			System.out.println("Created: " + sqlStatementString);
 			return true;
 		}
 	}
