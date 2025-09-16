@@ -589,8 +589,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} catch (final SQLException sqle) {
 				try {
 					logToFile(logOutputStream, "SQL Error: " + sqle.getMessage());
-					try (PrintStream printStream = new PrintStream(logOutputStream)) {
-						sqle.printStackTrace(printStream);
+					if (logOutputStream != null) {
+						try (PrintStream printStream = new PrintStream(logOutputStream)) {
+							sqle.printStackTrace(printStream);
+						}
 					}
 				} catch (final Exception e1) {
 					e1.printStackTrace();
@@ -599,8 +601,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} catch (final Exception e) {
 				try {
 					logToFile(logOutputStream, "Error: " + e.getMessage());
-					try (PrintStream printStream = new PrintStream(logOutputStream)) {
-						e.printStackTrace(printStream);
+					if (logOutputStream != null) {
+						try (PrintStream printStream = new PrintStream(logOutputStream)) {
+							e.printStackTrace(printStream);
+						}
 					}
 				} catch (final Exception e1) {
 					e1.printStackTrace();
