@@ -391,7 +391,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				final boolean tableWasCreated = createTableIfNeeded(connection, tableName, keyColumns);
 				if (tableWasCreated) {
 					try {
-						logToFile(logOutputStream, "Created table '" + tableWasCreated + "'");
+						logToFile(logOutputStream, "Created table '" + tableName + "'");
 					} catch (final Exception e1) {
 						e1.printStackTrace();
 					}
@@ -830,10 +830,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				primaryKeyPart = ", PRIMARY KEY (" + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), keyColumnsToSet) + ")";
 			}
 			final String sqlStatementString = "CREATE TABLE " + tableNameToCreate + " (" + columnsPart + primaryKeyPart + ")";
+			// TODO remove
+			System.out.println("Creating: " + sqlStatementString);
 			statement.execute(sqlStatementString);
-			if (dbDefinition.getDbVendor() == DbVendor.Derby) {
+			if (dbDefinition.getDbVendor() == DbVendor.Derby || dbDefinition.getDbVendor() == DbVendor.MsSQL) {
 				connection.commit();
 			}
+			// TODO remove
+			System.out.println("Created: " + sqlStatementString);
 			return true;
 		}
 	}
