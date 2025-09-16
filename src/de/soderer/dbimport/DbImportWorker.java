@@ -388,7 +388,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					connection.commit();
 				}
 
-				createTableIfNeeded(connection, tableName, keyColumns);
+				final boolean tableWasCreated = createTableIfNeeded(connection, tableName, keyColumns);
+				if (tableWasCreated) {
+					try {
+						logToFile(logOutputStream, "Created table '" + tableWasCreated + "'");
+					} catch (final Exception e1) {
+						e1.printStackTrace();
+					}
+				}
 
 				final Map<String, DbColumnType> dbColumns = DbUtilities.getColumnDataTypes(connection, tableName);
 				checkMapping(dbColumns);
@@ -697,12 +704,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				+ "PreventBatchFallbackToSingleLineOnErrors: " + preventBatchFallbackToSingleLineOnErrors + "\n";
 	}
 
-	protected void createTableIfNeeded(final Connection connection, final String tableNameToUse, final List<String> keyColumnsToUse) throws Exception, DbImportException, SQLException {
+	protected boolean createTableIfNeeded(final Connection connection, final String tableNameToUse, final List<String> keyColumnsToUse) throws Exception, DbImportException, SQLException {
 		if (!DbUtilities.checkTableExist(connection, tableNameToUse)) {
 			if (createTableIfNotExists) {
 				if (structureFilePath != null && Utilities.isNotBlank(structureFilePath)) {
 					try {
 						createTableFromStructureFile(connection, tableNameToUse, structureFilePath);
+						return true;
 					} catch (final Exception e) {
 						throw new DbImportException("Cannot create new table '" + tableNameToUse + "' by structure file: " + e.getMessage(), e);
 					}
@@ -737,8 +745,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						// Commit DDL-statement
 						connection.commit();
 					}
+					return true;
 				}
+			} else {
+				return false;
 			}
+		} else {
+			return false;
 		}
 	}
 
