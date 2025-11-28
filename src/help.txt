@@ -9,7 +9,7 @@ Mandatory parameters for database import
 	
 	-table tablename: Table to import to (* for name by filename)
 	-import importfilepathOrData: File to import (?, * as wildcards, automapping only), maybe zipped (.zip, .tar.gz, .tgz, .gz)
-								or data as text (See optional parameter '-data')
+								or data as text (See optional parameter '-data', round brackets may enclose import table name)
 
 Optional parameters for database import
 	-data: Declare importfilepathOrData explicitly as inline data (No filepath)

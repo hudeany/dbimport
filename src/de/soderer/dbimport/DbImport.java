@@ -949,19 +949,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				final File fileToImport = filesToImport.get(0);
 				String tableName = dbImportDefinitionToExecute.getTableName();
 				if ("*".equals(tableName)) {
-					tableName = fileToImport.getName();
-					if (Utilities.endsWithIgnoreCase(tableName, ".zip")) {
-						tableName = tableName.substring(0, tableName.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableName, ".tar.gz")) {
-						tableName = tableName.substring(0, tableName.length() - 7);
-					} else if (Utilities.endsWithIgnoreCase(tableName, ".tgz")) {
-						tableName = tableName.substring(0, tableName.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableName, ".gz")) {
-						tableName = tableName.substring(0, tableName.length() - 3);
-					}
-					if (tableName.contains(".")) {
-						tableName = tableName.substring(0, tableName.indexOf("."));
-					}
+					tableName = DbImport.getImportTablenameFromFilename(fileToImport.getName());
 					dbImportDefinitionToExecute.setTableName(tableName);
 				}
 				System.out.println("Importing file '" + fileToImport.getAbsolutePath() + "' into table '"+ tableName + "'");
@@ -1334,5 +1322,24 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 			System.out.println();
 		}
+	}
+
+	public static String getImportTablenameFromFilename(final String filename) {
+		String tableNameToImport = filename.toLowerCase();
+		if (Utilities.endsWithIgnoreCase(tableNameToImport, ".zip")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tar.gz")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 7);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tgz")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".gz")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 3);
+		}
+		if (tableNameToImport.contains("(") && tableNameToImport.indexOf(")") > tableNameToImport.indexOf("(")) {
+			tableNameToImport = tableNameToImport.substring(tableNameToImport.indexOf("(") + 1, tableNameToImport.indexOf(")"));
+		} else if (tableNameToImport.contains(".")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.lastIndexOf("."));
+		}
+		return tableNameToImport;
 	}
 }

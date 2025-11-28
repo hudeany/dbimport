@@ -57,20 +57,7 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 				final List<String> notFoundTables = new ArrayList<>();
 				final List<String> availableTables = DbUtilities.getAvailableTables(connection, "*").stream().map(x -> x.toLowerCase()).collect(Collectors.toList());
 				for (int fileIndex = 0; fileIndex < filesToImport.size(); fileIndex++) {
-					String tableNameToImport = filesToImport.get(fileIndex).getName().toLowerCase();
-					if (Utilities.endsWithIgnoreCase(tableNameToImport, ".zip")) {
-						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tar.gz")) {
-						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 7);
-					} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tgz")) {
-						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".gz")) {
-						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 3);
-					}
-					if (tableNameToImport.contains(".")) {
-						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.lastIndexOf("."));
-					}
-
+					final String tableNameToImport = DbImport.getImportTablenameFromFilename(filesToImport.get(fileIndex).getName());
 					if (!availableTables.contains(tableNameToImport)) {
 						notFoundTables.add(tableNameToImport);
 					}
@@ -118,43 +105,14 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 			}
 
 			for (int fileIndex = 0; fileIndex < filesToImport.size(); fileIndex++) {
-				String tableToImport = tableName;
-
-				if ("*".equals(tableToImport)) {
-					tableToImport = filesToImport.get(fileIndex).getName();
-					if (Utilities.endsWithIgnoreCase(tableToImport, ".zip")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableToImport, ".tar.gz")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 7);
-					} else if (Utilities.endsWithIgnoreCase(tableToImport, ".tgz")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableToImport, ".gz")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 3);
-					}
-					if (tableToImport.contains(".")) {
-						tableToImport = tableToImport.substring(0, tableToImport.lastIndexOf("."));
-					}
-				}
-
-				final File fileToImport = filesToImport.get(fileIndex);
 				if (cancel || (multiImportHadError && dbImportDefinition.isCompleteCommit())) {
 					break;
 				}
 
+				String tableToImport = tableName;
+				final File fileToImport = filesToImport.get(fileIndex);
 				if ("*".equals(tableToImport)) {
-					tableToImport = fileToImport.getName();
-					if (Utilities.endsWithIgnoreCase(tableToImport, ".zip")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableToImport, ".tar.gz")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 7);
-					} else if (Utilities.endsWithIgnoreCase(tableToImport, ".tgz")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 4);
-					} else if (Utilities.endsWithIgnoreCase(tableToImport, ".gz")) {
-						tableToImport = tableToImport.substring(0, tableToImport.length() - 3);
-					}
-					if (tableToImport.contains(".")) {
-						tableToImport = tableToImport.substring(0, tableToImport.lastIndexOf("."));
-					}
+					tableToImport = DbImport.getImportTablenameFromFilename(fileToImport.getName());
 				}
 
 				signalUnlimitedSubProgress();
