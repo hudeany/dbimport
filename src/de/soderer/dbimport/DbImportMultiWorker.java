@@ -132,7 +132,7 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 						tableToImport = tableToImport.substring(0, tableToImport.length() - 3);
 					}
 					if (tableToImport.contains(".")) {
-						tableToImport = tableToImport.substring(0, tableToImport.indexOf("."));
+						tableToImport = tableToImport.substring(0, tableToImport.lastIndexOf("."));
 					}
 				}
 
