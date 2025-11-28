@@ -258,7 +258,7 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 		return multiImportResult.toString();
 	}
 
-	public boolean wasErrorneous() {
+	public boolean wasErroneous() {
 		return multiImportHadError;
 	}
 

@@ -1044,7 +1044,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			System.out.println();
 			System.out.println("End of multiple file import.\nImported files: " + worker.getItemsDone());
 
-			if (worker.wasErrorneous()) {
+			if (worker.wasErroneous()) {
 				System.out.println(ConsoleUtilities.getAnsiColoredText(worker.getResult(), TextColor.Light_red));
 			} else if (dbImportDefinitionToExecute.isVerbose()) {
 				System.out.println(worker.getResult());

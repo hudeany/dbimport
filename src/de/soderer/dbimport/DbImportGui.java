@@ -1873,7 +1873,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 				}
 			} else {
 				Color backgroundColor = null;
-				if (worker.wasErrorneous()) {
+				if (worker.wasErroneous()) {
 					backgroundColor = SwingColor.LightRed;
 				}
 				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + worker.getResult()).setBackgroundColor(backgroundColor).open();
