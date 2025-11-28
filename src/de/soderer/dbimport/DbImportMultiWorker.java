@@ -68,8 +68,9 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 3);
 					}
 					if (tableNameToImport.contains(".")) {
-						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.indexOf("."));
+						tableNameToImport = tableNameToImport.substring(0, tableNameToImport.lastIndexOf("."));
 					}
+
 					if (!availableTables.contains(tableNameToImport)) {
 						notFoundTables.add(tableNameToImport);
 					}
