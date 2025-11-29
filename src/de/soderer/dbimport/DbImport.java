@@ -1335,11 +1335,33 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".gz")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 3);
 		}
+
+		if (Utilities.endsWithIgnoreCase(tableNameToImport, ".csv")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".xls")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".xlsx")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 5);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".json")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 5);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".jsn")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".kdbx")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 5);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".ods")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".sql")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".vcf")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".xml")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		}
+
 		if (tableNameToImport.contains("(") && tableNameToImport.indexOf(")") > tableNameToImport.indexOf("(")) {
 			tableNameToImport = tableNameToImport.substring(tableNameToImport.indexOf("(") + 1, tableNameToImport.indexOf(")"));
-		} else if (tableNameToImport.contains(".")) {
-			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.lastIndexOf("."));
 		}
+
 		return tableNameToImport;
 	}
 }
