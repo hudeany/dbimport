@@ -31,6 +31,7 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.csv.CsvDataException;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
+import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
@@ -141,6 +142,12 @@ public class DbSqlWorker extends DbImportWorker {
 					// Execute statements
 					String nextStatement;
 					while ((nextStatement = sqlScriptReader.readNextStatement()) != null) {
+						if (dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
+							if (Utilities.startsWithCaseinsensitive(nextStatement, "CREATE TABLE ")) {
+								nextStatement = nextStatement.replaceAll(" COMMENT '[^']*'", "");
+							}
+						}
+
 						try {
 							statement.execute(nextStatement);
 							validItems++;
