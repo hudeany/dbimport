@@ -143,8 +143,9 @@ public class DbSqlWorker extends DbImportWorker {
 					String nextStatement;
 					while ((nextStatement = sqlScriptReader.readNextStatement()) != null) {
 						if (dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
-							if (Utilities.startsWithCaseinsensitive(nextStatement, "CREATE TABLE ")) {
+							if (Utilities.startsWithCaseinsensitive(nextStatement, "CREATE TABLE ") && nextStatement.contains(" COMMENT ")) {
 								nextStatement = nextStatement.replaceAll("(?s) COMMENT '[^']*'", "");
+								logToFile(logOutputStream, "Ignored COMMENT in sql statement for PostgreSQL");
 							}
 						}
 
