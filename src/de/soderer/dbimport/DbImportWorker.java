@@ -1121,7 +1121,17 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		Closeable itemToCloseAfterwards = null;
 		if (dataValue == null) {
 			if (!isNullable) {
-				throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
+				if (simpleDataType == SimpleDataType.String) {
+					// If String column is not nullable, but data was an empty string which, was interpreted as null, then an empty String is used
+					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
+						preparedStatement.setString(columnIndex, "");
+					} else {
+						preparedStatement.setNString(columnIndex, "");
+					}
+					batchValueItem.add("");
+				} else {
+					throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
+				}
 			} else {
 				setNullParameter(preparedStatement, columnIndex, simpleDataType);
 				batchValueItem.add(null);
