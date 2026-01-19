@@ -14,8 +14,8 @@ Mandatory parameters for database import
 Optional parameters for database import
 	-data: Declare importfilepathOrData explicitly as inline data (No filepath)
 	-x importDataFormat: Data import format, default format is detected by file extension or, if it cannot be detected, default is CSV
-		importDataFormat: CSV | JSON | XML | SQL | EXCEL | ODS | VCF | KDBX
-	-dp <datapath>: Optional datapath within the XML-Data (XPath), JSON-Data or EXCEL/ODS-Data (Sheetname)
+		importDataFormat: CSV | JSON | YAML | XML | SQL | EXCEL | ODS | VCF | KDBX
+	-dp <datapath>: Optional datapath within the XML-Data (XPath), JSON-Data, YAML-Data or EXCEL/ODS-Data (Sheetname)
 	-sp <schemaFilePath>: Optional path to schema file for XML (XSD) or JSON
 	-m: Column mappings (Separated by semicolon or linebreak): When not configured a simple mapping by column names is used (Automapping)
 		Mapping entry format: dbcolumnname="data column name" <formatinfo>
@@ -25,7 +25,7 @@ Optional parameters for database import
 	-n 'NULL': Set a string for null values (Only for csv and xml, default is '')
 	-l: Log import information in .log files
 	-v: Progress and e.t.a. import in terminal
-	-e: Encoding for CSV and JSON data files and clob files (Default UTF-8)
+	-e: Encoding for CSV, YAML and JSON data files and clob files (Default UTF-8)
 	-s: Separator character, default ';', encapsulate by ' (for CSV)
 	-q: String quote character, default '"', encapsulate by ', 'null' or 'none' for empty (for CSV)
 	-qe: String quote escape character, default '"', encapsulate by ' (for CSV)
