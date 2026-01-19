@@ -42,6 +42,11 @@ import java.util.zip.GZIPInputStream;
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.dbimport.dataprovider.DataProvider;
+import de.soderer.json.JsonArray;
+import de.soderer.json.JsonNode;
+import de.soderer.json.JsonObject;
+import de.soderer.json.JsonReader;
+import de.soderer.network.NetworkUtilities;
 import de.soderer.utilities.CountingInputStream;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.InputStreamWithOtherItemsToClose;
@@ -58,11 +63,6 @@ import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.db.SimpleDataType;
-import de.soderer.utilities.json.JsonArray;
-import de.soderer.utilities.json.JsonNode;
-import de.soderer.utilities.json.JsonObject;
-import de.soderer.utilities.json.JsonReader;
-import de.soderer.utilities.json.utilities.NetworkUtilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 import de.soderer.utilities.zip.TarGzUtilities;
@@ -766,14 +766,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				throw new DbImportException("Invalid database structure file. Must contain JsonObject with table properties");
 			}
 
-			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode.getValue();
+			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode;
 
 			itemsToDo = dbStructureJsonObject.size();
 			itemsUnitSign = null;
 			itemsDone = 0;
 
 			JsonObject foundTableJsonObject = null;
-			for (final Entry<String, Object> tableEntry : dbStructureJsonObject.entrySet()) {
+			for (final Entry<String, Object> tableEntry : dbStructureJsonObject) {
 				final String currentTableName = tableEntry.getKey();
 				final JsonObject tableJsonObject = (JsonObject) tableEntry.getValue();
 				if (currentTableName.equalsIgnoreCase(tableNameToUse)) {
@@ -821,8 +821,8 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			}
 
 			List<String> keyColumnsToSet = null;
-			if (tableJsonObject.containsPropertyKey("keycolumns")) {
-				keyColumnsToSet = ((JsonArray) tableJsonObject.get("keycolumns")).stream().map(String.class::cast).collect(Collectors.toList());
+			if (tableJsonObject.containsKey("keycolumns")) {
+				keyColumnsToSet = ((JsonArray) tableJsonObject.get("keycolumns")).items().stream().map(String.class::cast).collect(Collectors.toList());
 			}
 
 			String primaryKeyPart = "";
@@ -839,15 +839,15 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	}
 
 	private String getColumnNameAndType(final JsonObject columnJsonObject) throws Exception {
-		final String name = DbUtilities.escapeVendorReservedNames(dbDefinition.getDbVendor(), (String) columnJsonObject.get("name"));
-		final SimpleDataType simpleDataType = SimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.get("datatype"));
+		final String name = DbUtilities.escapeVendorReservedNames(dbDefinition.getDbVendor(), (String) columnJsonObject.getSimpleValue("name"));
+		final SimpleDataType simpleDataType = SimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
 		int characterByteSize = -1;
-		if (columnJsonObject.containsPropertyKey("datasize")) {
-			characterByteSize = (Integer) columnJsonObject.get("datasize");
+		if (columnJsonObject.containsKey("datasize")) {
+			characterByteSize = (Integer) columnJsonObject.getSimpleValue("datasize");
 		}
 
 		Object defaultvalue = null;
-		if (columnJsonObject.containsPropertyKey("defaultvalue")) {
+		if (columnJsonObject.containsKey("defaultvalue")) {
 			defaultvalue = columnJsonObject.get("defaultvalue");
 		}
 		String defaultvaluePart = "";

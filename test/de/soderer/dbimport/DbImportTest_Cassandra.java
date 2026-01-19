@@ -14,6 +14,9 @@ import org.junit.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
+import de.soderer.json.JsonArray;
+import de.soderer.json.JsonObject;
+import de.soderer.json.JsonWriter;
 import de.soderer.utilities.BOM;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
@@ -22,9 +25,6 @@ import de.soderer.utilities.WildcardFilenameFilter;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.json.JsonArray;
-import de.soderer.utilities.json.JsonObject;
-import de.soderer.utilities.json.JsonWriter;
 import de.soderer.utilities.xml.XmlUtilities;
 
 public class DbImportTest_Cassandra {
@@ -1078,7 +1078,7 @@ public class DbImportTest_Cassandra {
 			jsonObject.add("id", 1);
 			jsonObject.add("column int", 1);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_text", " aBcDeF1235_1");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1098,7 +1098,7 @@ public class DbImportTest_Cassandra {
 			jsonObject.add("id", 2);
 			jsonObject.add("column int", 2);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_text", " aBcDeF1235_2");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1118,7 +1118,7 @@ public class DbImportTest_Cassandra {
 			jsonObject.add("id", 3);
 			jsonObject.add("column int", 3);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_text", " aBcDeF1235_3");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1128,7 +1128,7 @@ public class DbImportTest_Cassandra {
 			jsonObject.add("id", 4);
 			jsonObject.add("column int", 4);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_text", " aBcDeF1235_4");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");

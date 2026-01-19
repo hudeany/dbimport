@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import de.soderer.json.JsonArray;
+import de.soderer.json.JsonNode;
+import de.soderer.json.JsonObject;
+import de.soderer.json.JsonReader;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.collection.CaseInsensitiveSet;
@@ -16,10 +20,6 @@ import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.db.SimpleDataType;
-import de.soderer.utilities.json.JsonArray;
-import de.soderer.utilities.json.JsonNode;
-import de.soderer.utilities.json.JsonObject;
-import de.soderer.utilities.json.JsonReader;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
@@ -70,12 +70,12 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 				throw new DbImportException("Invalid database structure file. Must contain JsonObject with table properties");
 			}
 
-			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode.getValue();
+			final JsonObject dbStructureJsonObject = (JsonObject) dbStructureJsonNode;
 
 			itemsToDo = dbStructureJsonObject.size();
 			itemsDone = 0;
 
-			for (final Entry<String, Object> tableEntry : dbStructureJsonObject.entrySet()) {
+			for (final Entry<String, Object> tableEntry : dbStructureJsonObject) {
 				final String tableName = tableEntry.getKey();
 				parent.changeTitle(LangResources.get("workingOnTable", tableName));
 				final JsonObject tableJsonObject = (JsonObject) tableEntry.getValue();
@@ -87,7 +87,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 					final JsonArray tableColumnsJsonArray = (JsonArray) tableJsonObject.get("columns");
 					for (final Object columnObject : tableColumnsJsonArray) {
 						final JsonObject columnJsonObject = (JsonObject) columnObject;
-						final String columnName = (String) columnJsonObject.get("name");
+						final String columnName = (String) columnJsonObject.getSimpleValue("name");
 						if (!columnNames.contains(columnName)) {
 							createTableColumn(connection, tableName, columnJsonObject);
 							createdColumns++;
@@ -140,7 +140,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 				columnsPart = columnsPart + getColumnNameAndType(columnJsonObject);
 			}
 
-			final List<String> keyColumns = ((JsonArray) tableJsonObject.get("keycolumns")).stream().map(String.class::cast).collect(Collectors.toList());
+			final List<String> keyColumns = ((JsonArray) tableJsonObject.get("keycolumns")).items().stream().map(String.class::cast).collect(Collectors.toList());
 
 			String primaryKeyPart = "";
 			if (Utilities.isNotEmpty(keyColumns)) {
@@ -169,16 +169,16 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 	}
 
 	private String getColumnNameAndType(final JsonObject columnJsonObject) throws Exception {
-		final String name = DbUtilities.escapeVendorReservedNames(dbDefinition.getDbVendor(), (String) columnJsonObject.get("name"));
-		final SimpleDataType simpleDataType = SimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.get("datatype"));
+		final String name = DbUtilities.escapeVendorReservedNames(dbDefinition.getDbVendor(), (String) columnJsonObject.getSimpleValue("name"));
+		final SimpleDataType simpleDataType = SimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
 		int characterByteSize = -1;
-		if (columnJsonObject.containsPropertyKey("datasize")) {
-			characterByteSize = (Integer) columnJsonObject.get("datasize");
+		if (columnJsonObject.containsKey("datasize")) {
+			characterByteSize = (Integer) columnJsonObject.getSimpleValue("datasize");
 		}
 
 		String defaultvalue = null;
-		if (columnJsonObject.containsPropertyKey("defaultvalue")) {
-			defaultvalue = (String) columnJsonObject.get("defaultvalue");
+		if (columnJsonObject.containsKey("defaultvalue")) {
+			defaultvalue = (String) columnJsonObject.getSimpleValue("defaultvalue");
 		}
 		String defaultvaluePart = "";
 		if (defaultvalue != null) {

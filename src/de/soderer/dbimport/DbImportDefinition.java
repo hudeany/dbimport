@@ -17,6 +17,7 @@ import de.soderer.dbimport.dataprovider.KdbxDataProvider;
 import de.soderer.dbimport.dataprovider.OdsDataProvider;
 import de.soderer.dbimport.dataprovider.VcfDataProvider;
 import de.soderer.dbimport.dataprovider.XmlDataProvider;
+import de.soderer.dbimport.dataprovider.YamlDataProvider;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.Utilities;
@@ -31,6 +32,7 @@ public class DbImportDefinition extends DbDefinition {
 	public enum DataType {
 		CSV,
 		JSON,
+		YAML,
 		XML,
 		SQL,
 		EXCEL,
@@ -566,6 +568,17 @@ public class DbImportDefinition extends DbDefinition {
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json.tgz")
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json.gz")) {
 					setDataType(DataType.JSON);
+				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.zip")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.tar.gz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.tgz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.gz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.zip")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.tar.gz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.tgz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.gz")) {
+					setDataType(DataType.YAML);
 				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls")
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls.zip")
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls.tar.gz")
@@ -648,7 +661,7 @@ public class DbImportDefinition extends DbDefinition {
 			}
 		}
 
-		if (Utilities.isNotEmpty(dataPath) && dataType != DataType.XML && dataType != DataType.JSON && dataType != DataType.EXCEL && dataType != DataType.ODS) {
+		if (Utilities.isNotEmpty(dataPath) && dataType != DataType.XML && dataType != DataType.JSON && dataType != DataType.YAML && dataType != DataType.EXCEL && dataType != DataType.ODS) {
 			throw new DbImportException("DataPath is not supported for data format " + dataType);
 		}
 
@@ -693,6 +706,9 @@ public class DbImportDefinition extends DbDefinition {
 					break;
 				case JSON:
 					dataTypeToExecute = DataType.JSON;
+					break;
+				case YAML:
+					dataTypeToExecute = DataType.YAML;
 					break;
 				case KDBX:
 					dataTypeToExecute = DataType.KDBX;
@@ -756,6 +772,13 @@ public class DbImportDefinition extends DbDefinition {
 						getZipPassword(),
 						getDataPath(),
 						getSchemaFilePath());
+				break;
+			case YAML:
+				dataProvider = new YamlDataProvider(
+						isInlineData(),
+						importFileOrData,
+						getZipPassword(),
+						getDataPath());
 				break;
 			case KDBX:
 				dataProvider = new KdbxDataProvider(

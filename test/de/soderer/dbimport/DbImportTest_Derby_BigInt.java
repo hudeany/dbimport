@@ -13,14 +13,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import de.soderer.json.JsonArray;
+import de.soderer.json.JsonObject;
+import de.soderer.json.JsonWriter;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.json.JsonArray;
-import de.soderer.utilities.json.JsonObject;
-import de.soderer.utilities.json.JsonWriter;
 
 public class DbImportTest_Derby_BigInt {
 	public static final String DERBY_DB_PATH = System.getProperty("user.home") + File.separator + "temp" + File.separator + "test.derby";
@@ -161,7 +161,7 @@ public class DbImportTest_Derby_BigInt {
 			jsonObject = new JsonObject();
 			jsonObject.add("column bigint", 1);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_1");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -179,7 +179,7 @@ public class DbImportTest_Derby_BigInt {
 			jsonObject = new JsonObject();
 			jsonObject.add("column bigint", 2);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_2");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -197,7 +197,7 @@ public class DbImportTest_Derby_BigInt {
 			jsonObject = new JsonObject();
 			jsonObject.add("column bigint", 3);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_3");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -206,7 +206,7 @@ public class DbImportTest_Derby_BigInt {
 			jsonObject = new JsonObject();
 			jsonObject.add("column bigint", 4);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_4");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");

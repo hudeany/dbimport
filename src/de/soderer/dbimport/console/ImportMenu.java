@@ -243,7 +243,7 @@ public class ImportMenu extends ConsoleMenu {
 				autoCompletionStrings.add("data");
 				System.out.println("  " + Utilities.rightPad("x)", bulletSize) + " " + Utilities.rightPad("Importformat:", nameSize) + (dbImportDefinition.getDataType() != null ? dbImportDefinition.getDataType().name() : "by file extension"));
 				autoCompletionStrings.add("x");
-				if (dbImportDefinition.getDataType() == DataType.JSON || dbImportDefinition.getDataType() == DataType.XML || dbImportDefinition.getDataType() == DataType.EXCEL || dbImportDefinition.getDataType() == DataType.ODS || dbImportDefinition.getDataType() == DataType.VCF) {
+				if (dbImportDefinition.getDataType() == DataType.JSON || dbImportDefinition.getDataType() == DataType.YAML || dbImportDefinition.getDataType() == DataType.XML || dbImportDefinition.getDataType() == DataType.EXCEL || dbImportDefinition.getDataType() == DataType.ODS || dbImportDefinition.getDataType() == DataType.VCF) {
 					System.out.println("  " + Utilities.rightPad("dp)", bulletSize) + " " + Utilities.rightPad("Data path:", nameSize) + dbImportDefinition.getDataPath());
 					autoCompletionStrings.add("dp");
 				}
@@ -261,7 +261,7 @@ public class ImportMenu extends ConsoleMenu {
 				autoCompletionStrings.add("l");
 				System.out.println("  " + Utilities.rightPad("v)", bulletSize) + " " + Utilities.rightPad("Verbose terminal output:", nameSize) + dbImportDefinition.isVerbose());
 				autoCompletionStrings.add("v");
-				if (dbImportDefinition.getDataType() == DataType.CSV || dbImportDefinition.getDataType() == DataType.JSON) {
+				if (dbImportDefinition.getDataType() == DataType.CSV || dbImportDefinition.getDataType() == DataType.JSON || dbImportDefinition.getDataType() == DataType.YAML) {
 					System.out.println("  " + Utilities.rightPad("e)", bulletSize) + " " + Utilities.rightPad("Output encoding:", nameSize) + dbImportDefinition.getEncoding());
 					autoCompletionStrings.add("e");
 				}

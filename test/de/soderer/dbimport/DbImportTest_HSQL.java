@@ -15,33 +15,49 @@ import org.junit.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
+import de.soderer.json.JsonArray;
+import de.soderer.json.JsonObject;
+import de.soderer.json.JsonWriter;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.json.JsonArray;
-import de.soderer.utilities.json.JsonObject;
-import de.soderer.utilities.json.JsonWriter;
 import de.soderer.utilities.xml.XmlUtilities;
 import de.soderer.utilities.zip.TarGzUtilities;
+import de.soderer.yaml.YamlWriter;
+import de.soderer.yaml.data.YamlDocument;
+import de.soderer.yaml.data.YamlMapping;
+import de.soderer.yaml.data.YamlSequence;
 
 public class DbImportTest_HSQL {
-	public static final String HSQL_DB_FILE = System.getProperty("user.home") + File.separator + "temp" + File.separator + "test.hsql";
+	public static final String HSQL_DB_FILE = System.getProperty("user.home") + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test.hsql";
 
 	public static final String[] DATA_TYPES = new String[] { "INTEGER", "DOUBLE", "VARCHAR(1024)", "BLOB", "CLOB", "TIMESTAMP", "DATE" };
 
-	public static File TEMP_DIR = new File(Utilities.replaceUsersHome("~" + File.separator + "temp"));
+	public static File TEMP_DIR = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "DbImportTest"));
 
 	public static File INPUTFILE_CSV = new File(TEMP_DIR, "test_tbl.csv");
 	public static File INPUTFILE_CSV2 = new File(TEMP_DIR, "test2_tbl.csv");
 	public static File INPUTFILE_JSON = new File(TEMP_DIR, "test_tbl.json");
+	public static File INPUTFILE_YAML = new File(TEMP_DIR, "test_tbl.yaml");
 	public static File INPUTFILE_XML = new File(TEMP_DIR, "test_tbl.xml");
 	public static File BLOB_DATA_FILE = new File(TEMP_DIR, "test.blob");
 
 	@BeforeClass
 	public static void setupTestClass() throws Exception {
+	}
+
+	@Before
+	public void setup() throws Exception {
+		if (TEMP_DIR.exists()) {
+			FileUtilities.delete(TEMP_DIR);
+		}
+		if (!TEMP_DIR.exists()) {
+			TEMP_DIR.mkdirs();
+		}
+
 		try {
 			DbUtilities.deleteDatabase(DbVendor.HSQL, HSQL_DB_FILE);
 		} catch (@SuppressWarnings("unused") final Exception e) {
@@ -51,19 +67,6 @@ public class DbImportTest_HSQL {
 		try (Connection connection = DbUtilities.createNewDatabase(DbVendor.HSQL, HSQL_DB_FILE)) {
 			// Just close the connection
 		}
-	}
-
-	@Before
-	public void setup() throws Exception {
-		if (!TEMP_DIR.exists()) {
-			TEMP_DIR.mkdirs();
-		}
-
-		INPUTFILE_CSV.delete();
-		INPUTFILE_CSV2.delete();
-		INPUTFILE_JSON.delete();
-		INPUTFILE_XML.delete();
-		BLOB_DATA_FILE.delete();
 
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.HSQL, "", HSQL_DB_FILE, "", null), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
@@ -80,11 +83,9 @@ public class DbImportTest_HSQL {
 
 	@After
 	public void tearDown() throws Exception {
-		INPUTFILE_CSV.delete();
-		INPUTFILE_CSV2.delete();
-		INPUTFILE_JSON.delete();
-		INPUTFILE_XML.delete();
-		BLOB_DATA_FILE.delete();
+		if (TEMP_DIR.exists()) {
+			FileUtilities.delete(TEMP_DIR);
+		}
 
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.HSQL, "", HSQL_DB_FILE, "", null), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
@@ -106,11 +107,6 @@ public class DbImportTest_HSQL {
 
 	@AfterClass
 	public static void tearDownTestClass() throws Exception {
-		try {
-			DbUtilities.deleteDatabase(DbVendor.HSQL, HSQL_DB_FILE);
-		} catch (@SuppressWarnings("unused") final Exception e) {
-			// Do nothing
-		}
 	}
 
 	private void createEmptyTestTable() throws Exception {
@@ -210,7 +206,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv"
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv"
 			}));
 			Assert.assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
@@ -235,7 +231,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping
 			}));
 			Assert.assertEquals(
@@ -267,7 +263,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping
 			}));
 
@@ -298,7 +294,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-t"
 			}));
@@ -326,7 +322,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-t"
 			}));
@@ -356,7 +352,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping
 			}));
 
@@ -386,7 +382,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping
 			}));
 
@@ -414,7 +410,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-c"
 			}));
@@ -451,7 +447,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "INSERT",
 					"-k", "column_integer"
@@ -494,7 +490,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPDATE",
 					"-k", "column_integer"
@@ -535,7 +531,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPDATE",
 					"-k", "column_integer",
@@ -577,7 +573,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer"
@@ -621,7 +617,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer",
@@ -665,7 +661,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer",
@@ -706,7 +702,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer",
@@ -743,7 +739,7 @@ public class DbImportTest_HSQL {
 					HSQL_DB_FILE,
 					"-create",
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer",
@@ -776,7 +772,7 @@ public class DbImportTest_HSQL {
 					HSQL_DB_FILE,
 					"-create",
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer",
@@ -813,7 +809,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 1);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_1");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -831,7 +827,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 2);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_2");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -849,7 +845,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 3);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_3");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -858,7 +854,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 4);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_4");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -885,7 +881,7 @@ public class DbImportTest_HSQL {
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
 					"-x", "JSON",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.json",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.json",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer"
@@ -910,7 +906,6 @@ public class DbImportTest_HSQL {
 
 	@Test
 	public void testXmlImportUpsert() {
-		final JsonWriter jsonWriter = null;
 		try {
 			createEmptyTestTable();
 			prefillTestTable();
@@ -991,7 +986,7 @@ public class DbImportTest_HSQL {
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
 					"-x", "XML",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.xml",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.xml",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer"
@@ -1008,8 +1003,6 @@ public class DbImportTest_HSQL {
 							exportTestTable());
 		} catch (final Exception e) {
 			Assert.fail(e.getMessage());
-		} finally {
-			Utilities.closeQuietly(jsonWriter);
 		}
 	}
 
@@ -1038,7 +1031,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-d", DuplicateMode.MAKE_UNIQUE_JOIN.toString(),
@@ -1084,7 +1077,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer",
@@ -1133,7 +1126,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-u",
 					"-m", mapping,
 					"-i", "UPSERT",
@@ -1346,7 +1339,7 @@ public class DbImportTest_HSQL {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
-					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "*.csv",
 					"-i", "CLEARINSERT",
 					"-table", "*"
 			}));
@@ -1388,7 +1381,7 @@ public class DbImportTest_HSQL {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
-					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "*.csv",
 					"-i", "CLEARINSERT",
 					"-table", "*",
 					"-dateformat", "yyyy-MM-dd",
@@ -1432,7 +1425,7 @@ public class DbImportTest_HSQL {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
-					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "*.csv",
 					"-i", "CLEARINSERT",
 					"-table", "*",
 					"-dateformat", "yyyy-MM-dd HH:mm",
@@ -1476,7 +1469,7 @@ public class DbImportTest_HSQL {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
-					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "*.csv",
 					"-i", "CLEARINSERT",
 					"-table", "*",
 					"-dateformat", "yyyy-MM-dd",
@@ -1537,7 +1530,7 @@ public class DbImportTest_HSQL {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
-					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "*.csv",
 					"-i", "CLEARINSERT",
 					"-table", "*",
 					"-dateformat", "yyyy-MM-dd",
@@ -1599,7 +1592,7 @@ public class DbImportTest_HSQL {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
-					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "*.csv",
 					"-i", "CLEARINSERT",
 					"-table", "*",
 					"-dateformat", "yyyy-MM-dd",
@@ -1650,7 +1643,7 @@ public class DbImportTest_HSQL {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
-					"-import", "~" + File.separator + "temp" + File.separator + "*.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "*.csv",
 					"-i", "CLEARINSERT",
 					"-table", "*",
 					"-deactivatefk",
@@ -1808,7 +1801,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer",
@@ -1863,7 +1856,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 1);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_1");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1881,7 +1874,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 2);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_2");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1899,7 +1892,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 3);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_3");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1908,7 +1901,7 @@ public class DbImportTest_HSQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 4);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_4");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1934,7 +1927,7 @@ public class DbImportTest_HSQL {
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
-					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.json",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.json",
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer"
@@ -1954,6 +1947,117 @@ public class DbImportTest_HSQL {
 			Assert.fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
+		}
+	}
+
+	@Test
+	public void testYamlImportUpsertWithoutDatatypeParameter() {
+		try {
+			createEmptyTestTable();
+			prefillTestTable();
+
+			final YamlSequence yamlSequence = new YamlSequence();
+
+			YamlMapping yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 1);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", " aBcDeF123_1");
+			yamlMapping.add("column_clob", " aBcDeF1234");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 1);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", null);
+			yamlMapping.add("column_clob", " aBcDeF1235_1");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 2);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", " aBcDeF123_2");
+			yamlMapping.add("column_clob", " aBcDeF1234");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 2);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", null);
+			yamlMapping.add("column_clob", " aBcDeF1235_2");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 3);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", " aBcDeF123_3");
+			yamlMapping.add("column_clob", " aBcDeF1234");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 3);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", null);
+			yamlMapping.add("column_clob", " aBcDeF1235_3");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 4);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", null);
+			yamlMapping.add("column_clob", " aBcDeF1235_4");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			yamlMapping = new YamlMapping();
+			yamlMapping.add("column integer", 5);
+			yamlMapping.add("column_double", 123.456);
+			yamlMapping.add("column_varchar", " aBcDeF123_5");
+			yamlMapping.add("column_clob", " aBcDeF1234");
+			yamlMapping.add("column_timestamp", "01.02.2003 11:12:13");
+			yamlMapping.add("column_date", "01.03.2003 21:22:23");
+			yamlSequence.add(yamlMapping);
+
+			try (YamlWriter yamlWriter = new YamlWriter(new FileOutputStream(INPUTFILE_YAML), StandardCharsets.UTF_8)) {
+				yamlWriter.writeDocument(new YamlDocument().setRoot(yamlSequence));
+			}
+
+			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
+			Assert.assertEquals(0, DbImport._main(new String[] {
+					"hsql",
+					"",
+					HSQL_DB_FILE,
+					"-table", "test_tbl",
+					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.yaml",
+					"-m", mapping,
+					"-i", "UPSERT",
+					"-k", "column_integer"
+			}));
+
+			Assert.assertEquals(
+					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
+							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
+							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
+							+ "3;;;;;999;;\"<test_text>_999\"\n"
+							+ "4;; aBcDeF1235_4;2003-03-01;123.456E0;4;2003-02-01 11:12:13.000000;\n"
+							+ "5;; aBcDeF1234;2003-03-01;123.456E0;5;2003-02-01 11:12:13.000000; aBcDeF123_5\n"
+							+ "6;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000;\n",
+
+							exportTestTable());
+		} catch (final Exception e) {
+			Assert.fail(e.getMessage());
 		}
 	}
 }

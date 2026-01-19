@@ -14,6 +14,9 @@ import org.junit.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
+import de.soderer.json.JsonArray;
+import de.soderer.json.JsonObject;
+import de.soderer.json.JsonWriter;
 import de.soderer.utilities.BOM;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
@@ -22,9 +25,6 @@ import de.soderer.utilities.WildcardFilenameFilter;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.json.JsonArray;
-import de.soderer.utilities.json.JsonObject;
-import de.soderer.utilities.json.JsonWriter;
 import de.soderer.utilities.xml.XmlUtilities;
 
 public class DbImportTest_MySQL {
@@ -1144,7 +1144,7 @@ public class DbImportTest_MySQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 1);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_1");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1162,7 +1162,7 @@ public class DbImportTest_MySQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 2);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_2");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1180,7 +1180,7 @@ public class DbImportTest_MySQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 3);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_3");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
@@ -1189,7 +1189,7 @@ public class DbImportTest_MySQL {
 			jsonObject = new JsonObject();
 			jsonObject.add("column integer", 4);
 			jsonObject.add("column_double", 123.456);
-			jsonObject.add("column_varchar", null);
+			jsonObject.addNull("column_varchar");
 			jsonObject.add("column_clob", " aBcDeF1235_4");
 			jsonObject.add("column_timestamp", "01.02.2003 11:12:13");
 			jsonObject.add("column_date", " 01.03.2003 21:22:23");
