@@ -92,14 +92,14 @@
 			</fileset>
 		</path>
 
-		<javac debug="true" nowarn="true" deprecation="false" destdir="${buildPath}/bin" fork="yes" source="1.8" target="1.8" srcdir="src" includeantruntime="false" encoding="UTF-8" classpath="lib/*">			
+		<javac debug="true" nowarn="true" deprecation="false" destdir="${buildPath}/bin" fork="yes" source="15" target="15" srcdir="src" includeantruntime="false" encoding="UTF-8" classpath="lib/*">			
 			<classpath refid="build.classpath" />
 			<compilerarg value="-Xlint:unchecked" />
 			<compilerarg value="-parameters" />
 		</javac>
 
 		<copy todir="${buildPath}/bin">
-			<fileset dir="src">
+			<fileset dir="src/main/resources">
 				<include name="**/LanguageProperties*.properties" />
 				<include name="**/*.txt" />
 			</fileset>
@@ -112,8 +112,8 @@
 
 		<delete file="${buildPath}/bin/version.txt" />
 		<echo file="${buildPath}/bin/version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
-		<delete file="src/version.txt" />
-		<echo file="src/version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
+		<delete file="src/main/resources/version.txt" />
+		<echo file="src/main/resources/version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
 	</target>
 
 	<target name="create_jar" depends="compile, create_versionfile">
@@ -130,8 +130,8 @@
 			<zipfileset file="${CaPublicKeyOld}" />
 			<zipfileset dir="lib" includes="*.jar" excludes="*sources.jar" />
 			<zipfileset dir="lib_db" includes="*.jar" />
-			<zipfileset dir="src" includes="DbImport_Icon.png" />
-			<zipfileset dir="src" includes="DbImport.ico" />
+			<zipfileset dir="src/main/resources" includes="DbImport_Icon.png" />
+			<zipfileset dir="src/main/resources" includes="DbImport.ico" />
 		</jar>
 			
 		<jar destfile="${buildPath}/DbImport.jar">
@@ -147,8 +147,8 @@
 			<zipfileset file="${CaPublicKeyOld}" />
 			<zipfileset dir="lib" includes="*.jar" excludes="*sources.jar" />
 			<zipfileset dir="lib_db" includes="*.jar" />
-			<zipfileset dir="src" includes="DbImport_Icon.png" />
-			<zipfileset dir="src" includes="DbImport.ico" />
+			<zipfileset dir="src/main/resources" includes="DbImport_Icon.png" />
+			<zipfileset dir="src/main/resources" includes="DbImport.ico" />
 		</jar>
 	</target>
 
