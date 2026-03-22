@@ -30,7 +30,7 @@ import de.soderer.dbimport.console.HelpMenu;
 import de.soderer.dbimport.console.ImportMenu;
 import de.soderer.dbimport.console.PreferencesMenu;
 import de.soderer.dbimport.console.UpdateMenu;
-import de.soderer.network.TrustManagerUtilities;
+import de.soderer.network.trustmanager.TrustManagerUtilities;
 import de.soderer.pac.PacScriptParser;
 import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
