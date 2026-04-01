@@ -129,10 +129,13 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 
 				importedDataSize += subWorker.getImportedDataAmount();
 
-				final String tableImportShortResult = tableToImport + " (" + fileToImport.getName() + ", " + Utilities.getHumanReadableNumber(subWorker.getImportedDataAmount(), "Byte", false, 5, false, Locale.getDefault()) + ")";
+				final String tableImportShortResult = tableToImport + " (" + fileToImport.getName() + ", " + subWorker.getImportedDataItems() + " data items, " + Utilities.getHumanReadableNumber(subWorker.getImportedDataAmount(), "Byte", false, 5, false, Locale.getDefault()) + ")";
 				if (subWorker.getError() != null) {
 					multiImportHadError = true;
 					multiImportResult.append(tableImportShortResult + ": ERROR (" + subWorker.getError().getMessage().replace("\n", "") + ")\n");
+				} else if (subWorker.getNotImportedItems().size() > 0) {
+					multiImportHadError = true;
+					multiImportResult.append(tableImportShortResult + ": ERROR (Not imported errorneous data items: " + subWorker.getNotImportedItems().size() + ")\n");
 				} else {
 					multiImportResult.append(tableImportShortResult + ": OK\n");
 				}
