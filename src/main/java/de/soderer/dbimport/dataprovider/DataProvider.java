@@ -139,6 +139,8 @@ public abstract class DataProvider implements Closeable {
 				dataTypes.put(propertyKey, new DbColumnType("BIGINT", -1, -1, -1, true, false));
 			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Date && currentType != SimpleDataType.DateTime && NumberUtilities.isDouble(currentValue) && currentValue.trim().length() <= 20) {
 				dataTypes.put(propertyKey, new DbColumnType("DOUBLE", -1, -1, -1, true, false));
+			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Date && currentType != SimpleDataType.Float && currentType != SimpleDataType.Integer && currentType != SimpleDataType.BigInteger && currentType != SimpleDataType.DateTime && ("true".equalsIgnoreCase(currentValue) || "false".equalsIgnoreCase(currentValue))) {
+				dataTypes.put(propertyKey, new DbColumnType("BOOLEAN", -1, -1, -1, true, false));
 			} else {
 				dataTypes.put(propertyKey, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyKey) == null ? 0 : dataTypes.get(propertyKey).getCharacterByteSize(), currentValue.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false));
 			}

@@ -152,6 +152,10 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				if ("email".equalsIgnoreCase(dbColumnName)) {
 					optionalComboBox.setSelectedItem("LowerCase");
 				}
+			} else if (dbColumnType.getSimpleDataType() == SimpleDataType.Boolean) {
+				optionalComboBox = new JComboBox<>();
+				optionalComboBox.addItem("");
+				mappingEntryPanel.add(optionalComboBox);
 			}
 
 			mappingPanel.add(mappingEntryPanel);

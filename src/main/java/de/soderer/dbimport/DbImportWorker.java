@@ -1548,6 +1548,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setNString(columnIndex, (String) dataValue);
 				}
 				batchValueItem.add(dataValue);
+			} else if (simpleDataType == SimpleDataType.Boolean) {
+				preparedStatement.setBoolean(columnIndex, Utilities.interpretAsBool((String) dataValue));
+				batchValueItem.add(dataValue);
 			} else if (simpleDataType == SimpleDataType.DateTime) {
 				throw new DbImportException("Date field to insert without mapping date format for column '" + columnName + "'");
 			} else if (simpleDataType == SimpleDataType.Date) {

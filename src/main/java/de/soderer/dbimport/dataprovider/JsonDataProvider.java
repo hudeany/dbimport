@@ -119,6 +119,8 @@ public class JsonDataProvider extends DataProvider {
 							dataTypes.put(propertyName, new DbColumnType("INTEGER", -1, -1, -1, true, false));
 						} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.DateTime && (propertyValue instanceof Float || propertyValue instanceof Double)) {
 							dataTypes.put(propertyName, new DbColumnType("DOUBLE", -1, -1, -1, true, false));
+						} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Date && currentType != SimpleDataType.Float && currentType != SimpleDataType.Integer && currentType != SimpleDataType.BigInteger && currentType != SimpleDataType.DateTime && propertyValue instanceof Boolean) {
+							dataTypes.put(propertyName, new DbColumnType("BOOLEAN", -1, -1, -1, true, false));
 						} else {
 							dataTypes.put(propertyName, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyName) == null ? 0 : dataTypes.get(propertyName).getCharacterByteSize(), propertyValue.toString().getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false));
 						}
