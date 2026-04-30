@@ -560,7 +560,12 @@ public class DbImportDefinition extends DbDefinition {
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.zip")
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.tar.gz")
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.gz")) {
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.gz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.zip")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.tar.gz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.tgz")
+						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.gz")) {
 					setDataType(DataType.CSV);
 				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json")
 						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json.zip")
