@@ -14,10 +14,10 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.collection.CaseInsensitiveSet;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.utilities.CaseInsensitiveSet;
 
 public class DbImportTest_Oracle {
 	public static final String HOSTNAME = System.getenv().get("HOSTNAME_ORACLE_TEST");
@@ -157,7 +157,7 @@ public class DbImportTest_Oracle {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			final CaseInsensitiveSet columnNames = DbUtilities.getColumnNames(connection, "test_tbl");
 			columnNames.remove(orderColumn);
-			return DbUtilities.readout(connection, "SELECT " + orderColumn + ", " + Utilities.join(Utilities.asSortedList(columnNames), ", ").toLowerCase() + " FROM test_tbl ORDER BY " + orderColumn, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readout(connection, "SELECT " + orderColumn + ", " + Utilities.join(Utilities.asSortedList(columnNames), ", ").toLowerCase() + " FROM test_tbl ORDER BY " + orderColumn, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -166,7 +166,7 @@ public class DbImportTest_Oracle {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
-			return DbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;

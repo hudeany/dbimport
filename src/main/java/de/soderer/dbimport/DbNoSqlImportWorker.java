@@ -21,12 +21,12 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.collection.CaseInsensitiveSet;
 import de.soderer.utilities.db.DbColumnType;
 import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.db.SimpleDataType;
+import de.soderer.utilities.db.utilities.CaseInsensitiveSet;
 import de.soderer.utilities.worker.WorkerParentSimple;
 
 public class DbNoSqlImportWorker extends DbImportWorker {

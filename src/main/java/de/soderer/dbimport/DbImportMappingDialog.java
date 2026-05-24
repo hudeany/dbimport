@@ -26,9 +26,9 @@ import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Triple;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.collection.CaseInsensitiveMap;
 import de.soderer.utilities.db.DbColumnType;
 import de.soderer.utilities.db.SimpleDataType;
+import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
 import de.soderer.utilities.swing.ModalDialog;
 
 public class DbImportMappingDialog extends ModalDialog<Boolean> {

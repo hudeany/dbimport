@@ -177,7 +177,7 @@ public class DbImportTest_HSQL {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.HSQL, "", HSQL_DB_FILE, "", null), false)) {
-			return DbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -186,7 +186,7 @@ public class DbImportTest_HSQL {
 
 	private String exportTest2Table() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.HSQL, "", HSQL_DB_FILE, "", null), false)) {
-			return DbUtilities.readoutTable(connection, "test2_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test2_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;

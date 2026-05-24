@@ -22,6 +22,7 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
+import de.soderer.utilities.db.DbDefinitionException;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 import de.soderer.utilities.worker.WorkerParentSimple;
 
@@ -549,8 +550,19 @@ public class DbImportDefinition extends DbDefinition {
 		this.preventBatchFallbackToSingleLineOnErrors = preventBatchFallbackToSingleLineOnErrors;
 	}
 
+	@Override
 	public void checkParameters() throws Exception {
-		super.checkParameters(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE);
+		if (getDbVendor() != null) {
+			try {
+				if (!new DbDriverSupplier(null, getDbVendor()).supplyDriver(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE)) {
+					throw new DbDefinitionException("Cannot aquire database driver for database vendor: " + getDbVendor());
+				}
+			} catch (final Exception e) {
+				throw new DbDefinitionException("Cannot aquire database driver for database vendor: " + getDbVendor(), e);
+			}
+		}
+
+		super.checkParameters();
 
 		if (importFilePathOrData == null) {
 			throw new DbImportException("ImportFilePath or data is missing");

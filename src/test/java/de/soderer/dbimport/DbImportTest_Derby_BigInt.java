@@ -133,7 +133,7 @@ public class DbImportTest_Derby_BigInt {
 
 	private String exportTestTable(final String columns) throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false)) {
-			return DbUtilities.readout(connection, "SELECT " + columns + " FROM test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readout(connection, "SELECT " + columns + " FROM test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;

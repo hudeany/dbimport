@@ -145,7 +145,7 @@ public class DbImportTest_SQLite {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.SQLite, "", SQLITE_DB_FILE, "", null), false)) {
-			return DbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -154,7 +154,7 @@ public class DbImportTest_SQLite {
 
 	private String export(final String tablename) throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.SQLite, "", SQLITE_DB_FILE, "", null), false)) {
-			return DbUtilities.readout(connection, tablename, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readout(connection, tablename, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;

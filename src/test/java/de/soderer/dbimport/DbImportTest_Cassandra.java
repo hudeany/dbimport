@@ -121,7 +121,7 @@ public class DbImportTest_Cassandra {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false)) {
-			return DbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;

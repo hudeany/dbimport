@@ -16,7 +16,6 @@
 	<classpathentry kind="lib" path="lib_db/orai18n-23.3.0.23.09.jar"/>
 	<classpathentry kind="lib" path="lib_db/mariadb-java-client-3.3.3.jar"/>
 	<classpathentry kind="lib" path="lib_db/mysql-connector-j-8.3.0.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.1.36.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections4-4.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-compress-1.24.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.14.0.jar"/>
@@ -39,6 +38,12 @@
 	<classpathentry kind="lib" path="lib_test/hamcrest-2.2.jar"/>
 	<classpathentry kind="lib" path="lib_test/hamcrest-core-2.2.jar"/>
 	<classpathentry kind="lib" path="lib_test/junit-4.13.2.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/OpenJDK-17.0.2"/>
+	<classpathentry kind="lib" path="lib/dbutilities-26.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/OpenJDK-17.0.2">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

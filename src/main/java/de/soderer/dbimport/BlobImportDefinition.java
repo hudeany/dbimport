@@ -4,6 +4,7 @@ import java.io.File;
 
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbDefinition;
+import de.soderer.utilities.db.DbDefinitionException;
 import de.soderer.utilities.db.DbUtilities.DbVendor;
 
 public class BlobImportDefinition extends DbDefinition {
@@ -33,8 +34,19 @@ public class BlobImportDefinition extends DbDefinition {
 		this.importFilePath = Utilities.replaceUsersHome(importFilePath);
 	}
 
+	@Override
 	public void checkParameters() throws Exception {
-		super.checkParameters(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE);
+		if (getDbVendor() != null) {
+			try {
+				if (!new DbDriverSupplier(null, getDbVendor()).supplyDriver(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE)) {
+					throw new DbDefinitionException("Cannot aquire database driver for database vendor: " + getDbVendor());
+				}
+			} catch (final Exception e) {
+				throw new DbDefinitionException("Cannot aquire database driver for database vendor: " + getDbVendor(), e);
+			}
+		}
+
+		super.checkParameters();
 
 		if (Utilities.isBlank(blobImportStatement)) {
 			throw new DbImportException("BlobImportStatement is missing");

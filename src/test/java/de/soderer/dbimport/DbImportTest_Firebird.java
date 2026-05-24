@@ -106,7 +106,7 @@ public class DbImportTest_Firebird {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
-			return DbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
