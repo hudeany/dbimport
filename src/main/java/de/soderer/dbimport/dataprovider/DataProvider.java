@@ -192,7 +192,8 @@ public abstract class DataProvider implements Closeable {
 					} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
 						inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(importFile)));
 					} else {
-						inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(importFile), importFile.getAbsolutePath()));
+						InputStreamWithOtherItemsToClose inputStreamWithOtherItemsToClose = new InputStreamWithOtherItemsToClose(new FileInputStream(importFile), importFile.getAbsolutePath());
+						inputStream = new CountingInputStream(inputStreamWithOtherItemsToClose);
 					}
 					return inputStream;
 				} catch (final Exception e) {
