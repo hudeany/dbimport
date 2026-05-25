@@ -38,11 +38,16 @@ public class SqlDdlMigrationDialog extends JDialog {
 	private final JTextField sourceFileField;
 	private final JTextField destinationFileField;
 	private final JTextField outputFileField;
-	private final JCheckBox mergeCheckBox;
-	private final JButton generateButton;
+
+	private final JCheckBox sortBySchemaCheckBox;
+	private final JCheckBox sortByTableCheckBox;
+	private final JCheckBox sortByColumnCheckBox;
+
+	private final JButton generateMigrationButton;
+	private final JButton generateMergeButton;
 
 	public SqlDdlMigrationDialog(final Frame parent) {
-		super(parent, DbImport.APPLICATION_NAME + " - DDL Migration", true);
+		super(parent, DbImport.APPLICATION_NAME + " - DDL Migration / Merge", true);
 
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
@@ -63,17 +68,17 @@ public class SqlDdlMigrationDialog extends JDialog {
 		sourceFileField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 
 			@Override
 			public void removeUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 
 			@Override
 			public void changedUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 		});
 		sourcePanel.add(sourceFileField);
@@ -86,7 +91,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 				final File selected = chooseSqlFile(sourceFileField.getText(), LangResources.get("sourceFile"));
 				if (selected != null) {
 					sourceFileField.setText(selected.getAbsolutePath());
-					checkGenerateButtonStatus();
+					checkButtonStatus();
 				}
 			}
 		});
@@ -106,17 +111,17 @@ public class SqlDdlMigrationDialog extends JDialog {
 		destinationFileField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 
 			@Override
 			public void removeUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 
 			@Override
 			public void changedUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 		});
 		destinationPanel.add(destinationFileField);
@@ -130,7 +135,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 						LangResources.get("destinationFile"));
 				if (selected != null) {
 					destinationFileField.setText(selected.getAbsolutePath());
-					checkGenerateButtonStatus();
+					checkButtonStatus();
 				}
 			}
 		});
@@ -150,17 +155,17 @@ public class SqlDdlMigrationDialog extends JDialog {
 		outputFileField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 
 			@Override
 			public void removeUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 
 			@Override
 			public void changedUpdate(final DocumentEvent e) {
-				checkGenerateButtonStatus();
+				checkButtonStatus();
 			}
 		});
 		outputPanel.add(outputFileField);
@@ -173,7 +178,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 				final File selected = saveSqlFile(outputFileField.getText(), LangResources.get("outputFile"));
 				if (selected != null) {
 					outputFileField.setText(selected.getAbsolutePath());
-					checkGenerateButtonStatus();
+					checkButtonStatus();
 				}
 			}
 		});
@@ -182,40 +187,49 @@ public class SqlDdlMigrationDialog extends JDialog {
 
 		add(Box.createRigidArea(new Dimension(0, 5)));
 
-		final JPanel modePanel = new JPanel();
-		modePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		final JPanel sortPanel = new JPanel();
+		sortPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
-		mergeCheckBox = new JCheckBox(LangResources.get("mergeMode"));
-		mergeCheckBox.setToolTipText(LangResources.get("mergeMode_help"));
-		mergeCheckBox.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				final boolean isMerge = mergeCheckBox.isSelected();
-				generateButton.setText(LangResources.get(isMerge ? "generateMerge" : "generateMigration"));
-				setTitle(DbImport.APPLICATION_NAME + " - " + LangResources.get(isMerge ? "merge" : "migration"));
-			}
-		});
-		modePanel.add(mergeCheckBox);
-		add(modePanel);
+		sortBySchemaCheckBox = new JCheckBox(LangResources.get("sortBySchema"));
+		sortBySchemaCheckBox.setToolTipText(LangResources.get("sortBySchema_help"));
+		sortPanel.add(sortBySchemaCheckBox);
+
+		sortByTableCheckBox = new JCheckBox(LangResources.get("sortByTable"));
+		sortByTableCheckBox.setToolTipText(LangResources.get("sortByTable_help"));
+		sortPanel.add(sortByTableCheckBox);
+
+		sortByColumnCheckBox = new JCheckBox(LangResources.get("sortByColumn"));
+		sortByColumnCheckBox.setToolTipText(LangResources.get("sortByColumn_help"));
+		sortPanel.add(sortByColumnCheckBox);
+
+		add(sortPanel);
 
 		add(Box.createRigidArea(new Dimension(0, 5)));
 
 		final JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
-		generateButton = new JButton(LangResources.get("generateMigration"));
-		generateButton.setEnabled(false);
-		generateButton.addActionListener(new ActionListener() {
+		generateMigrationButton = new JButton(LangResources.get("generateMigration"));
+		generateMigrationButton.setEnabled(false);
+		generateMigrationButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
-				if (mergeCheckBox.isSelected()) {
-					runMerge(dialog);
-				} else {
-					runMigration(dialog);
-				}
+				runMigration(dialog);
 			}
 		});
-		buttonPanel.add(generateButton);
+		buttonPanel.add(generateMigrationButton);
+
+		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+
+		generateMergeButton = new JButton(LangResources.get("generateMerge"));
+		generateMergeButton.setEnabled(false);
+		generateMergeButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent event) {
+				runMerge(dialog);
+			}
+		});
+		buttonPanel.add(generateMergeButton);
 
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
@@ -234,11 +248,14 @@ public class SqlDdlMigrationDialog extends JDialog {
 		setLocationRelativeTo(parent);
 	}
 
-	private void checkGenerateButtonStatus() {
-		final boolean sourceOk = isExistingFile(sourceFileField.getText());
+	private void checkButtonStatus() {
+		final boolean sourceOk      = isExistingFile(sourceFileField.getText());
 		final boolean destinationOk = isExistingFile(destinationFileField.getText());
-		final boolean outputOk = Utilities.isNotBlank(outputFileField.getText()) && isValidPath(outputFileField.getText());
-		generateButton.setEnabled(sourceOk && destinationOk && outputOk);
+		final boolean outputOk      = Utilities.isNotBlank(outputFileField.getText())
+				&& isValidPath(outputFileField.getText());
+		final boolean allOk = sourceOk && destinationOk && outputOk;
+		generateMigrationButton.setEnabled(allOk);
+		generateMergeButton.setEnabled(allOk);
 	}
 
 	private static boolean isExistingFile(final String path) {
@@ -250,8 +267,9 @@ public class SqlDdlMigrationDialog extends JDialog {
 	}
 
 	public static boolean isValidPath(final String path) {
-		if (path == null || path.isBlank())
+		if (path == null || path.isBlank()) {
 			return false;
+		}
 		try {
 			Paths.get(path);
 			return true;
@@ -261,11 +279,10 @@ public class SqlDdlMigrationDialog extends JDialog {
 	}
 
 	private void runMigration(final SqlDdlMigrationDialog dialog) {
-		final File sourceFile = new File(sourceFileField.getText().trim());
+		final File sourceFile      = new File(sourceFileField.getText().trim());
 		final File destinationFile = new File(destinationFileField.getText().trim());
-		final File outputFile = new File(outputFileField.getText().trim());
+		final File outputFile      = new File(outputFileField.getText().trim());
 
-		// Basic validation
 		if (!sourceFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nSource file does not exist:\n" + sourceFile.getAbsolutePath())
@@ -289,7 +306,10 @@ public class SqlDdlMigrationDialog extends JDialog {
 				final FileInputStream dstStream = new FileInputStream(destinationFile);
 				final FileOutputStream outStream = new FileOutputStream(outputFile)) {
 
-			SqlDdlMigrationGenerator.diff(srcStream, dstStream, outStream);
+			SqlDdlMigrationGenerator.diff(srcStream, dstStream, outStream,
+					sortBySchemaCheckBox.isSelected(),
+					sortByTableCheckBox.isSelected(),
+					sortByColumnCheckBox.isSelected());
 
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " OK",
 					"Migration script successfully written to:\n" + outputFile.getAbsolutePath())
@@ -305,9 +325,9 @@ public class SqlDdlMigrationDialog extends JDialog {
 	}
 
 	private void runMerge(final SqlDdlMigrationDialog dialog) {
-		final File sourceFile = new File(sourceFileField.getText().trim());
+		final File sourceFile      = new File(sourceFileField.getText().trim());
 		final File destinationFile = new File(destinationFileField.getText().trim());
-		final File outputFile = new File(outputFileField.getText().trim());
+		final File outputFile      = new File(outputFileField.getText().trim());
 
 		if (!sourceFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
@@ -332,7 +352,10 @@ public class SqlDdlMigrationDialog extends JDialog {
 				final FileInputStream dstStream = new FileInputStream(destinationFile);
 				final FileOutputStream outStream = new FileOutputStream(outputFile)) {
 
-			SqlDdlMergeGenerator.merge(srcStream, dstStream, outStream);
+			SqlDdlMergeGenerator.merge(srcStream, dstStream, outStream,
+					sortBySchemaCheckBox.isSelected(),
+					sortByTableCheckBox.isSelected(),
+					sortByColumnCheckBox.isSelected());
 
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " OK",
 					"Merge DDL successfully written to:\n" + outputFile.getAbsolutePath())
