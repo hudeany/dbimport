@@ -47,7 +47,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 	private final JButton generateMergeButton;
 
 	public SqlDdlMigrationDialog(final Frame parent) {
-		super(parent, DbImport.APPLICATION_NAME + " - DDL Migration / Merge", true);
+		super(parent, DbImport.APPLICATION_NAME + " - SQL DDL Migration / Merge", true);
 
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
