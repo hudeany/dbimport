@@ -13,9 +13,9 @@ import org.junit.Test;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 
 public class DbImportTest_Firebird {
 	public static final String HOSTNAME = System.getenv().get("HOSTNAME_FIREBIRD_TEST");
@@ -31,7 +31,7 @@ public class DbImportTest_Firebird {
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				try (Statement statement = connection.createStatement()) {
 					statement.execute("DROP TABLE test_tbl");
@@ -47,7 +47,7 @@ public class DbImportTest_Firebird {
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				try (Statement statement = connection.createStatement()) {
 					statement.execute("DROP TABLE test_tbl");
@@ -60,7 +60,7 @@ public class DbImportTest_Firebird {
 	}
 
 	private void createEmptyTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			String dataColumnsPart = "";
 			String dataColumnsPartForInsert = "";
@@ -93,7 +93,7 @@ public class DbImportTest_Firebird {
 	}
 
 	private void prefillTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			statement.executeUpdate("INSERT INTO test_tbl (id, column_integer, column_varchar) VALUES (COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1), 1, '<test_text>_1')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''")));
 			statement.executeUpdate("INSERT INTO test_tbl (id, column_integer, column_varchar) VALUES (COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1), 3, '<test_text>_3')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''")));
@@ -105,7 +105,7 @@ public class DbImportTest_Firebird {
 	}
 
 	private String exportTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Firebird, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();

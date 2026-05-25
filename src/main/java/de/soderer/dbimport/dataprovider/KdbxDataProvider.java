@@ -17,8 +17,8 @@ import java.util.zip.ZipOutputStream;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbColumnType;
-import de.soderer.utilities.db.SimpleDataType;
+import de.soderer.utilities.db.data.DbColumnType;
+import de.soderer.utilities.db.data.DbSimpleDataType;
 import de.soderer.utilities.kdbx.KdbxDatabase;
 import de.soderer.utilities.kdbx.KdbxReader;
 import de.soderer.utilities.kdbx.KdbxWriter;
@@ -73,15 +73,15 @@ public class KdbxDataProvider extends DataProvider {
 						}
 					}
 
-					final SimpleDataType currentType = dataTypes.get(propertyName) == null ? null : dataTypes.get(propertyName).getSimpleDataType();
-					if (currentType != SimpleDataType.Blob) {
+					final DbSimpleDataType currentType = dataTypes.get(propertyName) == null ? null : dataTypes.get(propertyName).getSimpleDataType();
+					if (currentType != DbSimpleDataType.Blob) {
 						if (propertyValue == null) {
 							if (!dataTypes.containsKey(propertyName)) {
 								dataTypes.put(propertyName, null);
 							}
 						} else if ("file".equalsIgnoreCase(formatInfo) || (propertyValue instanceof String && ((String) propertyValue).length() > 4000)) {
 							dataTypes.put(propertyName, new DbColumnType("BLOB", -1, -1, -1, true, false, null));
-						} else if (currentType != SimpleDataType.String && Utilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && propertyValue instanceof String) {
+						} else if (currentType != DbSimpleDataType.String && Utilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && propertyValue instanceof String) {
 							final String value = ((String) propertyValue).trim();
 							try {
 								DateUtilities.parseLocalDateTime(formatInfo, value);
@@ -94,7 +94,7 @@ public class KdbxDataProvider extends DataProvider {
 									dataTypes.put(propertyName, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyName) == null ? 0 : dataTypes.get(propertyName).getCharacterByteSize(), value.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
 								}
 							}
-						} else if (currentType != SimpleDataType.String && Utilities.isBlank(formatInfo) && propertyValue instanceof String) {
+						} else if (currentType != DbSimpleDataType.String && Utilities.isBlank(formatInfo) && propertyValue instanceof String) {
 							final String value = ((String) propertyValue).trim();
 							try {
 								DateUtilities.parseLocalDateTime(DateUtilities.ISO_8601_DATETIME_FORMAT, value);
@@ -107,9 +107,9 @@ public class KdbxDataProvider extends DataProvider {
 									dataTypes.put(propertyName, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyName) == null ? 0 : dataTypes.get(propertyName).getCharacterByteSize(), value.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
 								}
 							}
-						} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.DateTime && currentType != SimpleDataType.Float && propertyValue instanceof Integer) {
+						} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.DateTime && currentType != DbSimpleDataType.Float && propertyValue instanceof Integer) {
 							dataTypes.put(propertyName, new DbColumnType("INTEGER", -1, -1, -1, true, false, null));
-						} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.DateTime && (propertyValue instanceof Float || propertyValue instanceof Double)) {
+						} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.DateTime && (propertyValue instanceof Float || propertyValue instanceof Double)) {
 							dataTypes.put(propertyName, new DbColumnType("DOUBLE", -1, -1, -1, true, false, null));
 						} else {
 							dataTypes.put(propertyName, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyName) == null ? 0 : dataTypes.get(propertyName).getCharacterByteSize(), propertyValue.toString().getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));

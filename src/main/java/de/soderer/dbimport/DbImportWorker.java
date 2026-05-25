@@ -57,12 +57,12 @@ import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.collection.CaseInsensitiveMap;
 import de.soderer.utilities.collection.CaseInsensitiveSet;
-import de.soderer.utilities.db.DbColumnType;
-import de.soderer.utilities.db.DbDefinition;
-import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.db.SimpleDataType;
+import de.soderer.utilities.db.data.DbColumnType;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbSimpleDataType;
+import de.soderer.utilities.db.data.DbVendor;
+import de.soderer.utilities.db.exception.DbNotExistsException;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 import de.soderer.utilities.zip.TarGzUtilities;
@@ -71,7 +71,7 @@ import de.soderer.utilities.zip.ZipUtilities;
 
 public class DbImportWorker extends WorkerSimple<Boolean> {
 	// Mandatory parameters
-	protected DbDefinition dbDefinition = null;
+	protected DbConnectionDefinition dbDefinition = null;
 	protected ImportMode importMode = ImportMode.INSERT;
 	protected DuplicateMode duplicateMode = DuplicateMode.UPDATE_ALL_JOIN;
 	protected List<String> keyColumns = null;
@@ -129,7 +129,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 	protected DataProvider dataProvider = null;
 
-	public DbImportWorker(final WorkerParentSimple parent, final DbDefinition dbDefinition, final String tableName, final String dateFormatPattern, final String dateTimeFormatPattern) {
+	public DbImportWorker(final WorkerParentSimple parent, final DbConnectionDefinition dbDefinition, final String tableName, final String dateFormatPattern, final String dateTimeFormatPattern) {
 		super(parent);
 
 		this.dbDefinition = dbDefinition;
@@ -840,7 +840,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 	private String getColumnNameAndType(final JsonObject columnJsonObject) throws Exception {
 		final String name = DbUtilities.escapeVendorReservedNames(dbDefinition.getDbVendor(), (String) columnJsonObject.getSimpleValue("name"));
-		final SimpleDataType simpleDataType = SimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
+		final DbSimpleDataType simpleDataType = DbSimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
 		int characterByteSize = -1;
 		if (columnJsonObject.containsKey("datasize")) {
 			characterByteSize = (Integer) columnJsonObject.getSimpleValue("datasize");
@@ -852,7 +852,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 		String defaultvaluePart = "";
 		if (defaultvalue != null) {
-			if (simpleDataType == SimpleDataType.String) {
+			if (simpleDataType == DbSimpleDataType.String) {
 				defaultvaluePart = defaultvalue.toString();
 				if (!defaultvaluePart.startsWith("'") || !defaultvaluePart.endsWith("'")) {
 					defaultvaluePart = "'" + defaultvaluePart + "'";
@@ -866,7 +866,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 		// "databasevendorspecific_datatype"
 
-		if (simpleDataType == SimpleDataType.String && characterByteSize < 0) {
+		if (simpleDataType == DbSimpleDataType.String && characterByteSize < 0) {
 			// Fallback for extremely large VARCHAR in PostgreSQL. Maybe better use CLOB
 			characterByteSize = 4000;
 		}
@@ -976,7 +976,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				try {
 					int i = 1;
 					for (final String dbColumnToInsert : dbTableColumnsListToInsert) {
-						final SimpleDataType simpleDataType = dbColumns.get(dbColumnToInsert).getSimpleDataType();
+						final DbSimpleDataType simpleDataType = dbColumns.get(dbColumnToInsert).getSimpleDataType();
 						final String unescapedDbColumnToInsert = DbUtilities.unescapeVendorReservedNames(dbDefinition.getDbVendor(), dbColumnToInsert);
 						final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
@@ -1112,7 +1112,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final PreparedStatement preparedStatement,
 			final int columnIndex,
 			final String columnName,
-			final SimpleDataType simpleDataType,
+			final DbSimpleDataType simpleDataType,
 			final boolean isNullable,
 			final Object dataValue,
 			final String formatInfo,
@@ -1121,7 +1121,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		Closeable itemToCloseAfterwards = null;
 		if (dataValue == null) {
 			if (!isNullable) {
-				if (simpleDataType == SimpleDataType.String) {
+				if (simpleDataType == DbSimpleDataType.String) {
 					// If String column is not nullable, but data was an empty string which, was interpreted as null, then an empty String is used
 					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
 						preparedStatement.setString(columnIndex, "");
@@ -1151,7 +1151,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 						preparedStatement.setDouble(columnIndex, value);
 						batchValueItem.add(value);
-					} else if (simpleDataType == SimpleDataType.Integer) {
+					} else if (simpleDataType == DbSimpleDataType.Integer) {
 						int value;
 						try {
 							value = Integer.parseInt(valueString);
@@ -1160,7 +1160,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 						preparedStatement.setInt(columnIndex, value);
 						batchValueItem.add(value);
-					} else if (simpleDataType == SimpleDataType.BigInteger) {
+					} else if (simpleDataType == DbSimpleDataType.BigInteger) {
 						long value;
 						try {
 							value = Long.parseLong(valueString);
@@ -1183,7 +1183,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 						preparedStatement.setDouble(columnIndex, value);
 						batchValueItem.add(value);
-					} else if (simpleDataType == SimpleDataType.Integer) {
+					} else if (simpleDataType == DbSimpleDataType.Integer) {
 						int value;
 						try {
 							value = Integer.parseInt(valueString);
@@ -1192,7 +1192,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 						preparedStatement.setInt(columnIndex, value);
 						batchValueItem.add(value);
-					} else if (simpleDataType == SimpleDataType.BigInteger) {
+					} else if (simpleDataType == DbSimpleDataType.BigInteger) {
 						long value;
 						try {
 							value = Long.parseLong(valueString);
@@ -1213,7 +1213,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						} else if (dbDefinition.getDbVendor() == DbVendor.MariaDB) {
 							throw new Exception("File size is too big for current database settings. Please adjust MariaDB server variable 'max_allowed_packet' to at least " + new File(valueString).length());
 						}
-					} else if (simpleDataType == SimpleDataType.Blob) {
+					} else if (simpleDataType == DbSimpleDataType.Blob) {
 						InputStream inputStream;
 						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
 							if (dataProvider.getZipPassword() != null) {
@@ -1336,7 +1336,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						preparedStatement.setNString(columnIndex, valueString);
 					}
 					batchValueItem.add(valueString);
-				} else if (simpleDataType == SimpleDataType.DateTime) {
+				} else if (simpleDataType == DbSimpleDataType.DateTime) {
 					final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
 					dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 					dateTimeFormatter.withZone(importDataZoneId);
@@ -1345,7 +1345,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					final Timestamp value = Timestamp.valueOf(localDateTimeValueForDb);
 					preparedStatement.setTimestamp(columnIndex, value);
 					batchValueItem.add(value);
-				} else if (simpleDataType == SimpleDataType.Date) {
+				} else if (simpleDataType == DbSimpleDataType.Date) {
 					final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
 					dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 					dateTimeFormatter.withZone(importDataZoneId);
@@ -1356,14 +1356,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				} else {
 					throw new DbImportException("Unknown data type for column '" + columnName + "': " + simpleDataType);
 				}
-			} else if (simpleDataType == SimpleDataType.DateTime) {
+			} else if (simpleDataType == DbSimpleDataType.DateTime) {
 				final String valueString = ((String) dataValue).trim();
 				LocalDateTime localDateTimeValueForDb;
 				if (Utilities.isBlank(valueString)) {
 					if (!isNullable) {
 						throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
 					} else {
-						setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+						setNullParameter(preparedStatement, columnIndex, DbSimpleDataType.DateTime);
 						batchValueItem.add(null);
 					}
 				} else {
@@ -1405,14 +1405,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setTimestamp(columnIndex, value);
 					batchValueItem.add(value);
 				}
-			} else if (simpleDataType == SimpleDataType.Date) {
+			} else if (simpleDataType == DbSimpleDataType.Date) {
 				final String valueString = ((String) dataValue).trim();
 				LocalDateTime localDateTimeValueForDb;
 				if (Utilities.isBlank(valueString)) {
 					if (!isNullable) {
 						throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
 					} else {
-						setNullParameter(preparedStatement, columnIndex, SimpleDataType.DateTime);
+						setNullParameter(preparedStatement, columnIndex, DbSimpleDataType.DateTime);
 						batchValueItem.add(null);
 					}
 				} else {
@@ -1468,11 +1468,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setTimestamp(columnIndex, value);
 					batchValueItem.add(value);
 				}
-			} else if (simpleDataType == SimpleDataType.Blob) {
+			} else if (simpleDataType == DbSimpleDataType.Blob) {
 				final byte[] value = Utilities.decodeBase64((String) dataValue);
 				preparedStatement.setBytes(columnIndex, value);
 				batchValueItem.add(value);
-			} else if (simpleDataType == SimpleDataType.Float) {
+			} else if (simpleDataType == DbSimpleDataType.Float) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.contains(".")) {
 					double value;
@@ -1493,7 +1493,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setInt(columnIndex, value);
 					batchValueItem.add(value);
 				}
-			} else if (simpleDataType == SimpleDataType.Integer) {
+			} else if (simpleDataType == DbSimpleDataType.Integer) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.equalsIgnoreCase("true")) {
 					preparedStatement.setInt(columnIndex, 1);
@@ -1520,7 +1520,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setInt(columnIndex, value);
 					batchValueItem.add(value);
 				}
-			} else if (simpleDataType == SimpleDataType.BigInteger) {
+			} else if (simpleDataType == DbSimpleDataType.BigInteger) {
 				final String valueString = ((String) dataValue).trim();
 				if (valueString.contains(".")) {
 					double value;
@@ -1541,19 +1541,19 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setLong(columnIndex, value);
 					batchValueItem.add(value);
 				}
-			} else if (simpleDataType == SimpleDataType.String || simpleDataType == SimpleDataType.Clob) {
+			} else if (simpleDataType == DbSimpleDataType.String || simpleDataType == DbSimpleDataType.Clob) {
 				if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
 					preparedStatement.setString(columnIndex, (String) dataValue);
 				} else {
 					preparedStatement.setNString(columnIndex, (String) dataValue);
 				}
 				batchValueItem.add(dataValue);
-			} else if (simpleDataType == SimpleDataType.Boolean) {
+			} else if (simpleDataType == DbSimpleDataType.Boolean) {
 				preparedStatement.setBoolean(columnIndex, Utilities.interpretAsBool((String) dataValue));
 				batchValueItem.add(dataValue);
-			} else if (simpleDataType == SimpleDataType.DateTime) {
+			} else if (simpleDataType == DbSimpleDataType.DateTime) {
 				throw new DbImportException("Date field to insert without mapping date format for column '" + columnName + "'");
-			} else if (simpleDataType == SimpleDataType.Date) {
+			} else if (simpleDataType == DbSimpleDataType.Date) {
 				throw new DbImportException("Date field to insert without mapping date format for column '" + columnName + "'");
 			} else {
 				throw new DbImportException("Unknown data type field to insert without mapping format for column '" + columnName + "'");
@@ -1567,7 +1567,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final Timestamp value = Timestamp.valueOf((LocalDateTime) dataValue);
 			preparedStatement.setTimestamp(columnIndex, value);
 			batchValueItem.add(value);
-		} else if (dataValue instanceof Number && simpleDataType == SimpleDataType.Float) {
+		} else if (dataValue instanceof Number && simpleDataType == DbSimpleDataType.Float) {
 			// Keep the right precision when inserting a float value to a double column
 			double value;
 			try {
@@ -1577,7 +1577,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			}
 			preparedStatement.setDouble(columnIndex, value);
 			batchValueItem.add(value);
-		} else if (dataValue instanceof MonthDay && simpleDataType == SimpleDataType.String) {
+		} else if (dataValue instanceof MonthDay && simpleDataType == DbSimpleDataType.String) {
 			final String value = dataValue.toString();
 			if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
 				preparedStatement.setString(columnIndex, value);
@@ -1592,23 +1592,23 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return itemToCloseAfterwards;
 	}
 
-	private void setNullParameter(final PreparedStatement preparedStatement, final int columnIndex, final SimpleDataType simpleDataType) throws SQLException {
-		if (simpleDataType == SimpleDataType.String) {
+	private void setNullParameter(final PreparedStatement preparedStatement, final int columnIndex, final DbSimpleDataType simpleDataType) throws SQLException {
+		if (simpleDataType == DbSimpleDataType.String) {
 			preparedStatement.setNull(columnIndex, java.sql.Types.VARCHAR);
 		} else if (dbDefinition.getDbVendor() == DbVendor.Oracle) {
-			if (simpleDataType == SimpleDataType.Date) {
+			if (simpleDataType == DbSimpleDataType.Date) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.TIMESTAMP);
-			} else if (simpleDataType == SimpleDataType.DateTime) {
+			} else if (simpleDataType == DbSimpleDataType.DateTime) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.TIMESTAMP);
-			} else if (simpleDataType == SimpleDataType.Float) {
+			} else if (simpleDataType == DbSimpleDataType.Float) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.DOUBLE);
-			} else if (simpleDataType == SimpleDataType.Integer) {
+			} else if (simpleDataType == DbSimpleDataType.Integer) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.INTEGER);
-			} else if (simpleDataType == SimpleDataType.BigInteger) {
+			} else if (simpleDataType == DbSimpleDataType.BigInteger) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.BIGINT);
-			} else if (simpleDataType == SimpleDataType.Clob) {
+			} else if (simpleDataType == DbSimpleDataType.Clob) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.CLOB);
-			} else if (simpleDataType == SimpleDataType.Blob) {
+			} else if (simpleDataType == DbSimpleDataType.Blob) {
 				preparedStatement.setNull(columnIndex, java.sql.Types.BLOB);
 			} else {
 				preparedStatement.setNull(columnIndex, 0);

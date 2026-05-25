@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbVendor;
+import de.soderer.utilities.db.exception.DbNotExistsException;
 import de.soderer.utilities.worker.WorkerDual;
 import de.soderer.utilities.worker.WorkerParentSimple;
 

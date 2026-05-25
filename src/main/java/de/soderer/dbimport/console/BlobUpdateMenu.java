@@ -15,12 +15,12 @@ import de.soderer.utilities.console.ConsoleUtilities;
 import de.soderer.utilities.console.ConsoleUtilities.TextColor;
 import de.soderer.utilities.console.PasswordConsoleInput;
 import de.soderer.utilities.console.SimpleConsoleInput;
-import de.soderer.utilities.db.DbDefinition;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 
 public class BlobUpdateMenu extends ConsoleMenu {
 	private BlobImportDefinition blobImportDefinition = new BlobImportDefinition();
-	private DbDefinition dbDefinitionCache = null;
+	private DbConnectionDefinition dbDefinitionCache = null;
 
 	public BlobImportDefinition getBlobImportDefinition() {
 		return blobImportDefinition;
@@ -30,7 +30,7 @@ public class BlobUpdateMenu extends ConsoleMenu {
 		this.blobImportDefinition = blobImportDefinition;
 	}
 
-	public BlobUpdateMenu(final ConsoleMenu parentMenu, final DbDefinition dbDefinitionCache) throws Exception {
+	public BlobUpdateMenu(final ConsoleMenu parentMenu, final DbConnectionDefinition dbDefinitionCache) throws Exception {
 		super(parentMenu, "Blob update");
 
 		this.dbDefinitionCache = dbDefinitionCache;

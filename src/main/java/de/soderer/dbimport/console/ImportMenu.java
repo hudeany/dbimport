@@ -24,7 +24,7 @@ import de.soderer.utilities.console.ConsoleUtilities.TextColor;
 import de.soderer.utilities.console.FilepathConsoleInput;
 import de.soderer.utilities.console.PasswordConsoleInput;
 import de.soderer.utilities.console.SimpleConsoleInput;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbVendor;
 
 public class ImportMenu extends ConsoleMenu {
 	private DbImportDefinition dbImportDefinition = new DbImportDefinition();

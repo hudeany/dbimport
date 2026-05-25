@@ -14,25 +14,25 @@ import de.soderer.json.JsonObject;
 import de.soderer.json.JsonReader;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbDefinition;
-import de.soderer.utilities.db.DbNotExistsException;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
-import de.soderer.utilities.db.SimpleDataType;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbSimpleDataType;
+import de.soderer.utilities.db.data.DbVendor;
+import de.soderer.utilities.db.exception.DbNotExistsException;
 import de.soderer.utilities.db.utilities.CaseInsensitiveSet;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
 public class DbStructureWorker extends WorkerSimple<Boolean> {
 	// Mandatory parameters
-	protected DbDefinition dbDefinition = null;
+	protected DbConnectionDefinition dbDefinition = null;
 
 	protected long createdTables = 0;
 	protected long createdColumns = 0;
 
 	protected InputStream jsonStructureDataInputStream;
 
-	public DbStructureWorker(final WorkerParentSimple parent, final DbDefinition dbDefinition, final InputStream jsonStructureDataInputStream) throws Exception {
+	public DbStructureWorker(final WorkerParentSimple parent, final DbConnectionDefinition dbDefinition, final InputStream jsonStructureDataInputStream) throws Exception {
 		super(parent);
 
 		this.dbDefinition = dbDefinition;
@@ -170,7 +170,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 
 	private String getColumnNameAndType(final JsonObject columnJsonObject) throws Exception {
 		final String name = DbUtilities.escapeVendorReservedNames(dbDefinition.getDbVendor(), (String) columnJsonObject.getSimpleValue("name"));
-		final SimpleDataType simpleDataType = SimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
+		final DbSimpleDataType simpleDataType = DbSimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
 		int characterByteSize = -1;
 		if (columnJsonObject.containsKey("datasize")) {
 			characterByteSize = (Integer) columnJsonObject.getSimpleValue("datasize");
@@ -182,7 +182,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 		}
 		String defaultvaluePart = "";
 		if (defaultvalue != null) {
-			if (simpleDataType == SimpleDataType.String) {
+			if (simpleDataType == DbSimpleDataType.String) {
 				defaultvaluePart = defaultvalue;
 				if (!defaultvaluePart.startsWith("'") || !defaultvaluePart.endsWith("'")) {
 					defaultvaluePart = "'" + defaultvaluePart + "'";

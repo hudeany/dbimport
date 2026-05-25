@@ -3,11 +3,11 @@ package de.soderer.dbimport;
 import java.io.File;
 
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbDefinition;
-import de.soderer.utilities.db.DbDefinitionException;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
+import de.soderer.utilities.db.exception.DbDefinitionException;
 
-public class BlobImportDefinition extends DbDefinition {
+public class BlobImportDefinition extends DbConnectionDefinition {
 	// Mandatory parameters
 
 	/** The blobImportStatement. */

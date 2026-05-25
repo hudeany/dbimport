@@ -14,9 +14,9 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.utilities.CaseInsensitiveSet;
 
 public class DbImportTest_Oracle {
@@ -33,7 +33,7 @@ public class DbImportTest_Oracle {
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				statement.execute("DROP TABLE test_tbl");
@@ -54,7 +54,7 @@ public class DbImportTest_Oracle {
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
@@ -73,7 +73,7 @@ public class DbImportTest_Oracle {
 	}
 
 	private void createEmptyTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			String dataColumnsPart = "";
 			String dataColumnsPartForInsert = "";
@@ -101,7 +101,7 @@ public class DbImportTest_Oracle {
 	}
 
 	private void createEmptyTestTableWithPrimaryKey() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			String dataColumnsPart = "";
 			String dataColumnsPartForInsert = "";
@@ -130,7 +130,7 @@ public class DbImportTest_Oracle {
 	}
 
 	private void prefillTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			statement.executeUpdate("INSERT INTO test_tbl (column_integer, column_varchar) VALUES (1, '<test_text>_1')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''")));
 			statement.executeUpdate("INSERT INTO test_tbl (column_integer, column_varchar) VALUES (3, '<test_text>_3')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''")));
@@ -142,7 +142,7 @@ public class DbImportTest_Oracle {
 	}
 
 	private void prefillTestTableWithPrimaryKey() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			statement.executeUpdate("INSERT INTO test_tbl (id, column_integer, column_varchar) VALUES (test_tbl_seq.NEXTVAL, 1, 'AbcÄ_1')");
 			statement.executeUpdate("INSERT INTO test_tbl (id, column_integer, column_varchar) VALUES (test_tbl_seq.NEXTVAL, 3, 'AbcÄ_3')");
@@ -154,7 +154,7 @@ public class DbImportTest_Oracle {
 	}
 
 	private String exportTestTableOrderBy(final String orderColumn) throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			final CaseInsensitiveSet columnNames = DbUtilities.getColumnNames(connection, "test_tbl");
 			columnNames.remove(orderColumn);
 			return TestDbUtilities.readout(connection, "SELECT " + orderColumn + ", " + Utilities.join(Utilities.asSortedList(columnNames), ", ").toLowerCase() + " FROM test_tbl ORDER BY " + orderColumn, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
@@ -165,7 +165,7 @@ public class DbImportTest_Oracle {
 	}
 
 	private String exportTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();

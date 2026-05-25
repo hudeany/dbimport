@@ -26,8 +26,8 @@ import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Triple;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbColumnType;
-import de.soderer.utilities.db.SimpleDataType;
+import de.soderer.utilities.db.data.DbColumnType;
+import de.soderer.utilities.db.data.DbSimpleDataType;
 import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
 import de.soderer.utilities.swing.ModalDialog;
 
@@ -114,14 +114,14 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 			JComboBox<String> optionalComboBox = null;
-			if (dbColumnType.getSimpleDataType() == SimpleDataType.Float
-					|| dbColumnType.getSimpleDataType() == SimpleDataType.Integer
-					|| dbColumnType.getSimpleDataType() == SimpleDataType.BigInteger) {
+			if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Float
+					|| dbColumnType.getSimpleDataType() == DbSimpleDataType.Integer
+					|| dbColumnType.getSimpleDataType() == DbSimpleDataType.BigInteger) {
 				optionalComboBox = new JComboBox<>();
 				optionalComboBox.addItem(".");
 				optionalComboBox.addItem(",");
 				mappingEntryPanel.add(optionalComboBox);
-			} else if (dbColumnType.getSimpleDataType() == SimpleDataType.DateTime) {
+			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.DateTime) {
 				optionalComboBox = new JComboBox<>();
 				optionalComboBox.setEditable(true);
 				optionalComboBox.addItem("dd.MM.yyyy HH:mm:ss");
@@ -129,7 +129,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				optionalComboBox.addItem("yyyy/MM/dd HH:mm:ss");
 				optionalComboBox.addItem("yyyy/MM/dd");
 				mappingEntryPanel.add(optionalComboBox);
-			} else if (dbColumnType.getSimpleDataType() == SimpleDataType.Date) {
+			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Date) {
 				optionalComboBox = new JComboBox<>();
 				optionalComboBox.setEditable(true);
 				optionalComboBox.addItem("dd.MM.yyyy HH:mm:ss");
@@ -137,12 +137,12 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				optionalComboBox.addItem("yyyy/MM/dd HH:mm:ss");
 				optionalComboBox.addItem("yyyy/MM/dd");
 				mappingEntryPanel.add(optionalComboBox);
-			} else if (dbColumnType.getSimpleDataType() == SimpleDataType.Blob || dbColumnType.getSimpleDataType() == SimpleDataType.Clob) {
+			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Blob || dbColumnType.getSimpleDataType() == DbSimpleDataType.Clob) {
 				optionalComboBox = new JComboBox<>();
 				optionalComboBox.addItem("");
 				optionalComboBox.addItem("file");
 				mappingEntryPanel.add(optionalComboBox);
-			} else if (dbColumnType.getSimpleDataType() == SimpleDataType.String) {
+			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.String) {
 				optionalComboBox = new JComboBox<>();
 				optionalComboBox.addItem("");
 				optionalComboBox.addItem("LowerCase");
@@ -152,7 +152,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				if ("email".equalsIgnoreCase(dbColumnName)) {
 					optionalComboBox.setSelectedItem("LowerCase");
 				}
-			} else if (dbColumnType.getSimpleDataType() == SimpleDataType.Boolean) {
+			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Boolean) {
 				optionalComboBox = new JComboBox<>();
 				optionalComboBox.addItem("");
 				mappingEntryPanel.add(optionalComboBox);

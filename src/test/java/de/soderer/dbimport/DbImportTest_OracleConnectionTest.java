@@ -7,9 +7,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 
 public class DbImportTest_OracleConnectionTest {
 	public static final String HOSTNAME = System.getenv().get("HOSTNAME_ORACLE_TEST");
@@ -25,7 +25,7 @@ public class DbImportTest_OracleConnectionTest {
 	public void testOracleConnections() {
 		try {
 			for (int i = 1; i <= 10; i++) {
-				try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+				try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 					System.out.println("Create connection OK " + i);
 				}
 			}

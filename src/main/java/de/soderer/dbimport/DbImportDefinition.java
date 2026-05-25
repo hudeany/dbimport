@@ -21,12 +21,12 @@ import de.soderer.dbimport.dataprovider.YamlDataProvider;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbDefinition;
-import de.soderer.utilities.db.DbDefinitionException;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
+import de.soderer.utilities.db.exception.DbDefinitionException;
 import de.soderer.utilities.worker.WorkerParentSimple;
 
-public class DbImportDefinition extends DbDefinition {
+public class DbImportDefinition extends DbConnectionDefinition {
 	/**
 	 * The Enum DataType.
 	 */
@@ -1016,10 +1016,10 @@ public class DbImportDefinition extends DbDefinition {
 	}
 
 	@Override
-	public void importParameters(final DbDefinition otherDbDefinition) {
-		super.importParameters(otherDbDefinition);
+	public void importParameters(final DbConnectionDefinition otherDbConnectionDefinition) {
+		super.importParameters(otherDbConnectionDefinition);
 
-		if (otherDbDefinition == null) {
+		if (otherDbConnectionDefinition == null) {
 			tableName = "*";
 			importFilePathOrData = null;
 			isInlineData = false;
@@ -1059,8 +1059,8 @@ public class DbImportDefinition extends DbDefinition {
 			dateTimeFormat = null;
 			batchBlockSize = 1000;
 			preventBatchFallbackToSingleLineOnErrors = false;
-		} else if (otherDbDefinition instanceof DbImportDefinition) {
-			final DbImportDefinition otherDbImportDefinition = (DbImportDefinition) otherDbDefinition;
+		} else if (otherDbConnectionDefinition instanceof DbImportDefinition) {
+			final DbImportDefinition otherDbImportDefinition = (DbImportDefinition) otherDbConnectionDefinition;
 			tableName = otherDbImportDefinition.getTableName();
 			importFilePathOrData = otherDbImportDefinition.getImportFilePathOrData();
 			isInlineData = otherDbImportDefinition.isInlineData();

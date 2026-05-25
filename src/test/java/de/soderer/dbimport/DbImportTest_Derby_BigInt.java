@@ -18,9 +18,9 @@ import de.soderer.json.JsonObject;
 import de.soderer.json.JsonWriter;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 
 public class DbImportTest_Derby_BigInt {
 	public static final String DERBY_DB_PATH = System.getProperty("user.home") + File.separator + "temp" + File.separator + "test.derby";
@@ -50,7 +50,7 @@ public class DbImportTest_Derby_BigInt {
 		INPUTFILE_XML.delete();
 		BLOB_DATA_FILE.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false);
 				Statement statement = connection.createStatement()) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				statement.execute("DROP TABLE test_tbl");
@@ -68,7 +68,7 @@ public class DbImportTest_Derby_BigInt {
 		INPUTFILE_XML.delete();
 		BLOB_DATA_FILE.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				try (Statement statement = connection.createStatement()) {
 					statement.execute("DROP TABLE test_tbl");
@@ -93,7 +93,7 @@ public class DbImportTest_Derby_BigInt {
 	}
 
 	private void createEmptyTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false);
 				Statement statement = connection.createStatement()) {
 			String dataColumnsPart = "";
 			String dataColumnsPartForInsert = "";
@@ -120,7 +120,7 @@ public class DbImportTest_Derby_BigInt {
 	}
 
 	private void prefillTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false);
 				Statement statement = connection.createStatement()) {
 			statement.executeUpdate("INSERT INTO test_tbl (column_bigint, column_varchar) VALUES (1, '<test_text>_1')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''")));
 			statement.executeUpdate("INSERT INTO test_tbl (column_bigint, column_varchar) VALUES (3, '<test_text>_3')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''")));
@@ -132,7 +132,7 @@ public class DbImportTest_Derby_BigInt {
 	}
 
 	private String exportTestTable(final String columns) throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false)) {
 			return TestDbUtilities.readout(connection, "SELECT " + columns + " FROM test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();

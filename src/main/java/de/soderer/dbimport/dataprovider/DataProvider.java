@@ -20,8 +20,8 @@ import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.NumberUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.db.DbColumnType;
-import de.soderer.utilities.db.SimpleDataType;
+import de.soderer.utilities.db.data.DbColumnType;
+import de.soderer.utilities.db.data.DbSimpleDataType;
 import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
@@ -71,15 +71,15 @@ public abstract class DataProvider implements Closeable {
 			}
 		}
 
-		final SimpleDataType currentType = dataTypes.get(propertyKey) == null ? null : dataTypes.get(propertyKey).getSimpleDataType();
-		if (currentType != SimpleDataType.Blob) {
+		final DbSimpleDataType currentType = dataTypes.get(propertyKey) == null ? null : dataTypes.get(propertyKey).getSimpleDataType();
+		if (currentType != DbSimpleDataType.Blob) {
 			if (Utilities.isEmpty(currentValue)) {
 				if (!dataTypes.containsKey(propertyKey)) {
 					dataTypes.put(propertyKey, null);
 				}
 			} else if ("file".equalsIgnoreCase(formatInfo) || currentValue.length() > 4000) {
 				dataTypes.put(propertyKey, new DbColumnType("BLOB", -1, -1, -1, true, false, null));
-			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Integer && currentType != SimpleDataType.BigInteger && currentType != SimpleDataType.Float && currentType != SimpleDataType.Blob && currentType != SimpleDataType.Clob && Utilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && !"lc".equalsIgnoreCase(formatInfo) && !"uc".equalsIgnoreCase(formatInfo)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && Utilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && !"lc".equalsIgnoreCase(formatInfo) && !"uc".equalsIgnoreCase(formatInfo)) {
 				try {
 					DateUtilities.parseLocalDateTime(formatInfo, currentValue.trim());
 					if (formatInfo != null && (formatInfo.toLowerCase().contains("h") || formatInfo.contains("m") || formatInfo.toLowerCase().contains("s"))) {
@@ -98,7 +98,7 @@ public abstract class DataProvider implements Closeable {
 						dataTypes.put(propertyKey, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyKey) == null ? 0 : dataTypes.get(propertyKey).getCharacterByteSize(), currentValue.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
 					}
 				}
-			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Integer && currentType != SimpleDataType.BigInteger && currentType != SimpleDataType.Float && currentType != SimpleDataType.Blob && currentType != SimpleDataType.Clob && currentType != SimpleDataType.Date && Utilities.isBlank(formatInfo)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && currentType != DbSimpleDataType.Date && Utilities.isBlank(formatInfo)) {
 				try {
 					DateUtilities.parseLocalDateTime(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()), currentValue.trim());
 					dataTypes.put(propertyKey, new DbColumnType("TIMESTAMP", -1, -1, -1, true, false, null));
@@ -118,7 +118,7 @@ public abstract class DataProvider implements Closeable {
 						}
 					}
 				}
-			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Integer && currentType != SimpleDataType.BigInteger && currentType != SimpleDataType.Float && currentType != SimpleDataType.Blob && currentType != SimpleDataType.Clob && currentType != SimpleDataType.DateTime && Utilities.isBlank(formatInfo)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && currentType != DbSimpleDataType.DateTime && Utilities.isBlank(formatInfo)) {
 				try {
 					DateUtilities.parseLocalDate(DateUtilities.getDateFormatPattern(Locale.getDefault()), currentValue.trim());
 					dataTypes.put(propertyKey, new DbColumnType("DATE", -1, -1, -1, true, false, null));
@@ -133,13 +133,13 @@ public abstract class DataProvider implements Closeable {
 						dataTypes.put(propertyKey, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyKey) == null ? 0 : dataTypes.get(propertyKey).getCharacterByteSize(), currentValue.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
 					}
 				}
-			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Date && currentType != SimpleDataType.DateTime && currentType != SimpleDataType.Float && NumberUtilities.isInteger(currentValue)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Date && currentType != DbSimpleDataType.DateTime && currentType != DbSimpleDataType.Float && NumberUtilities.isInteger(currentValue)) {
 				dataTypes.put(propertyKey, new DbColumnType("INTEGER", -1, -1, -1, true, false, null));
-			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Date && currentType != SimpleDataType.DateTime && currentType != SimpleDataType.Float && NumberUtilities.isBigInteger(currentValue)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Date && currentType != DbSimpleDataType.DateTime && currentType != DbSimpleDataType.Float && NumberUtilities.isBigInteger(currentValue)) {
 				dataTypes.put(propertyKey, new DbColumnType("BIGINT", -1, -1, -1, true, false, null));
-			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Date && currentType != SimpleDataType.DateTime && NumberUtilities.isDouble(currentValue) && currentValue.trim().length() <= 20) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Date && currentType != DbSimpleDataType.DateTime && NumberUtilities.isDouble(currentValue) && currentValue.trim().length() <= 20) {
 				dataTypes.put(propertyKey, new DbColumnType("DOUBLE", -1, -1, -1, true, false, null));
-			} else if (currentType != SimpleDataType.String && currentType != SimpleDataType.Date && currentType != SimpleDataType.Float && currentType != SimpleDataType.Integer && currentType != SimpleDataType.BigInteger && currentType != SimpleDataType.DateTime && ("true".equalsIgnoreCase(currentValue) || "false".equalsIgnoreCase(currentValue))) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Date && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.DateTime && ("true".equalsIgnoreCase(currentValue) || "false".equalsIgnoreCase(currentValue))) {
 				dataTypes.put(propertyKey, new DbColumnType("BOOLEAN", -1, -1, -1, true, false, null));
 			} else {
 				dataTypes.put(propertyKey, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyKey) == null ? 0 : dataTypes.get(propertyKey).getCharacterByteSize(), currentValue.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
@@ -192,7 +192,7 @@ public abstract class DataProvider implements Closeable {
 					} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
 						inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(importFile)));
 					} else {
-						InputStreamWithOtherItemsToClose inputStreamWithOtherItemsToClose = new InputStreamWithOtherItemsToClose(new FileInputStream(importFile), importFile.getAbsolutePath());
+						final InputStreamWithOtherItemsToClose inputStreamWithOtherItemsToClose = new InputStreamWithOtherItemsToClose(new FileInputStream(importFile), importFile.getAbsolutePath());
 						inputStream = new CountingInputStream(inputStreamWithOtherItemsToClose);
 					}
 					return inputStream;

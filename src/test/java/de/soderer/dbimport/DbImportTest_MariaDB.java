@@ -23,9 +23,9 @@ import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.WildcardFilenameFilter;
-import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.xml.XmlUtilities;
 
 public class DbImportTest_MariaDB {
@@ -50,7 +50,7 @@ public class DbImportTest_MariaDB {
 		INPUTFILE_XML.delete();
 		BLOB_DATA_FILE.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				try (Statement statement = connection.createStatement()) {
 					statement.execute("DROP TABLE test_tbl");
@@ -71,7 +71,7 @@ public class DbImportTest_MariaDB {
 		INPUTFILE_XML.delete();
 		BLOB_DATA_FILE.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				try (Statement statement = connection.createStatement()) {
 					statement.execute("DROP TABLE test_tbl");
@@ -84,7 +84,7 @@ public class DbImportTest_MariaDB {
 	}
 
 	private void createEmptyTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			String dataColumnsPart = "";
 			String dataColumnsPartForInsert = "";
@@ -114,7 +114,7 @@ public class DbImportTest_MariaDB {
 	}
 
 	private void prefillTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			statement.executeUpdate("INSERT INTO test_tbl (column_integer, column_varchar) VALUES (1, '<test_text>_1')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''").replace("\\", "\\\\")));
 			statement.executeUpdate("INSERT INTO test_tbl (column_integer, column_varchar) VALUES (3, '<test_text>_3')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''").replace("\\", "\\\\")));
@@ -126,7 +126,7 @@ public class DbImportTest_MariaDB {
 	}
 
 	private String exportTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -135,7 +135,7 @@ public class DbImportTest_MariaDB {
 	}
 
 	private String exportTestTableColumns(final String columnsPart) throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.MariaDB, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			return TestDbUtilities.readout(connection, "SELECT " + columnsPart + " FROM test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();

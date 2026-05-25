@@ -25,7 +25,7 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.csv.CsvFormat;
 import de.soderer.utilities.csv.CsvWriter;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbVendor;
 
 public class TestDbUtilities {
 	public static String readout(final DataSource dataSource, final String statementString, final char separator, final Character stringQuote) throws Exception {

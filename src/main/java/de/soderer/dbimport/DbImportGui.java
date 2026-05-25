@@ -59,9 +59,9 @@ import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.VersionInfo;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
-import de.soderer.utilities.db.DbColumnType;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbColumnType;
+import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
 import de.soderer.utilities.swing.ApplicationConfigurationDialog;
 import de.soderer.utilities.swing.DualProgressDialog;
@@ -1044,6 +1044,20 @@ public class DbImportGui extends UpdateableGuiApplication {
 		});
 		buttonPanel.add(mappingButton);
 
+		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+
+		// Migration Button
+		final JButton migrationButton = new JButton(LangResources.get("migration"));
+		migrationButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent event) {
+				showMigrationDialog();
+			}
+		});
+		buttonPanel.add(migrationButton);
+
+		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+
 		// Preferences Button
 		final JButton preferencesButton = new JButton(LangResources.get("preferences"));
 		preferencesButton.addActionListener(new ActionListener() {
@@ -1135,6 +1149,10 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		setLocationRelativeTo(null);
 		setResizable(false);
+	}
+
+	private void showMigrationDialog() {
+		new SqlDdlMigrationDialog(this).setVisible(true);
 	}
 
 	protected void createMapping(final DbImportDefinition configurationAsDefinition, final DbImportGui dbImportGui) throws Exception {
@@ -1286,7 +1304,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	 */
 	private void setConfigurationByDefinition(final DbImportDefinition dbImportDefinition) throws Exception {
 		for (int i = 0; i < dbTypeCombo.getItemCount(); i++) {
-			if (DbUtilities.DbVendor.getDbVendorByName(dbTypeCombo.getItemAt(i)) == dbImportDefinition.getDbVendor()) {
+			if (DbVendor.getDbVendorByName(dbTypeCombo.getItemAt(i)) == dbImportDefinition.getDbVendor()) {
 				dbTypeCombo.setSelectedIndex(i);
 				break;
 			}

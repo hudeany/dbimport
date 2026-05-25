@@ -29,9 +29,9 @@ import de.soderer.utilities.SqlScriptReader;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.csv.CsvDataException;
-import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
@@ -47,7 +47,7 @@ public class DbSqlWorker extends DbImportWorker {
 
 	private final Charset encoding = StandardCharsets.UTF_8;
 
-	public DbSqlWorker(final WorkerParentSimple parent, final DbDefinition dbDefinition, final String tableName, final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword) throws Exception {
+	public DbSqlWorker(final WorkerParentSimple parent, final DbConnectionDefinition dbDefinition, final String tableName, final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword) throws Exception {
 		super(parent, dbDefinition, tableName, null, null);
 
 		this.isInlineData = isInlineData;

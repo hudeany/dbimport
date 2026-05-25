@@ -22,9 +22,9 @@ import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.WildcardFilenameFilter;
-import de.soderer.utilities.db.DbDefinition;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.DbUtilities.DbVendor;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
+import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.xml.XmlUtilities;
 
 public class DbImportTest_Cassandra {
@@ -47,7 +47,7 @@ public class DbImportTest_Cassandra {
 		INPUTFILE_XML.delete();
 		BLOB_DATA_FILE.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				try (Statement statement = connection.createStatement()) {
 					statement.execute("DROP TABLE test_tbl");
@@ -68,7 +68,7 @@ public class DbImportTest_Cassandra {
 		INPUTFILE_XML.delete();
 		BLOB_DATA_FILE.delete();
 
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false)) {
 			if (DbUtilities.checkTableExist(connection, "test_tbl")) {
 				try (Statement statement = connection.createStatement()) {
 					statement.execute("DROP TABLE test_tbl");
@@ -81,7 +81,7 @@ public class DbImportTest_Cassandra {
 	}
 
 	private void createEmptyTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			String dataColumnsPart = "";
 			String dataColumnsPartForInsert = "";
@@ -108,7 +108,7 @@ public class DbImportTest_Cassandra {
 	}
 
 	private void prefillTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false);
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false);
 				Statement statement = connection.createStatement()) {
 			statement.executeUpdate("INSERT INTO test_tbl (id, column_int, column_varchar) VALUES (1, 1, '<test_text>_1')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''").replace("\\", "\\\\")));
 			statement.executeUpdate("INSERT INTO test_tbl (id, column_int, column_varchar) VALUES (3, 3, '<test_text>_3')".replace("<test_text>", TextUtilities.GERMAN_TEST_STRING.replace("'", "''").replace("\\", "\\\\")));
@@ -120,7 +120,7 @@ public class DbImportTest_Cassandra {
 	}
 
 	private String exportTestTable() throws Exception {
-		try (Connection connection = DbUtilities.createConnection(new DbDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false)) {
+		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Cassandra, HOSTNAME, DBNAME, USERNAME, PASSWORD == null ? null : PASSWORD.toCharArray()), false)) {
 			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
