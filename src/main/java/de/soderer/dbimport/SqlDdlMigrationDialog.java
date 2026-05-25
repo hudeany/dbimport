@@ -8,6 +8,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -19,6 +21,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import de.soderer.utilities.LangResources;
@@ -56,6 +60,22 @@ public class SqlDdlMigrationDialog extends JDialog {
 		sourceFileField = new JTextField();
 		sourceFileField.setPreferredSize(new Dimension(350, 20));
 		sourceFileField.setToolTipText(LangResources.get("sourceFile_help"));
+		sourceFileField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+
+			@Override
+			public void removeUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+
+			@Override
+			public void changedUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+		});
 		sourcePanel.add(sourceFileField);
 
 		final JButton sourceButton = new JButton("...");
@@ -83,6 +103,22 @@ public class SqlDdlMigrationDialog extends JDialog {
 		destinationFileField = new JTextField();
 		destinationFileField.setPreferredSize(new Dimension(350, 20));
 		destinationFileField.setToolTipText(LangResources.get("destinationFile_help"));
+		destinationFileField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+
+			@Override
+			public void removeUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+
+			@Override
+			public void changedUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+		});
 		destinationPanel.add(destinationFileField);
 
 		final JButton destinationButton = new JButton("...");
@@ -90,7 +126,8 @@ public class SqlDdlMigrationDialog extends JDialog {
 		destinationButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
-				final File selected = chooseSqlFile(destinationFileField.getText(), LangResources.get("destinationFile"));
+				final File selected = chooseSqlFile(destinationFileField.getText(),
+						LangResources.get("destinationFile"));
 				if (selected != null) {
 					destinationFileField.setText(selected.getAbsolutePath());
 					checkGenerateButtonStatus();
@@ -110,6 +147,22 @@ public class SqlDdlMigrationDialog extends JDialog {
 		outputFileField = new JTextField();
 		outputFileField.setPreferredSize(new Dimension(350, 20));
 		outputFileField.setToolTipText(LangResources.get("outputFile_help"));
+		outputFileField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+
+			@Override
+			public void removeUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+
+			@Override
+			public void changedUpdate(final DocumentEvent e) {
+				checkGenerateButtonStatus();
+			}
+		});
 		outputPanel.add(outputFileField);
 
 		final JButton outputButton = new JButton("...");
@@ -182,9 +235,9 @@ public class SqlDdlMigrationDialog extends JDialog {
 	}
 
 	private void checkGenerateButtonStatus() {
-		final boolean sourceOk      = isExistingFile(sourceFileField.getText());
+		final boolean sourceOk = isExistingFile(sourceFileField.getText());
 		final boolean destinationOk = isExistingFile(destinationFileField.getText());
-		final boolean outputOk      = Utilities.isNotBlank(outputFileField.getText());
+		final boolean outputOk = Utilities.isNotBlank(outputFileField.getText()) && isValidPath(outputFileField.getText());
 		generateButton.setEnabled(sourceOk && destinationOk && outputOk);
 	}
 
@@ -196,28 +249,39 @@ public class SqlDdlMigrationDialog extends JDialog {
 		return f.exists() && f.isFile();
 	}
 
+	public static boolean isValidPath(final String path) {
+		if (path == null || path.isBlank())
+			return false;
+		try {
+			Paths.get(path);
+			return true;
+		} catch (@SuppressWarnings("unused") final InvalidPathException e) {
+			return false;
+		}
+	}
+
 	private void runMigration(final SqlDdlMigrationDialog dialog) {
-		final File sourceFile      = new File(sourceFileField.getText().trim());
+		final File sourceFile = new File(sourceFileField.getText().trim());
 		final File destinationFile = new File(destinationFileField.getText().trim());
-		final File outputFile      = new File(outputFileField.getText().trim());
+		final File outputFile = new File(outputFileField.getText().trim());
 
 		// Basic validation
 		if (!sourceFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nSource file does not exist:\n" + sourceFile.getAbsolutePath())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (!destinationFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nDestination file does not exist:\n" + destinationFile.getAbsolutePath())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (outputFile.getParentFile() != null && !outputFile.getParentFile().exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nOutput directory does not exist:\n" + outputFile.getParent())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 
@@ -229,38 +293,38 @@ public class SqlDdlMigrationDialog extends JDialog {
 
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " OK",
 					"Migration script successfully written to:\n" + outputFile.getAbsolutePath())
-					.setBackgroundColor(SwingColor.Green).open();
+							.setBackgroundColor(SwingColor.Green).open();
 
 			dispose();
 
 		} catch (final Exception e) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 		}
 	}
 
 	private void runMerge(final SqlDdlMigrationDialog dialog) {
-		final File sourceFile      = new File(sourceFileField.getText().trim());
+		final File sourceFile = new File(sourceFileField.getText().trim());
 		final File destinationFile = new File(destinationFileField.getText().trim());
-		final File outputFile      = new File(outputFileField.getText().trim());
+		final File outputFile = new File(outputFileField.getText().trim());
 
 		if (!sourceFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nSource file does not exist:\n" + sourceFile.getAbsolutePath())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (!destinationFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nDestination file does not exist:\n" + destinationFile.getAbsolutePath())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (outputFile.getParentFile() != null && !outputFile.getParentFile().exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nOutput directory does not exist:\n" + outputFile.getParent())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 
@@ -272,14 +336,14 @@ public class SqlDdlMigrationDialog extends JDialog {
 
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " OK",
 					"Merge DDL successfully written to:\n" + outputFile.getAbsolutePath())
-					.setBackgroundColor(SwingColor.Green).open();
+							.setBackgroundColor(SwingColor.Green).open();
 
 			dispose();
 
 		} catch (final Exception e) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage())
-					.setBackgroundColor(SwingColor.LightRed).open();
+							.setBackgroundColor(SwingColor.LightRed).open();
 		}
 	}
 
