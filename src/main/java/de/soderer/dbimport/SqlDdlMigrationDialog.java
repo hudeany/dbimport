@@ -1,5 +1,6 @@
 package de.soderer.dbimport;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -20,6 +21,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -246,13 +248,20 @@ public class SqlDdlMigrationDialog extends JDialog {
 
 		pack();
 		setLocationRelativeTo(parent);
+
+		checkButtonStatus();
 	}
 
 	private void checkButtonStatus() {
-		final boolean sourceOk      = isExistingFile(sourceFileField.getText());
+		final boolean sourceOk = isExistingFile(sourceFileField.getText());
 		final boolean destinationOk = isExistingFile(destinationFileField.getText());
-		final boolean outputOk      = Utilities.isNotBlank(outputFileField.getText())
-				&& isValidPath(outputFileField.getText());
+		final boolean outputOk = Utilities.isNotBlank(outputFileField.getText())
+				&& isValidPath(outputFileField.getText())
+				&& !outputFileField.getText().equals(sourceFileField.getText())
+				&& !outputFileField.getText().equals(destinationFileField.getText());
+		sourceFileField.setBackground(sourceOk ? UIManager.getColor("TextField.background") : new Color(255, 182, 193) );
+		destinationFileField.setBackground(destinationOk ? UIManager.getColor("TextField.background") : new Color(255, 182, 193) );
+		outputFileField.setBackground(outputOk ? UIManager.getColor("TextField.background") : new Color(255, 182, 193) );
 		final boolean allOk = sourceOk && destinationOk && outputOk;
 		generateMigrationButton.setEnabled(allOk);
 		generateMergeButton.setEnabled(allOk);
