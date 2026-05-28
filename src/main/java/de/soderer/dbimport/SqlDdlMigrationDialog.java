@@ -133,8 +133,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 		destinationButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
-				final File selected = chooseSqlFile(destinationFileField.getText(),
-						LangResources.get("destinationFile"));
+				final File selected = chooseSqlFile(destinationFileField.getText(), LangResources.get("destinationFile"));
 				if (selected != null) {
 					destinationFileField.setText(selected.getAbsolutePath());
 					checkButtonStatus();
@@ -275,7 +274,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 		return f.exists() && f.isFile();
 	}
 
-	public static boolean isValidPath(final String path) {
+	private static boolean isValidPath(final String path) {
 		if (path == null || path.isBlank()) {
 			return false;
 		}
