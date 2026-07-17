@@ -830,7 +830,7 @@ public class DbImportTest_MySQL {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("column integer;column_clob\n");
-			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
@@ -878,7 +878,7 @@ public class DbImportTest_MySQL {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("column integer;column_blob\n");
-			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_blob='column_blob' file";

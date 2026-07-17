@@ -780,7 +780,7 @@ public class DbImportTest_Cassandra {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("id;column int;column_text\n");
-			data.append("1;1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_text='column_text' file";
@@ -827,7 +827,7 @@ public class DbImportTest_Cassandra {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("id;column int;column_blob\n");
-			data.append("1;1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_blob='column_blob' file";

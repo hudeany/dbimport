@@ -137,7 +137,7 @@ public class DbImportTest_Derby {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Derby, "", DERBY_DB_PATH, "", null), false)) {
-			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -516,7 +516,7 @@ public class DbImportTest_Derby {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("column integer;column_clob\n");
-			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";

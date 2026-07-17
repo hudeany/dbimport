@@ -19,6 +19,7 @@ import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
 import de.soderer.utilities.db.data.DbSimpleDataType;
+import de.soderer.utilities.vcf.VcfAttributedAddress;
 import de.soderer.utilities.vcf.VcfCard;
 import de.soderer.utilities.vcf.VcfReader;
 import de.soderer.utilities.vcf.VcfWriter;
@@ -182,7 +183,39 @@ public class VcfDataProvider extends DataProvider {
 		if (vcfCard == null) {
 			return null;
 		} else {
-			return VcfCard.toMap(vcfCard);
+			final Map<String, Object> itemData = VcfCard.toMap(vcfCard);
+
+			// VcfCard.toMap() joins all 7 structured ADR components into one free-text value per
+			// address (e.g. "address_1"), separated internally for a lossless round-trip via
+			// VcfCard.fromMap(). For database import, replace that single joined field with one
+			// column per structurally filled component instead (e.g. "address_1_street",
+			// "address_1_country", ...). Components that are blank for a given card are omitted
+			// entirely, so different cards may contribute different address_N_* columns depending
+			// on what data they actually contain. The numbering here mirrors VcfCard.toMap()'s own
+			// addressCount logic exactly, so indices stay aligned with the "address_N_attr" entries
+			// that toMap() already produced and which are kept as-is.
+			int addressIndex = 0;
+			for (final VcfAttributedAddress address : vcfCard.getAddresses()) {
+				if (Utilities.isNotEmpty(address.getValues())) {
+					addressIndex++;
+					itemData.remove("address_" + addressIndex);
+					for (final Entry<String, String> filledPart : address.getFilledParts().entrySet()) {
+						itemData.put("address_" + addressIndex + "_" + filledPart.getKey(), filledPart.getValue());
+					}
+				}
+			}
+
+			// VcfCard.toMap() joins other structured multi-part values (ORG, TEL/EMAIL/ADR attributes)
+			// using an internal, non-printable separator meant for lossless round-tripping via
+			// VcfCard.fromMap(). That separator must not leak into imported database data, so it is
+			// replaced here with a human-readable separator.
+			for (final Entry<String, Object> entry : itemData.entrySet()) {
+				if (entry.getValue() instanceof String && ((String) entry.getValue()).contains(VcfCard.STRUCTURED_VALUE_SEPARATOR)) {
+					entry.setValue(((String) entry.getValue()).replace(VcfCard.STRUCTURED_VALUE_SEPARATOR, ", "));
+				}
+			}
+
+			return itemData;
 		}
 	}
 

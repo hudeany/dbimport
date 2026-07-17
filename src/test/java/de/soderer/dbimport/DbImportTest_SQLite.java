@@ -145,7 +145,7 @@ public class DbImportTest_SQLite {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.SQLite, "", SQLITE_DB_FILE, "", null), false)) {
-			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -154,7 +154,7 @@ public class DbImportTest_SQLite {
 
 	private String export(final String tablename) throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.SQLite, "", SQLITE_DB_FILE, "", null), false)) {
-			return TestDbUtilities.readout(connection, tablename, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readout(connection, tablename, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -532,7 +532,7 @@ public class DbImportTest_SQLite {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("column integer;column_clob\n");
-			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
@@ -558,11 +558,21 @@ public class DbImportTest_SQLite {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("column integer;column_blob\n");
-			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_blob='column_blob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'" }));
+			Assert.assertEquals(0, DbImport._main(new String[] {
+					"sqlite",
+					SQLITE_DB_FILE,
+					"-table", "test_tbl",
+					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
+					"-m", mapping,
+					"-i", "UPSERT",
+					"-k", "column_integer",
+					"-u",
+					"-insvalues", "column_varchar='Insert'",
+					"-updvalues", "column_varchar='Update'" }));
 			Assert.assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkgw6TDtsO8w5/DhMOWw5zCtSE/wqdA4oKsJCUmL1w8Pigpe31bXSciwrRgXsKwwrnCssKzKiMuLDs6PSstfl98wr3CvMKs;;;;1;;Update\n"
@@ -706,7 +716,14 @@ public class DbImportTest_SQLite {
 			jsonWriter = null;
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-x", "JSON", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.json", "-m", mapping, "-i", "UPSERT", "-k", "column_integer" }));
+			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite",
+					SQLITE_DB_FILE,
+					"-table", "test_tbl",
+					"-x", "JSON",
+					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.json",
+					"-m", mapping,
+					"-i", "UPSERT",
+					"-k", "column_integer" }));
 			Assert.assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13;\n"

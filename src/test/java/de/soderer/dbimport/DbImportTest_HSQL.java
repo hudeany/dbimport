@@ -177,7 +177,7 @@ public class DbImportTest_HSQL {
 
 	private String exportTestTable() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.HSQL, "", HSQL_DB_FILE, "", null), false)) {
-			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -186,7 +186,7 @@ public class DbImportTest_HSQL {
 
 	private String exportTest2Table() throws Exception {
 		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.HSQL, "", HSQL_DB_FILE, "", null), false)) {
-			return TestDbUtilities.readoutTable(connection, "test2_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readoutTable(connection, "test2_tbl", ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\"").replace("\\", "\\\\"), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -693,7 +693,7 @@ public class DbImportTest_HSQL {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("column integer;column_clob\n");
-			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath() + "\n");
+			data.append("1;" + BLOB_DATA_FILE.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
@@ -1672,11 +1672,11 @@ public class DbImportTest_HSQL {
 			final String exportResult = exportTestTable();
 
 			Assert.assertEquals(
-					"ADDRESS_1;ADDRESS_1_ATTR;FIRSTNAME;FORMATTEDNAME;LASTNAME;TELEPHONENUMBER_1;TELEPHONENUMBER_1_ATTR\n"
-							+ "Porgesstraße 16, 81247 München, Deutschland;HOME;Tester;Tester Testermann;Testermann;+4947110815;CELL\n"
-							+ "Porgesstraße 16, 81247 München, Deutschland;HOME;Testerin;Testerin Testermann;Testermann;+4947110816;CELL\n"
-							+ "Porgesstraße 16, 81247 München, Deutschland;HOME;Testerchen;Testerchen Testermann;Testermann;+4947110817;CELL\n",
-							exportResult);
+				"ADDRESS_1_ATTR;ADDRESS_1_STREET;FIRSTNAME;FORMATTEDNAME;LASTNAME;TELEPHONENUMBER_1;TELEPHONENUMBER_1_ATTR\n"
+				+ "HOME;Porgesstraße 16, 81247 München, Deutschland;Tester;Tester Testermann;Testermann;+4947110815;CELL\n"
+				+ "HOME;Porgesstraße 16, 81247 München, Deutschland;Testerin;Testerin Testermann;Testermann;+4947110816;CELL\n"
+				+ "HOME;Porgesstraße 16, 81247 München, Deutschland;Testerchen;Testerchen Testermann;Testermann;+4947110817;CELL\n",
+				exportResult);
 		} catch (final Exception e) {
 			Assert.fail(e.getMessage());
 		}
@@ -1791,8 +1791,8 @@ public class DbImportTest_HSQL {
 
 			final StringBuilder data = new StringBuilder();
 			data.append("column integer;column_clob\n");
-			data.append("1;" + data_file_1_targz.getAbsolutePath() + "\n");
-			data.append("2;" + data_file_2_targz.getAbsolutePath() + "\n");
+			data.append("1;" + data_file_1_targz.getAbsolutePath().replace("\\", "\\\\") + "\n");
+			data.append("2;" + data_file_2_targz.getAbsolutePath().replace("\\", "\\\\") + "\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
