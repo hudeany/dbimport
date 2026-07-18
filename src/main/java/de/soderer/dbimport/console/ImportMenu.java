@@ -304,7 +304,7 @@ public class ImportMenu extends ConsoleMenu {
 				autoCompletionStrings.add("k");
 				System.out.println("  " + Utilities.rightPad("insvalues)", bulletSize) + " " + Utilities.rightPad("Additional insert values:", nameSize) + (Utilities.isBlank(dbImportDefinition.getAdditionalInsertValues()) ? "<empty>" : dbImportDefinition.getAdditionalInsertValues()));
 				autoCompletionStrings.add("insvalues");
-				System.out.println("  " + Utilities.rightPad("updvalues)", bulletSize) + " " + Utilities.rightPad("Additional update values:", nameSize) + (Utilities.isBlank(dbImportDefinition.getAdditionalUpdateValues()) ? "<empty>" : dbImportDefinition.getAdditionalInsertValues()));
+				System.out.println("  " + Utilities.rightPad("updvalues)", bulletSize) + " " + Utilities.rightPad("Additional update values:", nameSize) + (Utilities.isBlank(dbImportDefinition.getAdditionalUpdateValues()) ? "<empty>" : dbImportDefinition.getAdditionalUpdateValues()));
 				autoCompletionStrings.add("updvalues");
 
 				System.out.println("  " + Utilities.rightPad("create)", bulletSize) + " " + Utilities.rightPad("Scan data and create suitable table:", nameSize) + dbImportDefinition.isCreateTable());
@@ -356,7 +356,7 @@ public class ImportMenu extends ConsoleMenu {
 					dbImportDefinition.setTrustStoreFile(null);
 					dbImportDefinition.setTrustStorePassword(null);
 				} else if ("secure".equalsIgnoreCase(choice)) {
-					dbImportDefinition.setSecureConnection(dbImportDefinition.isSecureConnection());
+					dbImportDefinition.setSecureConnection(!dbImportDefinition.isSecureConnection());
 				} else if ("truststore".equalsIgnoreCase(choice)) {
 					System.out.println();
 					System.out.println("Please enter database TrustStore filepath (Blank => None)");
@@ -572,11 +572,12 @@ public class ImportMenu extends ConsoleMenu {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
-							try {
-								dbImportDefinition.setDatabaseTimeZone(TimeZone.getTimeZone(dbtzString).toString());
-								break;
-							} catch (@SuppressWarnings("unused") final Exception e) {
+							final TimeZone dbTimeZone = TimeZone.getTimeZone(dbtzString);
+							if (!dbTimeZone.getID().equals(dbtzString) && !"GMT".equalsIgnoreCase(dbtzString)) {
 								System.out.println(ConsoleUtilities.getAnsiColoredText("Unsupported timezone: " + dbtzString, TextColor.Light_red));
+							} else {
+								dbImportDefinition.setDatabaseTimeZone(dbTimeZone.getID());
+								break;
 							}
 						}
 					}
@@ -590,11 +591,12 @@ public class ImportMenu extends ConsoleMenu {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
-							try {
-								dbImportDefinition.setImportDataTimeZone(TimeZone.getTimeZone(idtzString).toString());
-								break;
-							} catch (@SuppressWarnings("unused") final Exception e) {
+							final TimeZone importDataTimeZone = TimeZone.getTimeZone(idtzString);
+							if (!importDataTimeZone.getID().equals(idtzString) && !"GMT".equalsIgnoreCase(idtzString)) {
 								System.out.println(ConsoleUtilities.getAnsiColoredText("Unsupported timezone: " + idtzString, TextColor.Light_red));
+							} else {
+								dbImportDefinition.setImportDataTimeZone(importDataTimeZone.getID());
+								break;
 							}
 						}
 					}
