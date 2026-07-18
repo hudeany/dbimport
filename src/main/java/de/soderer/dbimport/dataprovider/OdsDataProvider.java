@@ -120,7 +120,7 @@ public class OdsDataProvider extends DataProvider {
 							maxColumns = Math.max(maxColumns, values.size());
 						}
 						for (int i = 0; i < maxColumns; i++) {
-							returnList.add(Integer.toString(i + 1));
+							returnList.add("column_" + Integer.toString(i + 1));
 						}
 						columnNames = returnList;
 					} else {
