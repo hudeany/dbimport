@@ -228,7 +228,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 
 		for (final Triple<Label, JComboBox<String>, JComboBox<String>> mappingEntry : mappingEntries) {
 			for (final Entry<String, Tuple<String, String>> entry : mapping.entrySet()) {
-				if (entry.getKey().equals(mappingEntry.getFirst().getText())) {
+				if (entry.getKey().equalsIgnoreCase(mappingEntry.getFirst().getText())) {
 					mappingEntry.getSecond().setSelectedItem(entry.getValue().getFirst());
 					if (mappingEntry.getThird() != null && Utilities.isNotBlank(entry.getValue().getSecond())) {
 						if ("lc".equalsIgnoreCase(entry.getValue().getSecond())) {
@@ -314,7 +314,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 					mapping.put(dbColumn, new Tuple<>(dataColumn, ","));
 				} else if ("file".equalsIgnoreCase(rest)) {
 					mapping.put(dbColumn, new Tuple<>(dataColumn, "file"));
-				} else if (Pattern.matches("[ yYmMdDhHsS:.-/]+", rest)) {
+				} else if (Pattern.matches("[ yYuUmMdDhHsSnNxXzZtT:.'\\[\\]/-]+", rest)) {
 					mapping.put(dbColumn, new Tuple<>(dataColumn, rest));
 				} else if ("lc".equalsIgnoreCase(rest)) {
 					mapping.put(dbColumn, new Tuple<>(dataColumn, "lc"));
