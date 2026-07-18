@@ -909,12 +909,6 @@ public class DbImportDefinition extends DbConnectionDefinition {
 		if (getZipPassword() != null) {
 			params += " " + "-zippassword" + " '" + new String(getZipPassword()).replace("'", "\\'") + "'";
 		}
-		if (TimeZone.getDefault().getDisplayName().equalsIgnoreCase(getDatabaseTimeZone())) {
-			params += " " + "-dbtz" + " " + getDatabaseTimeZone();
-		}
-		if (TimeZone.getDefault().getDisplayName().equalsIgnoreCase(getImportDataTimeZone())) {
-			params += " " + "-idtz" + " " + getImportDataTimeZone();
-		}
 		if (getEncoding() != StandardCharsets.UTF_8) {
 			params += " " + "-e" + " " + getEncoding().name();
 		}
@@ -970,7 +964,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			params += " " + "-i " + getImportMode().name();
 		}
 		if (getDuplicateMode() != DuplicateMode.UPDATE_ALL_JOIN) {
-			params += " " + "-i " + getDuplicateMode().name();
+			params += " " + "-d " + getDuplicateMode().name();
 		}
 		if (getKeycolumns() != null && getKeycolumns().size() > 0) {
 			final List<String> escapedKeyColumns = new ArrayList<>();
@@ -994,10 +988,10 @@ public class DbImportDefinition extends DbConnectionDefinition {
 		if (getSchemaFilePath() != null && getSchemaFilePath().length() > 0) {
 			params += " " + "-sp '" + getSchemaFilePath().replace("'", "\\'") + "'";
 		}
-		if (getDatabaseTimeZone() != TimeZone.getDefault().getID()) {
+		if (!TimeZone.getDefault().getID().equals(getDatabaseTimeZone())) {
 			params += " " + "-dbtz " + getDatabaseTimeZone() + "";
 		}
-		if (getImportDataTimeZone() != TimeZone.getDefault().getID()) {
+		if (!TimeZone.getDefault().getID().equals(getImportDataTimeZone())) {
 			params += " " + "-idtz " + getImportDataTimeZone() + "";
 		}
 		if (Utilities.isNotBlank(getDateFormat())) {
