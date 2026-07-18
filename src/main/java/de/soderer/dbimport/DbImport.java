@@ -197,7 +197,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					} else if ("version".equalsIgnoreCase(arguments[i]) && arguments.length == 1) {
 						System.out.println(VERSION);
 						return 1;
-					} else if ("update".equalsIgnoreCase(arguments[i]) && arguments.length == 1) {
+					} else if ("update".equalsIgnoreCase(arguments[i]) && i == 0 && arguments.length <= 3) {
 						if (arguments.length > i + 2) {
 							final DbImport dbImport = new DbImport();
 							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, false, false);
@@ -282,9 +282,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 			// Read the parameters
 			for (int i = 0; i < arguments.length; i++) {
-				boolean wasAllowedParam = false;
+				boolean wasAllowedParam = createTrustStore;
 
-				if (openGui || openMenu || (!blobImport && !connectionTest)) {
+				if (openGui || openMenu || (!blobImport && !connectionTest && !createTrustStore)) {
 					if ("-x".equalsIgnoreCase(arguments[i])) {
 						i++;
 						if (i >= arguments.length) {
@@ -450,7 +450,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for structure file path");
 						} else if (!new File(arguments[i]).exists()) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Structure file file does not exist");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getMapping())) {
+						} else if (Utilities.isNotBlank(dbImportDefinition.getStructureFilePath())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Structure file path is already defined");
 						} else {
 							dbImportDefinition.setStructureFilePath(arguments[i]);
@@ -483,7 +483,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							throw new ParameterException(arguments[i - 1], "Missing parameter for data path");
 						} else if (Utilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for data path");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getMapping())) {
+						} else if (Utilities.isNotBlank(dbImportDefinition.getDataPath())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Data path is already defined");
 						} else {
 							dbImportDefinition.setDataPath(arguments[i]);
@@ -497,7 +497,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for schema file path");
 						} else if (!new File(arguments[i]).exists()) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Schema file file does not exist");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getMapping())) {
+						} else if (Utilities.isNotBlank(dbImportDefinition.getSchemaFilePath())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Schema file path is already defined");
 						} else {
 							dbImportDefinition.setSchemaFilePath(arguments[i]);
@@ -751,13 +751,16 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					}
 				}
 
-				if (createTrustStore) {
-					TrustManagerUtilities.createTrustStoreFile(arguments[0], 443, new File(arguments[1]), Utilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null, null);
-				}
-
 				if (!wasAllowedParam) {
 					throw new ParameterException(arguments[i], "Invalid parameter");
 				}
+			}
+
+			if (createTrustStore) {
+				TrustManagerUtilities.createTrustStoreFile(arguments[0], 443, new File(arguments[1]), Utilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null, null);
+				System.out.println();
+				System.out.println("Created TrustStore in file '" + arguments[1] + "'");
+				return 0;
 			}
 
 			if (openMenu) {
