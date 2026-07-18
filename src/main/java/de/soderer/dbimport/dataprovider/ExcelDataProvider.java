@@ -405,7 +405,10 @@ public class ExcelDataProvider extends DataProvider {
 							int columnIndex = 0;
 							for (final String propertyName : getAvailableDataPropertyNames()) {
 								final HSSFCell cell = currentRow.createCell(columnIndex++);
-								cell.setCellValue(item.get(propertyName).toString());
+								final Object cellValue = item.get(propertyName);
+								if (cellValue != null) {
+									cell.setCellValue(cellValue.toString());
+								}
 							}
 						}
 					}
@@ -436,7 +439,10 @@ public class ExcelDataProvider extends DataProvider {
 							int columnIndex = 0;
 							for (final String propertyName : getAvailableDataPropertyNames()) {
 								final XSSFCell cell = currentRow.createCell(columnIndex++);
-								cell.setCellValue(item.get(propertyName).toString());
+								final Object cellValue = item.get(propertyName);
+								if (cellValue != null) {
+									cell.setCellValue(cellValue.toString());
+								}
 							}
 						}
 					}

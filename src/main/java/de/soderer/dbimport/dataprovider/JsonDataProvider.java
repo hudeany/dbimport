@@ -35,7 +35,7 @@ import de.soderer.utilities.zip.ZipUtilities;
 public class JsonDataProvider extends DataProvider {
 	private Json5Reader jsonReader = null;
 	private List<String> dataPropertyNames = null;
-	private final Map<String, DbColumnType> dataTypes = null;
+	private Map<String, DbColumnType> dataTypes = null;
 	private Integer itemsAmount = null;
 	private String dataPath = null;
 	private String schemaFilePath = null;
@@ -62,6 +62,7 @@ public class JsonDataProvider extends DataProvider {
 
 			int itemCount = 0;
 			dataPropertyNames = new ArrayList<>();
+			dataTypes = new HashMap<>();
 
 			Map<String, Object> nextItem;
 			while ((nextItem = getNextItemData()) != null) {

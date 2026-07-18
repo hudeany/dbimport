@@ -32,7 +32,7 @@ public class KdbxDataProvider extends DataProvider {
 	private KdbxDatabase kdbxDatabase = null;
 	private Iterator<KdbxEntry> kdbxEntryIterator = null;
 	private List<String> dataPropertyNames = null;
-	private final Map<String, DbColumnType> dataTypes = null;
+	private Map<String, DbColumnType> dataTypes = null;
 	private Integer itemsAmount = null;
 	private char[] password = null;
 
@@ -54,6 +54,7 @@ public class KdbxDataProvider extends DataProvider {
 
 			int itemCount = 0;
 			dataPropertyNames = new ArrayList<>();
+			dataTypes = new HashMap<>();
 
 			Map<String, Object> nextItem;
 			while ((nextItem = getNextItemData()) != null) {
@@ -175,17 +176,17 @@ public class KdbxDataProvider extends DataProvider {
 			openKdbxDatabase();
 		}
 
+		if (!kdbxEntryIterator.hasNext()) {
+			return null;
+		}
+
 		final KdbxEntry kdbxEntry = kdbxEntryIterator.next();
 
-		if (kdbxEntry == null) {
-			return null;
-		} else {
-			final Map<String, Object> returnMap = new HashMap<>();
-			for (final Entry<String, Object> itemEntry : kdbxEntry.getItems().entrySet()) {
-				returnMap.put(itemEntry.getKey(), itemEntry.getValue());
-			}
-			return returnMap;
+		final Map<String, Object> returnMap = new HashMap<>();
+		for (final Entry<String, Object> itemEntry : kdbxEntry.getItems().entrySet()) {
+			returnMap.put(itemEntry.getKey(), itemEntry.getValue());
 		}
+		return returnMap;
 	}
 
 	@Override

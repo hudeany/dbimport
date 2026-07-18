@@ -244,7 +244,11 @@ public abstract class DataProvider implements Closeable {
 	}
 
 	public String getImportFilePath() {
-		return importFile.getAbsolutePath();
+		if (isInlineData) {
+			throw new UnsupportedOperationException("Import file path is not available for inline data imports");
+		} else {
+			return importFile.getAbsolutePath();
+		}
 	}
 
 	/**

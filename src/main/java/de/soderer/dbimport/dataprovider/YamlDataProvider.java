@@ -32,7 +32,7 @@ import de.soderer.yaml.data.YamlScalar;
 public class YamlDataProvider extends DataProvider {
 	private YamlReader yamlReader = null;
 	private List<String> dataPropertyNames = null;
-	private final Map<String, DbColumnType> dataTypes = null;
+	private Map<String, DbColumnType> dataTypes = null;
 	private Integer itemsAmount = null;
 	private String dataPath = null;
 
@@ -57,6 +57,7 @@ public class YamlDataProvider extends DataProvider {
 
 			int itemCount = 0;
 			dataPropertyNames = new ArrayList<>();
+			dataTypes = new HashMap<>();
 
 			Map<String, Object> nextItem;
 			while ((nextItem = getNextItemData()) != null) {
