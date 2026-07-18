@@ -22,7 +22,7 @@ Optional parameters for database import
 		<formatinfo> may be decimal delimiter (Default .), date pattern (Default dd.MM.yyyy HH:mm:ss) or file or lc (Lowercase) or uc (Uppercase) or email
 		Example: 'db1="def 1" ,;db2="def 2" .;db3="def 3" dd.MM.yyyy HH:mm:ss;db4="def 4" file'
 	-mf: Column mapping file, containing the mapping entries of -m
-	-n 'NULL': Set a string for null values (Only for csv and xml, default is '')
+	-n 'NULL': Set a string for null values (Only for csv, xml, excel and ods, default is '')
 	-l: Log import information in .log files
 	-v: Progress and e.t.a. import in terminal
 	-e: Encoding for CSV, YAML and JSON data files and clob files (Default UTF-8)
@@ -68,7 +68,7 @@ Optional parameters for database import
 	-secure: Use TLS/SSL for secure communication with database
 	-truststore '<truststorefilepath>': Filepath to TrustStore in JKS format for encrypted database connections of some database vendors
 	-truststorepassword '<password>': Optional password for TrustStore
-	-batchBlockSize '<password>': Block size for batch SQL updates (Default 1000)
+	-batchBlockSize '<size>': Block size for batch SQL updates (Default 1000)
 	-noSingleMode: Prevent batch SQL updates to fall back to single item update mode when errors occur
 
 Global standalone parameters

@@ -763,6 +763,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 						isInlineData(),
 						importFileOrData,
 						getZipPassword(),
+						getEncoding(),
 						getSeparator(),
 						getStringQuote(),
 						getEscapeStringQuote(),
@@ -787,6 +788,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 						isInlineData(),
 						importFileOrData,
 						getZipPassword(),
+						getEncoding(),
 						getDataPath(),
 						getSchemaFilePath());
 				break;
@@ -795,6 +797,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 						isInlineData(),
 						importFileOrData,
 						getZipPassword(),
+						getEncoding(),
 						getDataPath());
 				break;
 			case KDBX:
@@ -833,6 +836,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 						isInlineData(),
 						importFileOrData,
 						getZipPassword(),
+						getEncoding(),
 						getSeparator(),
 						getStringQuote(),
 						getEscapeStringQuote(),

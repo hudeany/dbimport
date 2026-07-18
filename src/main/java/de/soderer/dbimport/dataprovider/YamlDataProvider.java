@@ -36,10 +36,13 @@ public class YamlDataProvider extends DataProvider {
 	private Integer itemsAmount = null;
 	private String dataPath = null;
 
-	private final Charset encoding = StandardCharsets.UTF_8;
+	private Charset encoding = StandardCharsets.UTF_8;
 
-	public YamlDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final String dataPath) {
+	public YamlDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final String dataPath) {
 		super(isInlineData, importFilePathOrData, zipPassword);
+		if (encoding != null) {
+			this.encoding = encoding;
+		}
 		this.dataPath = dataPath;
 	}
 

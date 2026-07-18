@@ -40,10 +40,13 @@ public class JsonDataProvider extends DataProvider {
 	private String dataPath = null;
 	private String schemaFilePath = null;
 
-	private final Charset encoding = StandardCharsets.UTF_8;
+	private Charset encoding = StandardCharsets.UTF_8;
 
-	public JsonDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final String dataPath, final String schemaFilePath) {
+	public JsonDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final String dataPath, final String schemaFilePath) {
 		super(isInlineData, importFilePathOrData, zipPassword);
+		if (encoding != null) {
+			this.encoding = encoding;
+		}
 		this.dataPath = dataPath;
 		this.schemaFilePath = schemaFilePath;
 	}

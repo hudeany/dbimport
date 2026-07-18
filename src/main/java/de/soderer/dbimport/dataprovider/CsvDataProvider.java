@@ -42,10 +42,13 @@ public class CsvDataProvider extends DataProvider {
 	private Long itemsAmount = null;
 	private String itemsUnitSign = null;
 
-	private final Charset encoding = StandardCharsets.UTF_8;
+	private Charset encoding = StandardCharsets.UTF_8;
 
-	public CsvDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final char separator, final Character stringQuote, final char escapeStringQuote, final boolean allowUnderfilledLines, final boolean removeSurplusEmptyTrailingColumns, final boolean noHeaders, final String nullValueText, final boolean trimData) {
+	public CsvDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final char separator, final Character stringQuote, final char escapeStringQuote, final boolean allowUnderfilledLines, final boolean removeSurplusEmptyTrailingColumns, final boolean noHeaders, final String nullValueText, final boolean trimData) {
 		super(isInlineData, importFilePathOrData, zipPassword);
+		if (encoding != null) {
+			this.encoding = encoding;
+		}
 		this.separator = separator;
 		this.stringQuote = stringQuote;
 		this.escapeStringQuote = escapeStringQuote;
