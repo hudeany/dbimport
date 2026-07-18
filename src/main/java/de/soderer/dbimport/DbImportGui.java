@@ -1503,7 +1503,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					Utilities.isNotBlank(dbNameField.getText())
 					&& Utilities.isNotBlank(hostField.getText())
 					&& Utilities.isNotBlank(userField.getText()) || DbVendor.Cassandra.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-					&& Utilities.isNotBlank(passwordField.getPassword()) || DbVendor.Cassandra.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem()));
+					&& Utilities.isNotBlank(passwordField.getPassword()));
 		}
 
 		DataType dataType;
