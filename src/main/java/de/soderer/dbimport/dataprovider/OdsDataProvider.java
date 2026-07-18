@@ -324,6 +324,8 @@ public class OdsDataProvider extends DataProvider {
 			}
 
 			final XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+			xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+			xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
 
 			xmlReader = xmlInputFactory.createXMLStreamReader(contentXmlZipInputStream);
 
@@ -332,7 +334,7 @@ public class OdsDataProvider extends DataProvider {
 			String currentSheetname = null;
 			xmlReader.next();
 			currentPath.push(xmlReader.getLocalName());
-			while (currentPath.size() > 0 && !Utilities.join(currentPath, "/").equals(dataPath) && !(sheetname == null || sheetname.equals(currentSheetname))) {
+			while (currentPath.size() > 0 && !(Utilities.join(currentPath, "/").equals(dataPath) && (sheetname == null || sheetname.equals(currentSheetname)))) {
 				xmlReader.next();
 				if (xmlReader.isStartElement()) {
 					currentPath.push(xmlReader.getLocalName());
@@ -353,7 +355,11 @@ public class OdsDataProvider extends DataProvider {
 				}
 			}
 			if (currentPath.size() == 0) {
-				throw new DbImportException("Path '" + dataPath + "' is not part of the xml data");
+				if (Utilities.isNotBlank(sheetname)) {
+					throw new DbImportException("Sheet '" + sheetname + "' was not found in the ods data");
+				} else {
+					throw new DbImportException("Path '" + dataPath + "' is not part of the xml data");
+				}
 			}
 
 			currentRowNumber = 0;

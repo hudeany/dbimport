@@ -289,7 +289,10 @@ public class XmlDataProvider extends DataProvider {
 			if (Utilities.isNotEmpty(schemaFilePath)) {
 				XMLStreamReader xmlStreamReader = null;
 				try (InputStream validationStream = getInputStream()) {
-					xmlStreamReader = XMLInputFactory.newInstance().createXMLStreamReader(validationStream);
+					final XMLInputFactory validationXmlInputFactory = XMLInputFactory.newInstance();
+					validationXmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+					validationXmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+					xmlStreamReader = validationXmlInputFactory.createXMLStreamReader(validationStream);
 					final SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 					final Schema schema = factory.newSchema(new File(schemaFilePath));
 
@@ -305,6 +308,8 @@ public class XmlDataProvider extends DataProvider {
 			}
 
 			final XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+			xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+			xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
 			xmlReader = xmlInputFactory.createXMLStreamReader(getInputStream());
 
 			if (Utilities.isNotEmpty(dataPath)) {
