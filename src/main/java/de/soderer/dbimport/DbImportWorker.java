@@ -1341,7 +1341,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					}
 					batchValueItem.add(valueString);
 				} else if (simpleDataType == DbSimpleDataType.DateTime) {
-					DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
+					DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo.replace("yyyy", "uuuu"));
 					dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 					dateTimeFormatter = dateTimeFormatter.withZone(importDataZoneId);
 					final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
@@ -1350,7 +1350,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					preparedStatement.setTimestamp(columnIndex, value);
 					batchValueItem.add(value);
 				} else if (simpleDataType == DbSimpleDataType.Date) {
-					DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo);
+					DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatInfo.replace("yyyy", "uuuu"));
 					dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 					dateTimeFormatter = dateTimeFormatter.withZone(importDataZoneId);
 					LocalDate localDateValue;
@@ -1385,22 +1385,17 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
 					} else {
 						try {
-							DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()));
-							dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-							dateTimeFormatter = dateTimeFormatter.withZone(importDataZoneId);
+							final DateTimeFormatter dateTimeFormatter = DateUtilities.getDateTimeFormatterWithSeconds(Locale.getDefault(), importDataZoneId);
 							final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
 							localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
 						} catch (@SuppressWarnings("unused") final DateTimeParseException e) {
 							try {
-								DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatPattern(Locale.getDefault()));
-								dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-								dateTimeFormatter = dateTimeFormatter.withZone(importDataZoneId);
+								final DateTimeFormatter dateTimeFormatter = DateUtilities.getDateTimeFormatter(Locale.getDefault(), importDataZoneId);
 								final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
 								localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
 							} catch (@SuppressWarnings("unused") final DateTimeParseException e1) {
 								try {
-									DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateFormatPattern(Locale.getDefault()));
-									dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
+									final DateTimeFormatter dateTimeFormatter = DateUtilities.getDateFormatter(Locale.getDefault());
 									localDateTimeValueForDb = LocalDate.parse(valueString.trim(), dateTimeFormatter).atStartOfDay();
 								} catch (@SuppressWarnings("unused") final DateTimeParseException e2) {
 									try {
@@ -1458,22 +1453,17 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 					} else {
 						try {
-							DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()));
-							dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-							dateTimeFormatter = dateTimeFormatter.withZone(importDataZoneId);
+							final DateTimeFormatter dateTimeFormatter = DateUtilities.getDateTimeFormatterWithSeconds(Locale.getDefault(), importDataZoneId);
 							final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
 							localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
 						} catch (@SuppressWarnings("unused") final DateTimeParseException e) {
 							try {
-								DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateTimeFormatPattern(Locale.getDefault()));
-								dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
-								dateTimeFormatter = dateTimeFormatter.withZone(importDataZoneId);
+								final DateTimeFormatter dateTimeFormatter = DateUtilities.getDateTimeFormatter(Locale.getDefault(), importDataZoneId);
 								final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), dateTimeFormatter);
 								localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
 							} catch (@SuppressWarnings("unused") final DateTimeParseException e1) {
 								try {
-									DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtilities.getDateFormatPattern(Locale.getDefault()));
-									dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
+									final DateTimeFormatter dateTimeFormatter = DateUtilities.getDateFormatter(Locale.getDefault());
 									localDateTimeValueForDb = LocalDate.parse(valueString.trim(), dateTimeFormatter).atStartOfDay();
 								} catch (@SuppressWarnings("unused") final DateTimeParseException e2) {
 									try {
@@ -1644,7 +1634,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 	private DateTimeFormatter getConfiguredDateTimeFormatter() {
 		if (dateTimeFormatterCache == null) {
-			DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatPattern);
+			DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatPattern.replace("yyyy", "uuuu"));
 			dateTimeFormatter = dateTimeFormatter.withResolverStyle(ResolverStyle.STRICT);
 			dateTimeFormatter = dateTimeFormatter.withZone(importDataZoneId);
 			dateTimeFormatterCache = dateTimeFormatter;
@@ -1654,7 +1644,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 	private DateTimeFormatter getConfiguredDateFormatter() {
 		if (dateFormatterCache == null) {
-			DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatPattern);
+			DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatPattern.replace("yyyy", "uuuu"));
 			dateFormatter = dateFormatter.withResolverStyle(ResolverStyle.STRICT);
 			dateFormatter = dateFormatter.withZone(importDataZoneId);
 			dateFormatterCache = dateFormatter;
