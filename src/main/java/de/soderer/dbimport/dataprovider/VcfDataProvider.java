@@ -114,6 +114,8 @@ public class VcfDataProvider extends DataProvider {
 							dataTypes.put(propertyName, new DbColumnType("INTEGER", -1, -1, -1, true, false, null));
 						} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.DateTime && (propertyValue instanceof Float || propertyValue instanceof Double)) {
 							dataTypes.put(propertyName, new DbColumnType("DOUBLE", -1, -1, -1, true, false, null));
+						} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Date && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.DateTime && propertyValue instanceof Boolean) {
+							dataTypes.put(propertyName, new DbColumnType("BOOLEAN", -1, -1, -1, true, false, null));
 						} else {
 							dataTypes.put(propertyName, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyName) == null ? 0 : dataTypes.get(propertyName).getCharacterByteSize(), propertyValue.toString().getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
 						}
