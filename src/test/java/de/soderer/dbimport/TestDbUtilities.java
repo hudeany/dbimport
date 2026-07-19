@@ -87,7 +87,7 @@ public class TestDbUtilities {
 		try (Statement statement = connection.createStatement();
 				ResultSet resultSet = statement.executeQuery(statementString)) {
 			statement.setFetchSize(100);
-			try (CsvWriter csvWriter = new CsvWriter(outputStream, encoding, new CsvFormat().setSeparator(separator).setStringQuote(stringQuote))) {
+			try (CsvWriter csvWriter = new CsvWriter(outputStream, encoding, new CsvFormat().withSeparator(separator).withStringQuote(stringQuote))) {
 				final ResultSetMetaData metaData = resultSet.getMetaData();
 
 				final List<String> headers = new ArrayList<>();

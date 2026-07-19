@@ -77,12 +77,12 @@ public class CsvDataProvider extends DataProvider {
 	public Map<String, DbColumnType> scanDataPropertyTypes(final Map<String, Tuple<String, String>> mapping) throws Exception {
 		if (dataTypes == null) {
 			final CsvFormat csvFormat = new CsvFormat()
-					.setSeparator(separator)
-					.setStringQuote(stringQuote)
-					.setStringQuoteEscapeCharacter(escapeStringQuote)
-					.setFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
-					.setRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
-					.setAlwaysTrim(trimData);
+					.withSeparator(separator)
+					.withStringQuote(stringQuote)
+					.withStringQuoteEscapeCharacter(escapeStringQuote)
+					.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
+					.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
+					.withAlwaysTrim(trimData);
 
 			try (CsvReader scanCsvReader = new CsvReader(getInputStream(), encoding, csvFormat)) {
 				if (!noHeaders) {
@@ -113,12 +113,12 @@ public class CsvDataProvider extends DataProvider {
 	public List<String> getAvailableDataPropertyNames() throws Exception {
 		if (columnNames == null) {
 			final CsvFormat csvFormat = new CsvFormat()
-					.setSeparator(separator)
-					.setStringQuote(stringQuote)
-					.setStringQuoteEscapeCharacter(escapeStringQuote)
-					.setFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
-					.setRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
-					.setAlwaysTrim(true);
+					.withSeparator(separator)
+					.withStringQuote(stringQuote)
+					.withStringQuoteEscapeCharacter(escapeStringQuote)
+					.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
+					.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
+					.withAlwaysTrim(true);
 
 			try (CsvReader scanCsvReader = new CsvReader(getInputStream(), encoding, csvFormat)) {
 				if (noHeaders) {
@@ -159,11 +159,11 @@ public class CsvDataProvider extends DataProvider {
 		if (itemsAmount == null) {
 			if (getImportDataAmount() < 1024 * 1024 * 1024) {
 				final CsvFormat csvFormat = new CsvFormat()
-						.setSeparator(separator)
-						.setStringQuote(stringQuote)
-						.setStringQuoteEscapeCharacter(escapeStringQuote)
-						.setFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
-						.setRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns);
+						.withSeparator(separator)
+						.withStringQuote(stringQuote)
+						.withStringQuoteEscapeCharacter(escapeStringQuote)
+						.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
+						.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns);
 
 				try (CsvReader scanCsvReader = new CsvReader(getInputStream(), encoding, csvFormat)) {
 					if (noHeaders) {
@@ -245,7 +245,7 @@ public class CsvDataProvider extends DataProvider {
 				outputStream = new FileOutputStream(filteredDataFile);
 			}
 
-			try (CsvWriter csvWriter = new CsvWriter(outputStream, encoding, new CsvFormat().setSeparator(separator).setStringQuote(stringQuote).setStringQuoteEscapeCharacter(escapeStringQuote))) {
+			try (CsvWriter csvWriter = new CsvWriter(outputStream, encoding, new CsvFormat().withSeparator(separator).withStringQuote(stringQuote).withStringQuoteEscapeCharacter(escapeStringQuote))) {
 				csvWriter.writeValues(columnNames);
 
 				List<String> values;
@@ -284,12 +284,12 @@ public class CsvDataProvider extends DataProvider {
 
 		try {
 			final CsvFormat csvFormat = new CsvFormat()
-					.setSeparator(separator)
-					.setStringQuote(stringQuote)
-					.setStringQuoteEscapeCharacter(escapeStringQuote)
-					.setFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
-					.setRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
-					.setAlwaysTrim(trimData);
+					.withSeparator(separator)
+					.withStringQuote(stringQuote)
+					.withStringQuoteEscapeCharacter(escapeStringQuote)
+					.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
+					.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
+					.withAlwaysTrim(trimData);
 
 			csvReader = new CsvReader(getInputStream(), encoding, csvFormat);
 

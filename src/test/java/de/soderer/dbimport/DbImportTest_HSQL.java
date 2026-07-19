@@ -2031,7 +2031,7 @@ public class DbImportTest_HSQL {
 			yamlSequence.add(yamlMapping);
 
 			try (YamlWriter yamlWriter = new YamlWriter(new FileOutputStream(INPUTFILE_YAML), StandardCharsets.UTF_8)) {
-				yamlWriter.writeDocument(new YamlDocument().setRoot(yamlSequence));
+				yamlWriter.writeDocument(new YamlDocument().withRoot(yamlSequence));
 			}
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
