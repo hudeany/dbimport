@@ -200,13 +200,13 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					} else if ("update".equalsIgnoreCase(arguments[i]) && i == 0 && arguments.length <= 3) {
 						if (arguments.length > i + 2) {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, null, false, false);
 						} else if (arguments.length > i + 1) {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, null, false, false);
 						} else {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
 						}
 						return 1;
 					} else if ("gui".equalsIgnoreCase(arguments[i])) {
@@ -802,7 +802,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				} else if (consoleMenuExecutionCode == -4) {
 					// Update application
 					final DbImport dbImport = new DbImport();
-					ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, false, false);
+					ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
 					return 0;
 				} else if (consoleMenuExecutionCode == -5) {
 					// Create TrustStore

@@ -23,7 +23,7 @@
 	<classpathentry kind="lib" path="lib/csv-26.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/jna-5.13.0.jar"/>
 	<classpathentry kind="lib" path="lib/json-26.2.0.jar"/>
-	<classpathentry kind="lib" path="lib/kdbx-25.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/kdbx-26.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.20.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-api-2.20.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-core-2.20.0.jar"/>
