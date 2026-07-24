@@ -46,9 +46,6 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.network.NetworkUtilities;
 import de.soderer.network.trustmanager.TrustManagerUtilities;
-import de.soderer.pac.PacScriptParser;
-import de.soderer.pac.utilities.ProxyConfiguration;
-import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.ExceptionUtilities;
@@ -236,32 +233,19 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		applicationConfiguration = new ConfigurationProperties(DbImport.APPLICATION_NAME, true);
 		DbImportGui.setupDefaultConfig(applicationConfiguration);
-		if ("de".equalsIgnoreCase(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_LANGUAGE))) {
+		if ("de".equalsIgnoreCase(applicationConfiguration.get(ConfigurationProperties.CONFIG_KEY_LANGUAGE))) {
 			Locale.setDefault(Locale.GERMAN);
 		} else {
 			Locale.setDefault(Locale.ENGLISH);
 		}
 
-		if (!applicationConfiguration.containsKey(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE)) {
-			if (PacScriptParser.findPacFileUrlByWpad() != null) {
-				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.WPAD.name());
-			} else {
-				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.None.name());
-			}
-			applicationConfiguration.save();
-		}
-
-		final ProxyConfigurationType proxyConfigurationType = ProxyConfigurationType.getFromString(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE));
-		final String proxyUrl = applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_URL);
-		final ProxyConfiguration proxyConfiguration = new ProxyConfiguration(proxyConfigurationType, proxyUrl);
-
 		if (dailyUpdateCheckIsPending()) {
 			setDailyUpdateCheckStatus(true);
 			try {
-				if (ApplicationUpdateUtilities.checkForNewVersionAvailable( DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, VersionInfo.getApplicationVersion()) != null) {
+				if (ApplicationUpdateUtilities.checkForNewVersionAvailable( DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, VersionInfo.getApplicationVersion()) != null) {
 					final List<String> appParameters = new ArrayList<>();
 					appParameters.add("gui");
-					ApplicationUpdateUtilities.executeUpdate(this, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, appParameters, true, false);
+					ApplicationUpdateUtilities.executeUpdate(this, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, appParameters, true, false);
 				}
 			} catch (final Exception e) {
 				new QuestionDialog(this, DbImport.APPLICATION_NAME + " " + LangResources.get("updateCheck") + " ERROR", LangResources.get("error.cannotCheckForUpdate") + "\n" + "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
@@ -1944,9 +1928,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	}
 
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
-		if (Utilities.isBlank(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_LANGUAGE))) {
-			applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
-		}
+		applicationConfiguration.setupDefaultConfig();
 	}
 
 	@Override

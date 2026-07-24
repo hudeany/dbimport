@@ -31,9 +31,6 @@ import de.soderer.dbimport.console.ImportMenu;
 import de.soderer.dbimport.console.PreferencesMenu;
 import de.soderer.dbimport.console.UpdateMenu;
 import de.soderer.network.trustmanager.TrustManagerUtilities;
-import de.soderer.pac.PacScriptParser;
-import de.soderer.pac.utilities.ProxyConfiguration;
-import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
@@ -53,7 +50,6 @@ import de.soderer.utilities.console.PasswordConsoleInput;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.exception.DbNotExistsException;
-import de.soderer.utilities.swing.ApplicationConfigurationDialog;
 import de.soderer.utilities.worker.WorkerParentDual;
 
 /**
@@ -159,19 +155,6 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			return 1;
 		}
 
-		if (!applicationConfiguration.containsKey(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE)) {
-			if (PacScriptParser.findPacFileUrlByWpad() != null) {
-				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.WPAD.name());
-			} else {
-				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.None.name());
-			}
-			applicationConfiguration.save();
-		}
-
-		final ProxyConfigurationType proxyConfigurationType = ProxyConfigurationType.getFromString(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE));
-		final String proxyUrl = applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_URL);
-		final ProxyConfiguration proxyConfiguration = new ProxyConfiguration(proxyConfigurationType, proxyUrl);
-
 		try {
 			String[] arguments = args;
 
@@ -200,13 +183,13 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					} else if ("update".equalsIgnoreCase(arguments[i]) && i == 0 && arguments.length <= 3) {
 						if (arguments.length > i + 2) {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, null, false, false);
 						} else if (arguments.length > i + 1) {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, null, false, false);
 						} else {
 							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
 						}
 						return 1;
 					} else if ("gui".equalsIgnoreCase(arguments[i])) {
@@ -802,7 +785,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				} else if (consoleMenuExecutionCode == -4) {
 					// Update application
 					final DbImport dbImport = new DbImport();
-					ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
+					ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
 					return 0;
 				} else if (consoleMenuExecutionCode == -5) {
 					// Create TrustStore
