@@ -76,8 +76,6 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private static final long serialVersionUID = 5969613637206441880L;
 
 	public static final File KEYSTORE_FILE = new File(System.getProperty("user.home") + File.separator + "." + DbImport.APPLICATION_NAME + File.separator + "." + DbImport.APPLICATION_NAME + ".keystore");
-	public static final String CONFIG_DAILY_UPDATE_CHECK = "DailyUpdateCheck";
-	public static final String CONFIG_NEXT_DAILY_UPDATE_CHECK = "NextDailyUpdateCheck";
 
 	private final ConfigurationProperties applicationConfiguration;
 
@@ -1933,19 +1931,19 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 	@Override
 	protected void setDailyUpdateCheckStatus(final boolean checkboxStatus) {
-		applicationConfiguration.set(CONFIG_DAILY_UPDATE_CHECK, checkboxStatus);
-		applicationConfiguration.set(CONFIG_NEXT_DAILY_UPDATE_CHECK, LocalDateTime.now().plusDays(1));
+		applicationConfiguration.set(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK, checkboxStatus);
+		applicationConfiguration.set(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK, LocalDateTime.now().plusDays(1));
 		applicationConfiguration.save();
 	}
 
 	@Override
 	protected Boolean isDailyUpdateCheckActivated() {
-		return applicationConfiguration.getBoolean(CONFIG_DAILY_UPDATE_CHECK);
+		return applicationConfiguration.getBoolean(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK);
 	}
 
 	protected boolean dailyUpdateCheckIsPending() {
-		return applicationConfiguration.getBoolean(CONFIG_DAILY_UPDATE_CHECK)
-				&& (applicationConfiguration.getDate(CONFIG_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(CONFIG_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))
+		return applicationConfiguration.getBoolean(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK)
+				&& (applicationConfiguration.getDate(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))
 				&& NetworkUtilities.checkForNetworkConnection();
 	}
 }
