@@ -26,7 +26,7 @@
 	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.20.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-api-2.20.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-core-2.20.0.jar"/>
-	<classpathentry kind="lib" path="lib/network-26.0.26.jar"/>
+	<classpathentry kind="lib" path="lib/network-26.0.27.jar"/>
 	<classpathentry kind="lib" path="lib/poi-5.2.4.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-5.2.4.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-full-5.2.4.jar"/>
@@ -38,7 +38,7 @@
 	<classpathentry kind="lib" path="lib_test/hamcrest-core-2.2.jar"/>
 	<classpathentry kind="lib" path="lib_test/junit-4.13.2.jar"/>
 	<classpathentry kind="lib" path="lib/dbutilities-26.0.11.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.32.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.33.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>
