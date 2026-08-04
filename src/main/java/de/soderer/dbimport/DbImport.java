@@ -827,7 +827,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						&& blobImportDefinition.getDbVendor() != DbVendor.SQLite
 						&& blobImportDefinition.getDbVendor() != DbVendor.Derby
 						&& blobImportDefinition.getDbVendor() != DbVendor.Cassandra) {
-					final char[] passwordArray = new PasswordConsoleInput().setPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
+					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					blobImportDefinition.setPassword(passwordArray);
 				}
 
@@ -841,7 +841,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						&& connectionTestDefinition.getDbVendor() != DbVendor.SQLite
 						&& connectionTestDefinition.getDbVendor() != DbVendor.Derby
 						&& connectionTestDefinition.getDbVendor() != DbVendor.Cassandra) {
-					final char[] passwordArray = new PasswordConsoleInput().setPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
+					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					connectionTestDefinition.setPassword(passwordArray);
 				}
 
@@ -854,7 +854,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						&& dbImportDefinition.getDbVendor() != DbVendor.SQLite
 						&& dbImportDefinition.getDbVendor() != DbVendor.Derby
 						&& dbImportDefinition.getDbVendor() != DbVendor.Cassandra) {
-					final char[] passwordArray = new PasswordConsoleInput().setPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
+					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					dbImportDefinition.setPassword(passwordArray);
 				}
 
