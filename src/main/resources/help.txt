@@ -30,6 +30,7 @@ Optional parameters for database import
 	-q: String quote character, default '"', encapsulate by ', 'null' or 'none' for empty (for CSV)
 	-qe: String quote escape character, default '"', encapsulate by ' (for CSV)
 	-noheaders: First csv line is data and not headers
+	-noescapesequences: Do not interpret escape sequences (e.g. \n or \t) in csv string values, use them as plain text (Default is to interpret them)
 	-c: Complete commit only (Takes more time and makes rollback on any error)
 	-nonewindex: Do not create new indexes on destination table, even if they are helpful (By default new indexes are created, which saves time)
 	-deactivatefk: Deactivate foreign key constraints during import

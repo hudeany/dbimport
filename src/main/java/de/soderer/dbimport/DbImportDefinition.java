@@ -136,6 +136,9 @@ public class DbImportDefinition extends DbConnectionDefinition {
 	/** The escape string quote character. */
 	private char escapeStringQuote = '"';
 
+	/** Interpret escape sequences (e.g. \n, \t) in csv string values, instead of treating them as plain text. */
+	private boolean interpretEscapeSequences = true;
+
 	/** The no headers. */
 	private boolean noHeaders = false;
 
@@ -310,6 +313,14 @@ public class DbImportDefinition extends DbConnectionDefinition {
 
 	public void setEscapeStringQuote(final char escapeStringQuote) {
 		this.escapeStringQuote = escapeStringQuote;
+	}
+
+	public boolean isInterpretEscapeSequences() {
+		return interpretEscapeSequences;
+	}
+
+	public void setInterpretEscapeSequences(final boolean interpretEscapeSequences) {
+		this.interpretEscapeSequences = interpretEscapeSequences;
 	}
 
 	public boolean isNoHeaders() {
@@ -767,6 +778,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 						getSeparator(),
 						getStringQuote(),
 						getEscapeStringQuote(),
+						isInterpretEscapeSequences(),
 						isAllowUnderfilledLines(),
 						isRemoveSurplusEmptyTrailingColumns(),
 						isNoHeaders(),
@@ -840,6 +852,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 						getSeparator(),
 						getStringQuote(),
 						getEscapeStringQuote(),
+						isInterpretEscapeSequences(),
 						isAllowUnderfilledLines(),
 						isRemoveSurplusEmptyTrailingColumns(),
 						isNoHeaders(),
@@ -927,6 +940,9 @@ public class DbImportDefinition extends DbConnectionDefinition {
 		}
 		if (isNoHeaders()) {
 			params += " " + "-noheaders";
+		}
+		if (!isInterpretEscapeSequences()) {
+			params += " " + "-noescapesequences";
 		}
 		if (!"".equals(getNullValueString())) {
 			params += " " + "-n" + " '" + getNullValueString() + "'";
@@ -1028,6 +1044,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			separator = ';';
 			stringQuote = '"';
 			escapeStringQuote = '"';
+			interpretEscapeSequences = true;
 			noHeaders = false;
 			nullValueString = "";
 			completeCommit = false;
@@ -1069,6 +1086,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			separator = otherDbImportDefinition.getSeparator();
 			stringQuote = otherDbImportDefinition.getStringQuote();
 			escapeStringQuote = otherDbImportDefinition.getEscapeStringQuote();
+			interpretEscapeSequences = otherDbImportDefinition.isInterpretEscapeSequences();
 			noHeaders = otherDbImportDefinition.isNoHeaders();
 			nullValueString = otherDbImportDefinition.getNullValueString();
 			completeCommit = otherDbImportDefinition.isCompleteCommit();

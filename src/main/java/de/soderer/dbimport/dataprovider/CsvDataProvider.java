@@ -30,6 +30,7 @@ public class CsvDataProvider extends DataProvider {
 	private char separator = ';';
 	private Character stringQuote = '"';
 	private char escapeStringQuote = '"';
+	private boolean interpretEscapeSequences = true;
 	private String nullValueText = null;
 	private boolean allowUnderfilledLines = false;
 	private boolean removeSurplusEmptyTrailingColumns = false;
@@ -44,7 +45,7 @@ public class CsvDataProvider extends DataProvider {
 
 	private Charset encoding = StandardCharsets.UTF_8;
 
-	public CsvDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final char separator, final Character stringQuote, final char escapeStringQuote, final boolean allowUnderfilledLines, final boolean removeSurplusEmptyTrailingColumns, final boolean noHeaders, final String nullValueText, final boolean trimData) {
+	public CsvDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final char separator, final Character stringQuote, final char escapeStringQuote, final boolean interpretEscapeSequences, final boolean allowUnderfilledLines, final boolean removeSurplusEmptyTrailingColumns, final boolean noHeaders, final String nullValueText, final boolean trimData) {
 		super(isInlineData, importFilePathOrData, zipPassword);
 		if (encoding != null) {
 			this.encoding = encoding;
@@ -52,6 +53,7 @@ public class CsvDataProvider extends DataProvider {
 		this.separator = separator;
 		this.stringQuote = stringQuote;
 		this.escapeStringQuote = escapeStringQuote;
+		this.interpretEscapeSequences = interpretEscapeSequences;
 		this.allowUnderfilledLines = allowUnderfilledLines;
 		this.removeSurplusEmptyTrailingColumns = removeSurplusEmptyTrailingColumns;
 		this.noHeaders = noHeaders;
@@ -67,6 +69,7 @@ public class CsvDataProvider extends DataProvider {
 				+ "Separator: " + separator + "\n"
 				+ "StringQuote: " + stringQuote + "\n"
 				+ "EscapeStringQuote: " + escapeStringQuote + "\n"
+				+ "InterpretEscapeSequences: " + interpretEscapeSequences + "\n"
 				+ "AllowUnderfilledLines: " + allowUnderfilledLines + "\n"
 				+ "RemoveSurplusEmptyTrailingColumns: " + removeSurplusEmptyTrailingColumns + "\n"
 				+ "TrimData: " + trimData + "\n"
@@ -80,6 +83,7 @@ public class CsvDataProvider extends DataProvider {
 					.withSeparator(separator)
 					.withStringQuote(stringQuote)
 					.withStringQuoteEscapeCharacter(escapeStringQuote)
+					.withEscapeLineBreaks(interpretEscapeSequences)
 					.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
 					.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
 					.withAlwaysTrim(trimData);
@@ -116,6 +120,7 @@ public class CsvDataProvider extends DataProvider {
 					.withSeparator(separator)
 					.withStringQuote(stringQuote)
 					.withStringQuoteEscapeCharacter(escapeStringQuote)
+					.withEscapeLineBreaks(interpretEscapeSequences)
 					.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
 					.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
 					.withAlwaysTrim(true);
@@ -162,6 +167,7 @@ public class CsvDataProvider extends DataProvider {
 						.withSeparator(separator)
 						.withStringQuote(stringQuote)
 						.withStringQuoteEscapeCharacter(escapeStringQuote)
+						.withEscapeLineBreaks(interpretEscapeSequences)
 						.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
 						.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns);
 
@@ -287,6 +293,7 @@ public class CsvDataProvider extends DataProvider {
 					.withSeparator(separator)
 					.withStringQuote(stringQuote)
 					.withStringQuoteEscapeCharacter(escapeStringQuote)
+					.withEscapeLineBreaks(interpretEscapeSequences)
 					.withFillMissingTrailingColumnsWithNull(allowUnderfilledLines)
 					.withRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumns)
 					.withAlwaysTrim(trimData);

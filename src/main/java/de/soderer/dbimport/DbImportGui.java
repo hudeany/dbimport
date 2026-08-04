@@ -153,6 +153,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 	/** The escape string quote combo. */
 	private final JComboBox<String> escapeStringQuoteCombo;
 
+	/** The checkbox to toggle interpretation of escape sequences (e.g. \n, \t) in csv string values. */
+	private final JCheckBox interpretEscapeSequencesBox;
+
 	/** The null value string combo. */
 	private final JComboBox<String> nullValueStringCombo;
 
@@ -954,6 +957,11 @@ public class DbImportGui extends UpdateableGuiApplication {
 		removeSurplusEmptyTrailingColumnsBox.setToolTipText(LangResources.get("removeSurplusEmptyTrailingColumns_help"));
 		optionalParametersPanel.add(removeSurplusEmptyTrailingColumnsBox);
 
+		interpretEscapeSequencesBox = new JCheckBox(LangResources.get("interpretEscapeSequences"));
+		interpretEscapeSequencesBox.setToolTipText(LangResources.get("interpretEscapeSequences_help"));
+		interpretEscapeSequencesBox.setSelected(true);
+		optionalParametersPanel.add(interpretEscapeSequencesBox);
+
 		noHeadersBox = new JCheckBox(LangResources.get("noheaders"));
 		noHeadersBox.setToolTipText(LangResources.get("noheaders_help"));
 		optionalParametersPanel.add(noHeadersBox);
@@ -1229,6 +1237,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setSeparator(((String) separatorCombo.getSelectedItem()).charAt(0));
 		dbImportDefinition.setStringQuote(Utilities.isNotEmpty((String) stringQuoteCombo.getSelectedItem()) ? ((String) stringQuoteCombo.getSelectedItem()).charAt(0) : null);
 		dbImportDefinition.setEscapeStringQuote(((String) escapeStringQuoteCombo.getSelectedItem()).charAt(0));
+		dbImportDefinition.setInterpretEscapeSequences(interpretEscapeSequencesBox.isSelected());
 		dbImportDefinition.setNoHeaders(noHeadersBox.isSelected());
 		dbImportDefinition.setNullValueString((String) nullValueStringCombo.getSelectedItem());
 		dbImportDefinition.setCompleteCommit(onlyCommitOnFullSuccessBox.isSelected());
@@ -1379,6 +1388,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 			escapeStringQuoteCombo.setSelectedItem(Character.toString(dbImportDefinition.getEscapeStringQuote()));
 		}
 
+		interpretEscapeSequencesBox.setSelected(dbImportDefinition.isInterpretEscapeSequences());
+
 		noHeadersBox.setSelected(dbImportDefinition.isNoHeaders());
 
 		boolean nullValueStringFound = false;
@@ -1502,6 +1513,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 			separatorCombo.setEnabled(true);
 			stringQuoteCombo.setEnabled(true);
 			escapeStringQuoteCombo.setEnabled(true);
+			interpretEscapeSequencesBox.setEnabled(true);
 			noHeadersBox.setEnabled(true);
 			nullValueStringCombo.setEnabled(true);
 			allowUnderfilledLinesBox.setEnabled(true);
@@ -1526,6 +1538,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(true);
 					stringQuoteCombo.setEnabled(true);
 					escapeStringQuoteCombo.setEnabled(true);
+					interpretEscapeSequencesBox.setEnabled(true);
 					noHeadersBox.setEnabled(true);
 					nullValueStringCombo.setEnabled(true);
 					allowUnderfilledLinesBox.setEnabled(true);
@@ -1549,6 +1562,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(true);
 					nullValueStringCombo.setEnabled(true);
 					allowUnderfilledLinesBox.setEnabled(true);
@@ -1572,6 +1586,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(false);
 					nullValueStringCombo.setEnabled(false);
 					allowUnderfilledLinesBox.setEnabled(false);
@@ -1595,6 +1610,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(false);
 					nullValueStringCombo.setEnabled(false);
 					allowUnderfilledLinesBox.setEnabled(false);
@@ -1618,6 +1634,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(false);
 					nullValueStringCombo.setEnabled(false);
 					allowUnderfilledLinesBox.setEnabled(false);
@@ -1641,6 +1658,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(true);
 					nullValueStringCombo.setEnabled(true);
 					allowUnderfilledLinesBox.setEnabled(true);
@@ -1664,6 +1682,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(false);
 					nullValueStringCombo.setEnabled(false);
 					allowUnderfilledLinesBox.setEnabled(false);
@@ -1687,6 +1706,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(false);
 					nullValueStringCombo.setEnabled(false);
 					allowUnderfilledLinesBox.setEnabled(false);
@@ -1710,6 +1730,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(false);
 					stringQuoteCombo.setEnabled(false);
 					escapeStringQuoteCombo.setEnabled(false);
+					interpretEscapeSequencesBox.setEnabled(false);
 					noHeadersBox.setEnabled(false);
 					nullValueStringCombo.setEnabled(true);
 					allowUnderfilledLinesBox.setEnabled(false);
@@ -1734,6 +1755,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					separatorCombo.setEnabled(true);
 					stringQuoteCombo.setEnabled(true);
 					escapeStringQuoteCombo.setEnabled(true);
+					interpretEscapeSequencesBox.setEnabled(true);
 					noHeadersBox.setEnabled(true);
 					nullValueStringCombo.setEnabled(true);
 					allowUnderfilledLinesBox.setEnabled(true);

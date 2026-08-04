@@ -360,6 +360,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							dbImportDefinition.setEscapeStringQuote(arguments[i].charAt(0));
 						}
 						wasAllowedParam = true;
+					} else if ("-noescapesequences".equalsIgnoreCase(arguments[i])) {
+						dbImportDefinition.setInterpretEscapeSequences(false);
+						wasAllowedParam = true;
 					} else if ("-a".equalsIgnoreCase(arguments[i])) {
 						dbImportDefinition.setAllowUnderfilledLines(true);
 						wasAllowedParam = true;

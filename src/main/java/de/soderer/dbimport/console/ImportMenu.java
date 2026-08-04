@@ -272,6 +272,8 @@ public class ImportMenu extends ConsoleMenu {
 					autoCompletionStrings.add("q");
 					System.out.println("  " + Utilities.rightPad("qe)", bulletSize) + " " + Utilities.rightPad("CSV string quote escape character:", nameSize) + dbImportDefinition.getEscapeStringQuote());
 					autoCompletionStrings.add("qe");
+					System.out.println("  " + Utilities.rightPad("noescapesequences)", bulletSize) + " " + Utilities.rightPad("Interpret escape sequences (\\n, \\t) in CSV values:", nameSize) + dbImportDefinition.isInterpretEscapeSequences());
+					autoCompletionStrings.add("noescapesequences");
 					System.out.println("  " + Utilities.rightPad("noheaders)", bulletSize) + " " + Utilities.rightPad("CSV file has no headers:", nameSize) + dbImportDefinition.isNoHeaders());
 					autoCompletionStrings.add("noheaders");
 				}
@@ -484,6 +486,8 @@ public class ImportMenu extends ConsoleMenu {
 					}
 				} else if ("noheaders".equalsIgnoreCase(choice)) {
 					dbImportDefinition.setNoHeaders(!dbImportDefinition.isNoHeaders());
+				} else if ("noescapesequences".equalsIgnoreCase(choice)) {
+					dbImportDefinition.setInterpretEscapeSequences(!dbImportDefinition.isInterpretEscapeSequences());
 				} else if ("c".equalsIgnoreCase(choice)) {
 					dbImportDefinition.setCompleteCommit(!dbImportDefinition.isCompleteCommit());
 				} else if ("nonewindex".equalsIgnoreCase(choice)) {
