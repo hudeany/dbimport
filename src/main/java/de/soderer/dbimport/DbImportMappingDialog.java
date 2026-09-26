@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -29,6 +28,7 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
 import de.soderer.utilities.db.data.DbSimpleDataType;
 import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
+import de.soderer.utilities.swing.DropDown;
 import de.soderer.utilities.swing.ModalDialog;
 
 public class DbImportMappingDialog extends ModalDialog<Boolean> {
@@ -38,7 +38,10 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	private final List<String> dataColumns;
 	private String mappingString;
 
-	private final List<Triple<Label, JComboBox<String>, JComboBox<String>>> mappingEntries = new ArrayList<>();
+	private final List<Triple<Label, DropDown, DropDown>> mappingEntries = new ArrayList<>();
+
+	/** Not final, so the DropDown listeners (lambdas) may read it before it is created */
+	private final JButton okButton;
 
 	public DbImportMappingDialog(final Window parent, final String title, final CaseInsensitiveMap<DbColumnType> columnTypes, final List<String> dataColumns, final List<String> keyColumns) throws Exception {
 		super(parent, title);
@@ -104,57 +107,50 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 
 			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
-			final JComboBox<String> dataFieldCombo = new JComboBox<>();
+			// Fixed list: no custom values (like the former non-editable combo box), empty entry means "not mapped"
+			final DropDown dataFieldCombo = createFixedDropDown();
 			dataFieldCombo.addItem("");
 			for (final String dataColumn : dataColumns) {
 				dataFieldCombo.addItem(dataColumn);
 			}
+			// The former combo box preselected the first item automatically, DropDown does not
+			dataFieldCombo.setText("");
 			mappingEntryPanel.add(dataFieldCombo);
 
 			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
-			JComboBox<String> optionalComboBox = null;
+			DropDown optionalComboBox = null;
 			if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Float
 					|| dbColumnType.getSimpleDataType() == DbSimpleDataType.Integer
 					|| dbColumnType.getSimpleDataType() == DbSimpleDataType.BigInteger) {
-				optionalComboBox = new JComboBox<>();
+				optionalComboBox = createFixedDropDown();
 				optionalComboBox.addItem(".");
 				optionalComboBox.addItem(",");
+				optionalComboBox.setText(".");
 				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.DateTime) {
-				optionalComboBox = new JComboBox<>();
-				optionalComboBox.setEditable(true);
-				optionalComboBox.addItem("dd.MM.yyyy HH:mm:ss");
-				optionalComboBox.addItem("dd.MM.yyyy");
-				optionalComboBox.addItem("yyyy/MM/dd HH:mm:ss");
-				optionalComboBox.addItem("yyyy/MM/dd");
+				optionalComboBox = createDateFormatDropDown();
 				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Date) {
-				optionalComboBox = new JComboBox<>();
-				optionalComboBox.setEditable(true);
-				optionalComboBox.addItem("dd.MM.yyyy HH:mm:ss");
-				optionalComboBox.addItem("dd.MM.yyyy");
-				optionalComboBox.addItem("yyyy/MM/dd HH:mm:ss");
-				optionalComboBox.addItem("yyyy/MM/dd");
+				optionalComboBox = createDateFormatDropDown();
 				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Blob || dbColumnType.getSimpleDataType() == DbSimpleDataType.Clob) {
-				optionalComboBox = new JComboBox<>();
+				optionalComboBox = createFixedDropDown();
 				optionalComboBox.addItem("");
 				optionalComboBox.addItem("file");
+				optionalComboBox.setText("");
 				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.String) {
-				optionalComboBox = new JComboBox<>();
+				optionalComboBox = createFixedDropDown();
 				optionalComboBox.addItem("");
 				optionalComboBox.addItem("LowerCase");
 				optionalComboBox.addItem("UpperCase");
+				optionalComboBox.setText("email".equalsIgnoreCase(dbColumnName) ? "LowerCase" : "");
 				mappingEntryPanel.add(optionalComboBox);
-
-				if ("email".equalsIgnoreCase(dbColumnName)) {
-					optionalComboBox.setSelectedItem("LowerCase");
-				}
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Boolean) {
-				optionalComboBox = new JComboBox<>();
+				optionalComboBox = createFixedDropDown();
 				optionalComboBox.addItem("");
+				optionalComboBox.setText("");
 				mappingEntryPanel.add(optionalComboBox);
 			}
 
@@ -177,7 +173,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
-		final JButton okButton = new JButton(LangResources.get("ok"));
+		okButton = new JButton(LangResources.get("ok"));
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -186,6 +182,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			}
 		});
 		buttonPanel.add(okButton);
+		updateOkButtonStatus();
 
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
@@ -226,17 +223,18 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			}
 		}
 
-		for (final Triple<Label, JComboBox<String>, JComboBox<String>> mappingEntry : mappingEntries) {
+		for (final Triple<Label, DropDown, DropDown> mappingEntry : mappingEntries) {
 			for (final Entry<String, Tuple<String, String>> entry : mapping.entrySet()) {
 				if (entry.getKey().equalsIgnoreCase(mappingEntry.getFirst().getText())) {
-					mappingEntry.getSecond().setSelectedItem(entry.getValue().getFirst());
+					// Unknown values are ignored for fixed lists, as the former combo box did
+					selectItem(mappingEntry.getSecond(), entry.getValue().getFirst());
 					if (mappingEntry.getThird() != null && Utilities.isNotBlank(entry.getValue().getSecond())) {
 						if ("lc".equalsIgnoreCase(entry.getValue().getSecond())) {
-							mappingEntry.getThird().setSelectedItem("LowerCase");
+							selectItem(mappingEntry.getThird(), "LowerCase");
 						} else if ("uc".equalsIgnoreCase(entry.getValue().getSecond())) {
-							mappingEntry.getThird().setSelectedItem("UpperCase");
+							selectItem(mappingEntry.getThird(), "UpperCase");
 						} else {
-							mappingEntry.getThird().setSelectedItem(entry.getValue().getSecond());
+							selectItem(mappingEntry.getThird(), entry.getValue().getSecond());
 						}
 					}
 					break;
@@ -248,11 +246,12 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	private void createMappingString() {
 		mappingString = "";
 
-		for (final Triple<Label, JComboBox<String>, JComboBox<String>> mappingEntry : mappingEntries) {
-			if (Utilities.isNotBlank(((String) mappingEntry.getSecond().getSelectedItem()))) {
-				mappingString += mappingEntry.getFirst().getText() + "=\"" + ((String) mappingEntry.getSecond().getSelectedItem()) + "\"";
-				if (mappingEntry.getThird() != null && Utilities.isNotBlank(((String) mappingEntry.getThird().getSelectedItem()))) {
-					final String formatValue = ((String) mappingEntry.getThird().getSelectedItem());
+		for (final Triple<Label, DropDown, DropDown> mappingEntry : mappingEntries) {
+			final String dataColumn = getValue(mappingEntry.getSecond());
+			if (Utilities.isNotBlank(dataColumn)) {
+				mappingString += mappingEntry.getFirst().getText() + "=\"" + dataColumn + "\"";
+				final String formatValue = mappingEntry.getThird() == null ? null : getValue(mappingEntry.getThird());
+				if (Utilities.isNotBlank(formatValue)) {
 					if ("lowercase".equalsIgnoreCase(formatValue)) {
 						mappingString += " lc";
 					} else if ("uppercase".equalsIgnoreCase(formatValue)) {
@@ -264,6 +263,102 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				mappingString += "\n";
 			}
 		}
+	}
+
+	/**
+	 * DropDown with a fixed item list (replaces a non-editable combo box)
+	 */
+	private DropDown createFixedDropDown() {
+		final DropDown dropDown = new DropDown();
+		dropDown.setCaseSensitive(false);
+		dropDown.setMatchMode(DropDown.MatchMode.CONTAINS);
+		dropDown.setAllowCustomValues(false);
+		dropDown.addChangeListener(event -> updateOkButtonStatus());
+		return dropDown;
+	}
+
+	/**
+	 * Editable DropDown with common date formats as presets (replaces the former editable combo box).
+	 * Case-sensitive, because e.g. "MM" (month) and "mm" (minute) differ in date format patterns.
+	 */
+	private DropDown createDateFormatDropDown() {
+		final DropDown dropDown = new DropDown();
+		dropDown.setCaseSensitive(true);
+		dropDown.setMatchMode(DropDown.MatchMode.STARTS_WITH);
+		dropDown.setAllowCustomValues(true);
+		dropDown.addItem("dd.MM.yyyy HH:mm:ss");
+		dropDown.addItem("dd.MM.yyyy");
+		dropDown.addItem("yyyy/MM/dd HH:mm:ss");
+		dropDown.addItem("yyyy/MM/dd");
+		dropDown.setText("dd.MM.yyyy HH:mm:ss");
+		return dropDown;
+	}
+
+	/**
+	 * Current value of a DropDown: the typed text for editable ones, the matching item for fixed lists.
+	 * Returns null for a fixed list whose text is invalid or only a partial input that was not accepted yet.
+	 */
+	private static String getValue(final DropDown dropDown) {
+		if (dropDown.isAllowCustomValues()) {
+			return dropDown.getText();
+		}
+		final String text = dropDown.getText();
+		if (text == null) {
+			return null;
+		}
+		for (final String item : dropDown.getItems()) {
+			if (item.equals(text)) {
+				return item;
+			}
+		}
+		for (final String item : dropDown.getItems()) {
+			if (item.equalsIgnoreCase(text)) {
+				return item;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Shows the item matching the given value (exact match preferred, then case-insensitive).
+	 * If there is no such item, the value itself is shown, but only if the DropDown allows custom values.
+	 */
+	private static void selectItem(final DropDown dropDown, final String value) {
+		final String valueToSelect = value == null ? "" : value;
+		for (final String item : dropDown.getItems()) {
+			if (item.equals(valueToSelect)) {
+				dropDown.setText(item);
+				return;
+			}
+		}
+		for (final String item : dropDown.getItems()) {
+			if (item.equalsIgnoreCase(valueToSelect)) {
+				dropDown.setText(item);
+				return;
+			}
+		}
+		if (dropDown.isAllowCustomValues()) {
+			dropDown.setText(valueToSelect);
+		}
+	}
+
+	/**
+	 * OK is only possible while every fixed-list DropDown shows one of its items,
+	 * so no mapping gets silently dropped because of an incomplete input
+	 */
+	private void updateOkButtonStatus() {
+		if (okButton == null) {
+			// Still building the dialog
+			return;
+		}
+		boolean allValid = true;
+		for (final Triple<Label, DropDown, DropDown> mappingEntry : mappingEntries) {
+			if (getValue(mappingEntry.getSecond()) == null || (mappingEntry.getThird() != null && getValue(mappingEntry.getThird()) == null)) {
+				allValid = false;
+				break;
+			}
+		}
+		okButton.setEnabled(allValid);
 	}
 
 	public void setMappingString(final String mappingString) throws Exception {

@@ -7,8 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -31,7 +29,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -61,6 +58,7 @@ import de.soderer.utilities.db.data.DbColumnType;
 import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
 import de.soderer.utilities.swing.ApplicationConfigurationDialog;
+import de.soderer.utilities.swing.DropDown;
 import de.soderer.utilities.swing.DualProgressDialog;
 import de.soderer.utilities.swing.ProgressDialog;
 import de.soderer.utilities.swing.QuestionDialog;
@@ -80,7 +78,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private final ConfigurationProperties applicationConfiguration;
 
 	/** The database type combo. */
-	private final JComboBox<String> dbTypeCombo;
+	private final DropDown dbTypeCombo;
 
 	private final JButton connectionCheckButton;
 
@@ -116,7 +114,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private final JTextField tableNameField;
 
 	/** The data type combo. */
-	private final JComboBox<String> dataTypeCombo;
+	private final DropDown dataTypeCombo;
 
 	/** The file log box. */
 	private final JCheckBox fileLogBox;
@@ -145,22 +143,22 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private final JButton schemaFileButton;
 
 	/** The separator combo. */
-	private final JComboBox<String> separatorCombo;
+	private final DropDown separatorCombo;
 
 	/** The string quote combo. */
-	private final JComboBox<String> stringQuoteCombo;
+	private final DropDown stringQuoteCombo;
 
 	/** The escape string quote combo. */
-	private final JComboBox<String> escapeStringQuoteCombo;
+	private final DropDown escapeStringQuoteCombo;
 
 	/** The checkbox to toggle interpretation of escape sequences (e.g. \n, \t) in csv string values. */
 	private final JCheckBox interpretEscapeSequencesBox;
 
 	/** The null value string combo. */
-	private final JComboBox<String> nullValueStringCombo;
+	private final DropDown nullValueStringCombo;
 
 	/** The encoding combo. */
-	private final JComboBox<String> encodingCombo;
+	private final DropDown encodingCombo;
 
 	private final JTextField keyColumnsField;
 
@@ -174,10 +172,10 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private final JTextArea additionalUpdateValuesField;
 
 	/** The field for databases timezone */
-	private final JComboBox<String> databaseTimezoneCombo;
+	private final DropDown databaseTimezoneCombo;
 
 	/** The field for datafiles timezone */
-	private final JComboBox<String> importDataTimezoneCombo;
+	private final DropDown importDataTimezoneCombo;
 
 	/** The no headers box. */
 	private final JCheckBox noHeadersBox;
@@ -204,9 +202,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 	private final JCheckBox noSingleModeBox;
 
-	private final JComboBox<String> importModeCombo;
+	private final DropDown importModeCombo;
 
-	private final JComboBox<String> duplicateModeCombo;
+	private final DropDown duplicateModeCombo;
 
 	private final JButton mappingButton;
 
@@ -278,17 +276,18 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbTypePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel dbTypeLabel = new JLabel(LangResources.get("dbtype"));
 		dbTypePanel.add(dbTypeLabel);
-		dbTypeCombo = new JComboBox<>();
+		dbTypeCombo = new DropDown();
 		dbTypeCombo.setToolTipText(LangResources.get("dbtype_help"));
+		// Fixed list: no custom values (like the former non-editable combo box)
+		dbTypeCombo.setCaseSensitive(false);
+		dbTypeCombo.setMatchMode(DropDown.MatchMode.CONTAINS);
+		dbTypeCombo.setAllowCustomValues(false);
 		for (final DbVendor dbVendor : DbVendor.values()) {
 			dbTypeCombo.addItem(dbVendor.toString());
 		}
-		dbTypeCombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(final ItemEvent event) {
-				checkButtonStatus();
-			}
-		});
+		// The former combo box preselected the first item automatically, DropDown does not
+		dbTypeCombo.setText(dbTypeCombo.getItems()[0]);
+		dbTypeCombo.addActionListener(event -> checkButtonStatus());
 		dbTypePanel.add(dbTypeCombo, BorderLayout.EAST);
 
 		connectionCheckButton = new JButton(LangResources.get("connectionCheck"));
@@ -444,7 +443,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						if (new File(trustStoreFilePathField.getText()).exists()) {
 							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File already exists: '" + trustStoreFilePathField.getText() + "'").setBackgroundColor(SwingColor.LightRed).open();
 						} else {
-							TrustManagerUtilities.createTrustStoreFile(hostField.getText(), DbVendor.getDbVendorByName((String) dbTypeCombo.getSelectedItem()).getDefaultPort(), new File(trustStoreFilePathField.getText()), trustStorePasswordField.getPassword(), null);
+							TrustManagerUtilities.createTrustStoreFile(hostField.getText(), DbVendor.getDbVendorByName(getRequiredSelectedItem(dbTypeCombo, "dbtype")).getDefaultPort(), new File(trustStoreFilePathField.getText()), trustStorePasswordField.getPassword(), null);
 							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").setBackgroundColor(SwingColor.Green).open();
 							checkButtonStatus();
 						}
@@ -490,13 +489,18 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dataTypePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel dataTypeLabel = new JLabel(LangResources.get("dataType"));
 		dataTypePanel.add(dataTypeLabel);
-		dataTypeCombo = new JComboBox<>();
+		dataTypeCombo = new DropDown();
 		dataTypeCombo.setToolTipText(LangResources.get("dataType_help"));
 		dataTypeCombo.setPreferredSize(new Dimension(200, dataTypeCombo.getPreferredSize().height));
+		// Fixed list: no custom values (like the former non-editable combo box)
+		dataTypeCombo.setCaseSensitive(false);
+		dataTypeCombo.setMatchMode(DropDown.MatchMode.CONTAINS);
+		dataTypeCombo.setAllowCustomValues(false);
 		dataTypeCombo.addItem(LangResources.get("byFileExtension"));
 		for (final DataType dataType : DataType.values()) {
 			dataTypeCombo.addItem(dataType.toString());
 		}
+		dataTypeCombo.setText(dataTypeCombo.getItems()[0]);
 		dataTypeCombo.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -699,13 +703,17 @@ public class DbImportGui extends UpdateableGuiApplication {
 		encodingPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel encodingLabel = new JLabel(LangResources.get("encoding"));
 		encodingPanel.add(encodingLabel);
-		encodingCombo = new JComboBox<>();
+		encodingCombo = new DropDown();
 		encodingCombo.setToolTipText(LangResources.get("encoding_help"));
 		encodingCombo.setPreferredSize(new Dimension(200, encodingCombo.getPreferredSize().height));
 		encodingCombo.addItem(StandardCharsets.UTF_8.name());
 		encodingCombo.addItem(StandardCharsets.ISO_8859_1.name());
 		encodingCombo.addItem("ISO-8859-15");
-		encodingCombo.setEditable(true);
+		// Editable like the former combo box: presets, but any other value may be typed in
+		encodingCombo.setCaseSensitive(false);
+		encodingCombo.setMatchMode(DropDown.MatchMode.CONTAINS);
+		encodingCombo.setAllowCustomValues(true);
+		encodingCombo.setText(StandardCharsets.UTF_8.name());
 		encodingPanel.add(encodingCombo);
 		mandatoryParameterPanel.add(encodingPanel);
 
@@ -714,12 +722,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 		separatorPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel separatorLabel = new JLabel(LangResources.get("separator"));
 		separatorPanel.add(separatorLabel);
-		separatorCombo = new JComboBox<>();
+		separatorCombo = new DropDown();
 		separatorCombo.setToolTipText(LangResources.get("separator_help"));
 		separatorCombo.setPreferredSize(new Dimension(200, separatorCombo.getPreferredSize().height));
 		separatorCombo.addItem(";");
 		separatorCombo.addItem(",");
-		separatorCombo.setEditable(true);
+		// Editable like the former combo box: presets, but any other value may be typed in
+		separatorCombo.setAllowCustomValues(true);
+		separatorCombo.setText(";");
 		separatorPanel.add(separatorCombo);
 		mandatoryParameterPanel.add(separatorPanel);
 
@@ -728,12 +738,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 		stringQuotePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel stringQuoteLabel = new JLabel(LangResources.get("stringquote"));
 		stringQuotePanel.add(stringQuoteLabel);
-		stringQuoteCombo = new JComboBox<>();
+		stringQuoteCombo = new DropDown();
 		stringQuoteCombo.setToolTipText(LangResources.get("stringquote_help"));
 		stringQuoteCombo.setPreferredSize(new Dimension(200, stringQuoteCombo.getPreferredSize().height));
 		stringQuoteCombo.addItem("\"");
 		stringQuoteCombo.addItem("'");
-		stringQuoteCombo.setEditable(true);
+		// Editable like the former combo box: presets, but any other value may be typed in
+		stringQuoteCombo.setAllowCustomValues(true);
+		stringQuoteCombo.setText("\"");
 		stringQuotePanel.add(stringQuoteCombo);
 		mandatoryParameterPanel.add(stringQuotePanel);
 
@@ -742,13 +754,15 @@ public class DbImportGui extends UpdateableGuiApplication {
 		escapeStringQuotePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel escapeStringQuoteLabel = new JLabel(LangResources.get("escapestringquote"));
 		escapeStringQuotePanel.add(escapeStringQuoteLabel);
-		escapeStringQuoteCombo = new JComboBox<>();
+		escapeStringQuoteCombo = new DropDown();
 		escapeStringQuoteCombo.setToolTipText(LangResources.get("escapestringquote_help"));
 		escapeStringQuoteCombo.setPreferredSize(new Dimension(200, escapeStringQuoteCombo.getPreferredSize().height));
 		escapeStringQuoteCombo.addItem("\"");
 		escapeStringQuoteCombo.addItem("'");
 		escapeStringQuoteCombo.addItem("\\");
-		escapeStringQuoteCombo.setEditable(true);
+		// Editable like the former combo box: presets, but any other value may be typed in
+		escapeStringQuoteCombo.setAllowCustomValues(true);
+		escapeStringQuoteCombo.setText("\"");
 		escapeStringQuotePanel.add(escapeStringQuoteCombo);
 		mandatoryParameterPanel.add(escapeStringQuotePanel);
 
@@ -757,7 +771,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		nullValueStringPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel nullValueStringLabel = new JLabel(LangResources.get("nullvaluetext"));
 		nullValueStringPanel.add(nullValueStringLabel);
-		nullValueStringCombo = new JComboBox<>();
+		nullValueStringCombo = new DropDown();
 		nullValueStringCombo.setToolTipText(LangResources.get("nullvaluetext_help"));
 		nullValueStringCombo.setPreferredSize(new Dimension(200, nullValueStringCombo.getPreferredSize().height));
 		nullValueStringCombo.addItem("");
@@ -765,7 +779,12 @@ public class DbImportGui extends UpdateableGuiApplication {
 		nullValueStringCombo.addItem("Null");
 		nullValueStringCombo.addItem("null");
 		nullValueStringCombo.addItem("<null>");
-		nullValueStringCombo.setEditable(true);
+		// Editable like the former combo box: presets, but any other value may be typed in
+		// Case-sensitive, because "NULL", "Null" and "null" are different values here
+		nullValueStringCombo.setCaseSensitive(true);
+		nullValueStringCombo.setMatchMode(DropDown.MatchMode.STARTS_WITH);
+		nullValueStringCombo.setAllowCustomValues(true);
+		nullValueStringCombo.setText("");
 		nullValueStringPanel.add(nullValueStringCombo);
 		mandatoryParameterPanel.add(nullValueStringPanel);
 
@@ -774,20 +793,19 @@ public class DbImportGui extends UpdateableGuiApplication {
 		importModePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel importModeLabel = new JLabel(LangResources.get("importMode"));
 		importModePanel.add(importModeLabel);
-		importModeCombo = new JComboBox<>();
+		importModeCombo = new DropDown();
 		importModeCombo.setToolTipText(LangResources.get("importMode_help"));
 		importModeCombo.setPreferredSize(new Dimension(200, importModeCombo.getPreferredSize().height));
+		// Fixed list: no custom values (like the former non-editable combo box)
+		importModeCombo.setCaseSensitive(false);
+		importModeCombo.setMatchMode(DropDown.MatchMode.CONTAINS);
+		importModeCombo.setAllowCustomValues(false);
 		importModeCombo.addItem("CLEARINSERT");
 		importModeCombo.addItem("INSERT");
 		importModeCombo.addItem("UPDATE");
 		importModeCombo.addItem("UPSERT");
-		importModeCombo.setEditable(false);
-		importModeCombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(final ItemEvent event) {
-				checkButtonStatus();
-			}
-		});
+		importModeCombo.setText(importModeCombo.getItems()[0]);
+		importModeCombo.addActionListener(event -> checkButtonStatus());
 		importModePanel.add(importModeCombo);
 		mandatoryParameterPanel.add(importModePanel);
 
@@ -796,19 +814,18 @@ public class DbImportGui extends UpdateableGuiApplication {
 		duplicateModePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel duplicateModeLabel = new JLabel(LangResources.get("duplicateMode"));
 		duplicateModePanel.add(duplicateModeLabel);
-		duplicateModeCombo = new JComboBox<>();
+		duplicateModeCombo = new DropDown();
 		duplicateModeCombo.setToolTipText(LangResources.get("duplicateMode_help"));
 		duplicateModeCombo.setPreferredSize(new Dimension(200, duplicateModeCombo.getPreferredSize().height));
+		// Fixed list: no custom values (like the former non-editable combo box)
+		duplicateModeCombo.setCaseSensitive(false);
+		duplicateModeCombo.setMatchMode(DropDown.MatchMode.CONTAINS);
+		duplicateModeCombo.setAllowCustomValues(false);
 		for (final DuplicateMode duplicateMode : DuplicateMode.values()) {
 			duplicateModeCombo.addItem(duplicateMode.toString());
 		}
-		duplicateModeCombo.setEditable(false);
-		duplicateModeCombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(final ItemEvent event) {
-				checkButtonStatus();
-			}
-		});
+		duplicateModeCombo.setText(duplicateModeCombo.getItems()[0]);
+		duplicateModeCombo.addActionListener(event -> checkButtonStatus());
 		duplicateModePanel.add(duplicateModeCombo);
 		mandatoryParameterPanel.add(duplicateModePanel);
 
@@ -864,20 +881,18 @@ public class DbImportGui extends UpdateableGuiApplication {
 		databaseTimezonePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel databaseTimezoneLabel = new JLabel(LangResources.get("databaseTimezone"));
 		databaseTimezonePanel.add(databaseTimezoneLabel);
-		databaseTimezoneCombo = new JComboBox<>();
+		databaseTimezoneCombo = new DropDown();
 		databaseTimezoneCombo.setToolTipText(LangResources.get("databaseTimezone_help"));
 		databaseTimezoneCombo.setPreferredSize(new Dimension(200, databaseTimezoneCombo.getPreferredSize().height));
+		// Fixed list: no custom values (like the former non-editable combo box)
+		databaseTimezoneCombo.setCaseSensitive(false);
+		databaseTimezoneCombo.setMatchMode(DropDown.MatchMode.CONTAINS);
+		databaseTimezoneCombo.setAllowCustomValues(false);
 		for (final String databaseTimezone : TimeZone.getAvailableIDs()) {
 			databaseTimezoneCombo.addItem(databaseTimezone);
 		}
-		databaseTimezoneCombo.setSelectedItem(TimeZone.getDefault().getID());
-		databaseTimezoneCombo.setEditable(false);
-		databaseTimezoneCombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(final ItemEvent event) {
-				checkButtonStatus();
-			}
-		});
+		databaseTimezoneCombo.setText(TimeZone.getDefault().getID());
+		databaseTimezoneCombo.addActionListener(event -> checkButtonStatus());
 		databaseTimezonePanel.add(databaseTimezoneCombo);
 		mandatoryParameterPanel.add(databaseTimezonePanel);
 
@@ -886,20 +901,18 @@ public class DbImportGui extends UpdateableGuiApplication {
 		importDataTimezonePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		final JLabel importDataTimezoneLabel = new JLabel(LangResources.get("importDataTimezone"));
 		importDataTimezonePanel.add(importDataTimezoneLabel);
-		importDataTimezoneCombo = new JComboBox<>();
+		importDataTimezoneCombo = new DropDown();
 		importDataTimezoneCombo.setToolTipText(LangResources.get("importDataTimezone_help"));
 		importDataTimezoneCombo.setPreferredSize(new Dimension(200, importDataTimezoneCombo.getPreferredSize().height));
+		// Fixed list: no custom values (like the former non-editable combo box)
+		importDataTimezoneCombo.setCaseSensitive(false);
+		importDataTimezoneCombo.setMatchMode(DropDown.MatchMode.CONTAINS);
+		importDataTimezoneCombo.setAllowCustomValues(false);
 		for (final String importDataTimezone : TimeZone.getAvailableIDs()) {
 			importDataTimezoneCombo.addItem(importDataTimezone);
 		}
-		importDataTimezoneCombo.setSelectedItem(TimeZone.getDefault().getID());
-		importDataTimezoneCombo.setEditable(false);
-		importDataTimezoneCombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(final ItemEvent event) {
-				checkButtonStatus();
-			}
-		});
+		importDataTimezoneCombo.setText(TimeZone.getDefault().getID());
+		importDataTimezoneCombo.addActionListener(event -> checkButtonStatus());
 		importDataTimezonePanel.add(importDataTimezoneCombo);
 		mandatoryParameterPanel.add(importDataTimezonePanel);
 
@@ -1220,7 +1233,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	private DbImportDefinition getConfigurationAsDefinition() throws Exception {
 		final DbImportDefinition dbImportDefinition = new DbImportDefinition();
 
-		dbImportDefinition.setDbVendor(DbVendor.getDbVendorByName((String) dbTypeCombo.getSelectedItem()));
+		dbImportDefinition.setDbVendor(DbVendor.getDbVendorByName(getRequiredSelectedItem(dbTypeCombo, "dbtype")));
 		dbImportDefinition.setHostnameAndPort(hostField.isEnabled() ? hostField.getText() : null);
 		dbImportDefinition.setDbName(dbNameField.getText());
 		dbImportDefinition.setUsername(userField.isEnabled() ? userField.getText() : null);
@@ -1229,25 +1242,27 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setTrustStoreFile(trustStoreFilePathField.isEnabled() && Utilities.isNotBlank(trustStoreFilePathField.getText()) ? new File(trustStoreFilePathField.getText()) : null);
 		dbImportDefinition.setTableName(tableNameField.getText());
 		dbImportDefinition.setImportFilePathOrData(importFilePathOrDataField.getText(), false);
-		if (dataTypeCombo.getSelectedIndex() > 0) {
-			dbImportDefinition.setDataType(DataType.getFromString((String) dataTypeCombo.getSelectedItem()));
+		// First item is "by file extension", which means no explicit data type
+		final String selectedDataType = getRequiredSelectedItem(dataTypeCombo, "dataType");
+		if (!selectedDataType.equals(dataTypeCombo.getItems()[0])) {
+			dbImportDefinition.setDataType(DataType.getFromString(selectedDataType));
 		}
 		dbImportDefinition.setLog(fileLogBox.isSelected());
-		dbImportDefinition.setEncoding(Charset.forName((String) encodingCombo.getSelectedItem()));
-		dbImportDefinition.setSeparator(((String) separatorCombo.getSelectedItem()).charAt(0));
-		dbImportDefinition.setStringQuote(Utilities.isNotEmpty((String) stringQuoteCombo.getSelectedItem()) ? ((String) stringQuoteCombo.getSelectedItem()).charAt(0) : null);
-		dbImportDefinition.setEscapeStringQuote(((String) escapeStringQuoteCombo.getSelectedItem()).charAt(0));
+		dbImportDefinition.setEncoding(Charset.forName(encodingCombo.getText()));
+		dbImportDefinition.setSeparator(separatorCombo.getText().charAt(0));
+		dbImportDefinition.setStringQuote(Utilities.isNotEmpty(stringQuoteCombo.getText()) ? stringQuoteCombo.getText().charAt(0) : null);
+		dbImportDefinition.setEscapeStringQuote(escapeStringQuoteCombo.getText().charAt(0));
 		dbImportDefinition.setInterpretEscapeSequences(interpretEscapeSequencesBox.isSelected());
 		dbImportDefinition.setNoHeaders(noHeadersBox.isSelected());
-		dbImportDefinition.setNullValueString((String) nullValueStringCombo.getSelectedItem());
+		dbImportDefinition.setNullValueString(nullValueStringCombo.getText());
 		dbImportDefinition.setCompleteCommit(onlyCommitOnFullSuccessBox.isSelected());
 		dbImportDefinition.setCreateNewIndexIfNeeded(createNewIndexIfNeededBox.isSelected());
 		dbImportDefinition.setDeactivateForeignKeyConstraints(deactivateForeignKeyConstraintsBox.isEnabled() && deactivateForeignKeyConstraintsBox.isSelected());
 		dbImportDefinition.setDeactivateTriggers(deactivateTriggersBox.isEnabled() && deactivateTriggersBox.isSelected());
 		dbImportDefinition.setAllowUnderfilledLines(allowUnderfilledLinesBox.isSelected());
 		dbImportDefinition.setRemoveSurplusEmptyTrailingColumns(removeSurplusEmptyTrailingColumnsBox.isSelected());
-		dbImportDefinition.setImportMode(ImportMode.getFromString(((String) importModeCombo.getSelectedItem())));
-		dbImportDefinition.setDuplicateMode(DuplicateMode.getFromString(((String) duplicateModeCombo.getSelectedItem())));
+		dbImportDefinition.setImportMode(ImportMode.getFromString(getRequiredSelectedItem(importModeCombo, "importMode")));
+		dbImportDefinition.setDuplicateMode(DuplicateMode.getFromString(getRequiredSelectedItem(duplicateModeCombo, "duplicateMode")));
 		dbImportDefinition.setUpdateNullData(updateWithNullDataBox.isSelected());
 		dbImportDefinition.setKeycolumns(Utilities.splitAndTrimList(keyColumnsField.getText()));
 		dbImportDefinition.setCreateTable(createTableBox.isSelected());
@@ -1263,8 +1278,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 		// null stands for no usage of zip password, but GUI field text is always not null, so use empty field as deactivation of zip password
 		dbImportDefinition.setZipPassword(Utilities.isEmpty(zipPasswordField.getPassword()) ? null : zipPasswordField.getPassword());
 		dbImportDefinition.setKdbxPassword(kdbxPasswordField.getPassword());
-		dbImportDefinition.setDatabaseTimeZone((String) databaseTimezoneCombo.getSelectedItem());
-		dbImportDefinition.setImportDataTimeZone((String) importDataTimezoneCombo.getSelectedItem());
+		dbImportDefinition.setDatabaseTimeZone(getRequiredSelectedItem(databaseTimezoneCombo, "databaseTimezone"));
+		dbImportDefinition.setImportDataTimeZone(getRequiredSelectedItem(importDataTimezoneCombo, "importDataTimezone"));
 
 		if (Utilities.isNotBlank(importDateFormatField.getText()) && importDateFormatField.isEnabled()) {
 			dbImportDefinition.setDateFormat(importDateFormatField.getText());
@@ -1298,9 +1313,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 	 *             the exception
 	 */
 	private void setConfigurationByDefinition(final DbImportDefinition dbImportDefinition) throws Exception {
-		for (int i = 0; i < dbTypeCombo.getItemCount(); i++) {
-			if (DbVendor.getDbVendorByName(dbTypeCombo.getItemAt(i)) == dbImportDefinition.getDbVendor()) {
-				dbTypeCombo.setSelectedIndex(i);
+		for (final String dbTypeItem : dbTypeCombo.getItems()) {
+			if (DbVendor.getDbVendorByName(dbTypeItem) == dbImportDefinition.getDbVendor()) {
+				dbTypeCombo.setText(dbTypeItem);
 				break;
 			}
 		}
@@ -1319,90 +1334,33 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		structureFilePathField.setText(dbImportDefinition.getStructureFilePath());
 
-		boolean dataTypeFound = false;
-		if (dbImportDefinition.getDataType() != null) {
-			for (int i = 0; i < dataTypeCombo.getItemCount(); i++) {
-				if (dataTypeCombo.getItemAt(i).equalsIgnoreCase(dbImportDefinition.getDataType().toString())) {
-					dataTypeCombo.setSelectedIndex(i);
-					dataTypeFound = true;
-					break;
-				}
-			}
-		}
-		if (!dataTypeFound) {
-			dataTypeCombo.setSelectedItem(0);
+		// Falls back to the first item "by file extension"
+		// (the former setSelectedItem(0) passed the Integer 0, which is no item and was silently ignored)
+		if (dbImportDefinition.getDataType() == null || !selectItem(dataTypeCombo, dbImportDefinition.getDataType().toString())) {
+			dataTypeCombo.setText(dataTypeCombo.getItems()[0]);
 		}
 
 		fileLogBox.setSelected(dbImportDefinition.isLog());
 
-		boolean encodingFound = false;
-		for (int i = 0; i < encodingCombo.getItemCount(); i++) {
-			if (encodingCombo.getItemAt(i).equalsIgnoreCase(dbImportDefinition.getEncoding().name())) {
-				encodingCombo.setSelectedIndex(i);
-				encodingFound = true;
-				break;
-			}
-		}
-		if (!encodingFound) {
-			encodingCombo.setSelectedItem(dbImportDefinition.getEncoding());
-		}
+		selectItem(encodingCombo, dbImportDefinition.getEncoding().name());
 
-		boolean separatorFound = false;
-		for (int i = 0; i < separatorCombo.getItemCount(); i++) {
-			if (separatorCombo.getItemAt(i).equalsIgnoreCase(Character.toString(dbImportDefinition.getSeparator()))) {
-				separatorCombo.setSelectedIndex(i);
-				separatorFound = true;
-				break;
-			}
-		}
-		if (!separatorFound) {
-			separatorCombo.setSelectedItem(Character.toString(dbImportDefinition.getSeparator()));
-		}
+		selectItem(separatorCombo, Character.toString(dbImportDefinition.getSeparator()));
 
-		boolean stringQuoteFound = false;
 		if (dbImportDefinition.getStringQuote() == null) {
-			stringQuoteCombo.setSelectedItem("");
-			stringQuoteFound = true;
+			// Empty text means no string quote
+			stringQuoteCombo.setText("");
 		} else {
-			for (int i = 0; i < stringQuoteCombo.getItemCount(); i++) {
-				if (stringQuoteCombo.getItemAt(i).equalsIgnoreCase(Character.toString(dbImportDefinition.getStringQuote()))) {
-					stringQuoteCombo.setSelectedIndex(i);
-					stringQuoteFound = true;
-					break;
-				}
-			}
-		}
-		if (!stringQuoteFound) {
-			stringQuoteCombo.setSelectedItem(Character.toString(dbImportDefinition.getStringQuote()));
+			selectItem(stringQuoteCombo, Character.toString(dbImportDefinition.getStringQuote()));
 		}
 
-		boolean escapeStringQuoteFound = false;
-		for (int i = 0; i < escapeStringQuoteCombo.getItemCount(); i++) {
-			if (escapeStringQuoteCombo.getItemAt(i).equalsIgnoreCase(Character.toString(dbImportDefinition.getEscapeStringQuote()))) {
-				escapeStringQuoteCombo.setSelectedIndex(i);
-				escapeStringQuoteFound = true;
-				break;
-			}
-		}
-		if (!escapeStringQuoteFound) {
-			escapeStringQuoteCombo.setSelectedItem(Character.toString(dbImportDefinition.getEscapeStringQuote()));
-		}
+		selectItem(escapeStringQuoteCombo, Character.toString(dbImportDefinition.getEscapeStringQuote()));
 
 		interpretEscapeSequencesBox.setSelected(dbImportDefinition.isInterpretEscapeSequences());
 
 		noHeadersBox.setSelected(dbImportDefinition.isNoHeaders());
 
-		boolean nullValueStringFound = false;
-		for (int i = 0; i < nullValueStringCombo.getItemCount(); i++) {
-			if (nullValueStringCombo.getItemAt(i).equals(dbImportDefinition.getNullValueString())) {
-				nullValueStringCombo.setSelectedIndex(i);
-				nullValueStringFound = true;
-				break;
-			}
-		}
-		if (!nullValueStringFound) {
-			nullValueStringCombo.setSelectedItem(dbImportDefinition.getNullValueString());
-		}
+		// selectItem() prefers the exact match, so "NULL", "Null" and "null" stay distinct
+		selectItem(nullValueStringCombo, dbImportDefinition.getNullValueString());
 
 		onlyCommitOnFullSuccessBox.setSelected(dbImportDefinition.isCompleteCommit());
 		createNewIndexIfNeededBox.setSelected(dbImportDefinition.isCreateNewIndexIfNeeded());
@@ -1411,27 +1369,11 @@ public class DbImportGui extends UpdateableGuiApplication {
 		allowUnderfilledLinesBox.setSelected(dbImportDefinition.isAllowUnderfilledLines());
 		removeSurplusEmptyTrailingColumnsBox.setSelected(dbImportDefinition.isRemoveSurplusEmptyTrailingColumns());
 
-		boolean importModeFound = false;
-		for (int i = 0; i < importModeCombo.getItemCount(); i++) {
-			if (importModeCombo.getItemAt(i).equalsIgnoreCase(dbImportDefinition.getImportMode().toString())) {
-				importModeCombo.setSelectedIndex(i);
-				importModeFound = true;
-				break;
-			}
-		}
-		if (!importModeFound) {
+		if (!selectItem(importModeCombo, dbImportDefinition.getImportMode().toString())) {
 			throw new DbImportException("Invalid import mode");
 		}
 
-		boolean duplicateModeFound = false;
-		for (int i = 0; i < duplicateModeCombo.getItemCount(); i++) {
-			if (duplicateModeCombo.getItemAt(i).equalsIgnoreCase(dbImportDefinition.getDuplicateMode().toString())) {
-				duplicateModeCombo.setSelectedIndex(i);
-				duplicateModeFound = true;
-				break;
-			}
-		}
-		if (!duplicateModeFound) {
+		if (!selectItem(duplicateModeCombo, dbImportDefinition.getDuplicateMode().toString())) {
 			throw new DbImportException("Invalid duplicate mode");
 		}
 
@@ -1450,9 +1392,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		additionalUpdateValuesField.setText(dbImportDefinition.getAdditionalUpdateValues());
 
-		databaseTimezoneCombo.setSelectedItem(dbImportDefinition.getDatabaseTimeZone());
+		selectItem(databaseTimezoneCombo, dbImportDefinition.getDatabaseTimeZone());
 
-		importDataTimezoneCombo.setSelectedItem(dbImportDefinition.getImportDataTimeZone());
+		selectItem(importDataTimezoneCombo, dbImportDefinition.getImportDataTimeZone());
 
 		trimDataBox.setSelected(dbImportDefinition.isTrimData());
 
@@ -1466,11 +1408,76 @@ public class DbImportGui extends UpdateableGuiApplication {
 	}
 
 	/**
+	 * Returns the item matching the current text of the DropDown, preferring an exact match over a
+	 * case-insensitive one. Returns null if the text is invalid or only a partial input that was not
+	 * accepted yet (DropDown.getText() may return such a partial text while it is still valid).
+	 */
+	private static String getSelectedItem(final DropDown dropDown) {
+		final String text = dropDown.getText();
+		if (text == null) {
+			return null;
+		}
+		for (final String item : dropDown.getItems()) {
+			if (item.equals(text)) {
+				return item;
+			}
+		}
+		for (final String item : dropDown.getItems()) {
+			if (item.equalsIgnoreCase(text)) {
+				return item;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Like {@link #getSelectedItem(DropDown)}, but throws a descriptive exception instead of returning null.
+	 * Used for the fixed-list DropDowns, whose value must be one of the items.
+	 */
+	private static String getRequiredSelectedItem(final DropDown dropDown, final String fieldLabelKey) throws Exception {
+		final String selectedItem = getSelectedItem(dropDown);
+		if (selectedItem == null) {
+			throw new Exception("Invalid value for '" + LangResources.get(fieldLabelKey) + "': '" + (dropDown.getText() == null ? "" : dropDown.getText()) + "'");
+		}
+		return selectedItem;
+	}
+
+	/**
+	 * Shows the item matching the given value (exact match preferred, then case-insensitive).
+	 * If there is no such item, the value itself is shown, but only if the DropDown allows custom values.
+	 *
+	 * @return true if a matching item was found
+	 */
+	private static boolean selectItem(final DropDown dropDown, final String value) {
+		final String valueToSelect = value == null ? "" : value;
+		for (final String item : dropDown.getItems()) {
+			if (item.equals(valueToSelect)) {
+				dropDown.setText(item);
+				return true;
+			}
+		}
+		for (final String item : dropDown.getItems()) {
+			if (item.equalsIgnoreCase(valueToSelect)) {
+				dropDown.setText(item);
+				return true;
+			}
+		}
+		if (dropDown.isAllowCustomValues()) {
+			dropDown.setText(valueToSelect);
+		}
+		return false;
+	}
+
+	/**
 	 * Check button status.
 	 */
 	private void checkButtonStatus() {
-		if (DbVendor.SQLite.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-				|| DbVendor.Derby.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())) {
+		// null while the typed text is no (complete) valid entry
+		final String selectedDbType = getSelectedItem(dbTypeCombo);
+		final String selectedImportMode = getSelectedItem(importModeCombo);
+
+		if (DbVendor.SQLite.toString().equalsIgnoreCase(selectedDbType)
+				|| DbVendor.Derby.toString().equalsIgnoreCase(selectedDbType)) {
 			hostField.setEnabled(false);
 			userField.setEnabled(false);
 			passwordField.setEnabled(false);
@@ -1486,26 +1493,26 @@ public class DbImportGui extends UpdateableGuiApplication {
 			userField.setEnabled(true);
 			passwordField.setEnabled(true);
 			secureConnectionBox.setEnabled(
-					DbVendor.Oracle.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-					|| DbVendor.MySQL.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-					|| DbVendor.MariaDB.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-					|| DbVendor.MsSQL.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem()));
+					DbVendor.Oracle.toString().equalsIgnoreCase(selectedDbType)
+					|| DbVendor.MySQL.toString().equalsIgnoreCase(selectedDbType)
+					|| DbVendor.MariaDB.toString().equalsIgnoreCase(selectedDbType)
+					|| DbVendor.MsSQL.toString().equalsIgnoreCase(selectedDbType));
 			trustStoreFilePathField.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
 			trustStoreFileButton.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
-			createTrustStoreFileButton.setEnabled(DbVendor.Oracle.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
+			createTrustStoreFileButton.setEnabled(DbVendor.Oracle.toString().equalsIgnoreCase(selectedDbType)
 					&& secureConnectionBox.isEnabled() && secureConnectionBox.isSelected() && Utilities.isNotBlank(hostField.getText()));
 			trustStorePasswordField.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected() && Utilities.isNotBlank(trustStoreFilePathField.getText()));
 
 			connectionCheckButton.setEnabled(
 					Utilities.isNotBlank(dbNameField.getText())
 					&& Utilities.isNotBlank(hostField.getText())
-					&& Utilities.isNotBlank(userField.getText()) || DbVendor.Cassandra.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
+					&& Utilities.isNotBlank(userField.getText()) || DbVendor.Cassandra.toString().equalsIgnoreCase(selectedDbType)
 					&& Utilities.isNotBlank(passwordField.getPassword()));
 		}
 
 		DataType dataType;
 		try {
-			dataType = DataType.getFromString((String) dataTypeCombo.getSelectedItem());
+			dataType = DataType.getFromString(getSelectedItem(dataTypeCombo));
 		} catch (@SuppressWarnings("unused") final Exception e) {
 			dataType = null;
 		}
@@ -1779,15 +1786,15 @@ public class DbImportGui extends UpdateableGuiApplication {
 		}
 		mappingField.setBackground(mappingField.isEnabled() ? Color.WHITE : Color.LIGHT_GRAY);
 
-		if (DbVendor.Oracle.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-				|| DbVendor.MySQL.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())
-				|| DbVendor.MariaDB.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())) {
+		if (DbVendor.Oracle.toString().equalsIgnoreCase(selectedDbType)
+				|| DbVendor.MySQL.toString().equalsIgnoreCase(selectedDbType)
+				|| DbVendor.MariaDB.toString().equalsIgnoreCase(selectedDbType)) {
 			deactivateForeignKeyConstraintsBox.setEnabled(true);
 		} else {
 			deactivateForeignKeyConstraintsBox.setEnabled(false);
 		}
 
-		if (DbVendor.Oracle.toString().equalsIgnoreCase((String) dbTypeCombo.getSelectedItem())) {
+		if (DbVendor.Oracle.toString().equalsIgnoreCase(selectedDbType)) {
 			deactivateTriggersBox.setEnabled(true);
 		} else {
 			deactivateTriggersBox.setEnabled(false);
@@ -1795,16 +1802,16 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		if (additionalInsertValuesField.isEnabled()) {
 			additionalInsertValuesField.setEnabled(
-					ImportMode.CLEARINSERT.toString().equalsIgnoreCase((String) importModeCombo.getSelectedItem())
-					|| ImportMode.INSERT.toString().equalsIgnoreCase((String) importModeCombo.getSelectedItem())
-					|| ImportMode.UPSERT.toString().equalsIgnoreCase((String) importModeCombo.getSelectedItem()));
+					ImportMode.CLEARINSERT.toString().equalsIgnoreCase(selectedImportMode)
+					|| ImportMode.INSERT.toString().equalsIgnoreCase(selectedImportMode)
+					|| ImportMode.UPSERT.toString().equalsIgnoreCase(selectedImportMode));
 		}
 		additionalInsertValuesField.setBackground(additionalInsertValuesField.isEnabled() ? Color.WHITE : Color.LIGHT_GRAY);
 
 		if (additionalUpdateValuesField.isEnabled()) {
 			additionalUpdateValuesField.setEnabled(
-					ImportMode.UPDATE.toString().equalsIgnoreCase((String) importModeCombo.getSelectedItem())
-					|| ImportMode.UPSERT.toString().equalsIgnoreCase((String) importModeCombo.getSelectedItem()));
+					ImportMode.UPDATE.toString().equalsIgnoreCase(selectedImportMode)
+					|| ImportMode.UPSERT.toString().equalsIgnoreCase(selectedImportMode));
 		}
 		additionalUpdateValuesField.setBackground(additionalUpdateValuesField.isEnabled() ? Color.WHITE : Color.LIGHT_GRAY);
 
