@@ -234,8 +234,6 @@ Example: `'db1="def 1" ,;db2="def 2" .;db3="def 3" dd.MM.yyyy HH:mm:ss;db4="def 
 | `UPDATE_ALL_DROP` / `_JOIN` | import data and database | all occurrences are updated (*default: `UPDATE_ALL_JOIN`*) |
 | `MAKE_UNIQUE_DROP` / `_JOIN` | import data and database | duplicate occurrences are removed |
 
-The former names `CKECK_SOURCE_ONLY_DROP` and `CKECK_SOURCE_ONLY_JOIN` are still accepted.
-
 > **Cassandra** only supports the duplicate mode `UPDATE_ALL_JOIN`, updates with null values and commits without `-c`.
 
 ## Further tools

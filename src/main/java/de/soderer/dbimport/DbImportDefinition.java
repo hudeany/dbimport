@@ -179,8 +179,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 		MAKE_UNIQUE_JOIN;
 
 		/**
-		 * Returns the duplicate mode for its name. The former misspelled names "CKECK_SOURCE_ONLY_DROP" and
-		 * "CKECK_SOURCE_ONLY_JOIN" are still accepted.
+		 * Returns the duplicate mode for its name.
 		 *
 		 * @param duplicateModeString the name of the duplicate mode (case insensitive)
 		 * @return the duplicate mode
