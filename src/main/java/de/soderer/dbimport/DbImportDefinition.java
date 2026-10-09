@@ -7,7 +7,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
 
 import de.soderer.dbimport.dataprovider.CsvDataProvider;
@@ -186,10 +185,8 @@ public class DbImportDefinition extends DbConnectionDefinition {
 		 * @throws Exception if there is no duplicate mode with this name
 		 */
 		public static DuplicateMode getFromString(final String duplicateModeString) throws Exception {
-			// Keep existing scripts and stored configurations with the former misspelled names working
-			final String modeName = duplicateModeString != null && duplicateModeString.toUpperCase(Locale.ROOT).startsWith("CKECK_") ? "CHECK_" + duplicateModeString.substring(6) : duplicateModeString;
 			for (final DuplicateMode duplicateMode : DuplicateMode.values()) {
-				if (duplicateMode.toString().equalsIgnoreCase(modeName)) {
+				if (duplicateMode.toString().equalsIgnoreCase(duplicateModeString)) {
 					return duplicateMode;
 				}
 			}
