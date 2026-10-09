@@ -18,6 +18,15 @@ import de.soderer.utilities.db.exception.DbNotExistsException;
 import de.soderer.utilities.worker.WorkerDual;
 import de.soderer.utilities.worker.WorkerParentSimple;
 
+/**
+ * Worker that imports several files one after another, each by its own {@link DbImportWorker}.
+ *
+ * <p>
+ * The table name "*" means, that each file is imported into the table named like the file (see
+ * {@link DbImport#getImportTablenameFromFilename(String)}). The progress of the single imports is signaled as
+ * sub item progress.
+ * </p>
+ */
 public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerParentSimple {
 	private final DbImportDefinition dbImportDefinition;
 	private final List<File> filesToImport;
@@ -27,6 +36,13 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 	private StringBuilder multiImportResult;
 	private boolean multiImportHadError;
 
+	/**
+	 * Creates the worker.
+	 *
+	 * @param dbImportDefinition the import definition used for all files
+	 * @param filesToImport the files to import
+	 * @param tableName the table to import into, or "*" for a table named like each file
+	 */
 	public DbImportMultiWorker(final DbImportDefinition dbImportDefinition, final List<File> filesToImport, final String tableName) {
 		super(null);
 
@@ -35,6 +51,12 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 		this.tableName = tableName;
 	}
 
+	/**
+	 * Imports all files.
+	 *
+	 * @return true if the import was not canceled
+	 * @throws Exception if the database connection fails or a table is missing
+	 */
 	@Override
 	public Boolean work() throws Exception {
 		boolean constraintsWereDeactivated = false;
@@ -207,6 +229,11 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 		}
 	}
 
+	/**
+	 * Cancels this worker and the currently running single import.
+	 *
+	 * @return true if the worker was canceled
+	 */
 	@Override
 	public boolean cancel() {
 		if (subWorker != null) {
@@ -215,19 +242,40 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 		return super.cancel();
 	}
 
+	/**
+	 * Returns the result text of all imports.
+	 *
+	 * @return the result text
+	 */
 	public String getResult() {
 		return multiImportResult.toString();
 	}
 
+	/**
+	 * Returns whether at least one of the imports failed.
+	 *
+	 * @return true if at least one of the imports failed
+	 */
 	public boolean wasErroneous() {
 		return multiImportHadError;
 	}
 
+	/**
+	 * Signals the unlimited progress of the current single import as sub item progress.
+	 */
 	@Override
 	public void receiveUnlimitedProgressSignal() {
 		signalUnlimitedSubProgress();
 	}
 
+	/**
+	 * Signals the progress of the current single import as sub item progress.
+	 *
+	 * @param start start time of the single import
+	 * @param itemsToDoParameter amount of items to import
+	 * @param itemsDoneParameter amount of items imported so far
+	 * @param itemsUnitSignParameter unit sign of the amounts (e.g. "B" for bytes), or null for data items
+	 */
 	@Override
 	public void receiveProgressSignal(final LocalDateTime start, final long itemsToDoParameter, final long itemsDoneParameter, final String itemsUnitSignParameter) {
 		// Progress of subWorker must be display of subItem progress
@@ -237,6 +285,15 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 		signalItemProgress();
 	}
 
+	/**
+	 * Signals the end of the current single import as end of the current item.
+	 *
+	 * @param start start time of the single import
+	 * @param end end time of the single import
+	 * @param itemsDoneParameter amount of imported items
+	 * @param itemsUnitSignParameter unit sign of the amount (e.g. "B" for bytes), or null for data items
+	 * @param resultText result text of the single import
+	 */
 	@Override
 	public void receiveDoneSignal(final LocalDateTime start, final LocalDateTime end, final long itemsDoneParameter, final String itemsUnitSignParameter, final String resultText) {
 		// Progress of subWorker must be display of subItem progress
@@ -245,6 +302,11 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 		signalItemDone(resultText);
 	}
 
+	/**
+	 * Passes a title change on to the parent.
+	 *
+	 * @param text the new title
+	 */
 	@Override
 	public void changeTitle(final String text) {
 		if (parent != null) {

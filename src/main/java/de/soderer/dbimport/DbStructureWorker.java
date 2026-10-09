@@ -23,15 +23,38 @@ import de.soderer.utilities.db.utilities.CaseInsensitiveSet;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
+/**
+ * Worker that creates the missing tables and columns of a database structure, which is described in JSON format.
+ */
 public class DbStructureWorker extends WorkerSimple<Boolean> {
 	// Mandatory parameters
+	/**
+	 * The connection parameters of the database.
+	 */
 	protected DbConnectionDefinition dbDefinition = null;
 
+	/**
+	 * The number of created tables.
+	 */
 	protected long createdTables = 0;
+	/**
+	 * The number of created columns (in existing tables).
+	 */
 	protected long createdColumns = 0;
 
+	/**
+	 * The JSON data describing the database structure.
+	 */
 	protected InputStream jsonStructureDataInputStream;
 
+	/**
+	 * Creates the worker.
+	 *
+	 * @param parent parent to signal the progress to
+	 * @param dbDefinition the connection parameters of the database
+	 * @param jsonStructureDataInputStream the JSON data describing the database structure (not closed by this worker)
+	 * @throws Exception if the worker cannot be created
+	 */
 	public DbStructureWorker(final WorkerParentSimple parent, final DbConnectionDefinition dbDefinition, final InputStream jsonStructureDataInputStream) throws Exception {
 		super(parent);
 
@@ -39,6 +62,12 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 		this.jsonStructureDataInputStream = jsonStructureDataInputStream;
 	}
 
+	/**
+	 * Creates the missing tables and columns and commits them.
+	 *
+	 * @return true if the worker was not canceled
+	 * @throws Exception if the JSON data is invalid or a database statement fails
+	 */
 	@Override
 	public Boolean work() throws Exception {
 		signalUnlimitedProgress();
@@ -99,6 +128,10 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 				signalProgress(false);
 			}
 
+			// Without this commit the rollback in the finally block undoes the whole structure creation
+			// on databases with transactional DDL (e.g. PostgreSQL)
+			connection.commit();
+
 			signalProgress(true);
 			setEndTime(LocalDateTime.now());
 		} finally {
@@ -140,7 +173,11 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 				columnsPart = columnsPart + getColumnNameAndType(columnJsonObject);
 			}
 
-			final List<String> keyColumns = ((JsonArray) tableJsonObject.get("keycolumns")).items().stream().map(String.class::cast).collect(Collectors.toList());
+			// "keycolumns" is optional (same as in DbImportWorker.createTable())
+			List<String> keyColumns = null;
+			if (tableJsonObject.containsKey("keycolumns")) {
+				keyColumns = ((JsonArray) tableJsonObject.get("keycolumns")).items().stream().map(String.class::cast).collect(Collectors.toList());
+			}
 
 			String primaryKeyPart = "";
 			if (Utilities.isNotEmpty(keyColumns)) {
@@ -173,12 +210,14 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 		final DbSimpleDataType simpleDataType = DbSimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
 		int characterByteSize = -1;
 		if (columnJsonObject.containsKey("datasize")) {
-			characterByteSize = (Integer) columnJsonObject.getSimpleValue("datasize");
+			// Via Number, the JSON reader does not necessarily return an Integer
+			characterByteSize = ((Number) columnJsonObject.getSimpleValue("datasize")).intValue();
 		}
 
 		String defaultvalue = null;
-		if (columnJsonObject.containsKey("defaultvalue")) {
-			defaultvalue = (String) columnJsonObject.getSimpleValue("defaultvalue");
+		if (columnJsonObject.containsKey("defaultvalue") && columnJsonObject.getSimpleValue("defaultvalue") != null) {
+			// Numeric default values are no Strings (the cast failed with a ClassCastException)
+			defaultvalue = columnJsonObject.getSimpleValue("defaultvalue").toString();
 		}
 		String defaultvaluePart = "";
 		if (defaultvalue != null) {
@@ -199,10 +238,20 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 		return name + " " + DbUtilities.getDataType(dbDefinition.getDbVendor(), simpleDataType) + (characterByteSize > -1 ? "(" + characterByteSize + ")" : "") + defaultvaluePart;
 	}
 
+	/**
+	 * Returns the number of created tables.
+	 *
+	 * @return the number of created tables
+	 */
 	public long getCreatedTables() {
 		return createdTables;
 	}
 
+	/**
+	 * Returns the number of created columns (in existing tables).
+	 *
+	 * @return the number of created columns
+	 */
 	public long getCreatedColumns() {
 		return createdColumns;
 	}

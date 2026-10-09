@@ -1,7 +1,7 @@
 package de.soderer.dbimport;
 
 /**
- * The Class DbImportException.
+ * Exception for errors of the DbImport application, e.g. invalid parameters or import data.
  */
 public class DbImportException extends Exception {
 
@@ -9,15 +9,20 @@ public class DbImportException extends Exception {
 	private static final long serialVersionUID = 6039775378389122712L;
 
 	/**
-	 * Instantiates a new database csv import exception.
+	 * Creates an exception with an error message.
 	 *
-	 * @param errorMessage
-	 *            the error message
+	 * @param errorMessage the error message
 	 */
 	public DbImportException(final String errorMessage) {
 		super(errorMessage);
 	}
 
+	/**
+	 * Creates an exception with an error message and its cause.
+	 *
+	 * @param errorMessage the error message
+	 * @param e the cause
+	 */
 	public DbImportException(final String errorMessage, final Exception e) {
 		super(errorMessage, e);
 	}

@@ -28,6 +28,9 @@ import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 
 // TODO: Export/Import KDBX entry path
+/**
+ * Data provider for KeePass database files (KDBX format). The data items are the entries of the database.
+ */
 public class KdbxDataProvider extends DataProvider {
 	private KdbxDatabase kdbxDatabase = null;
 	private Iterator<KdbxEntry> kdbxEntryIterator = null;
@@ -36,6 +39,12 @@ public class KdbxDataProvider extends DataProvider {
 	private Integer itemsAmount = null;
 	private char[] password = null;
 
+	/**
+	 * Creates the data provider.
+	 *
+	 * @param importFilePath path of the KeePass database file
+	 * @param password password of the KeePass database
+	 */
 	public KdbxDataProvider(final String importFilePath, final char[] password) {
 		super(false, importFilePath, null);
 		this.password = password;
@@ -144,7 +153,10 @@ public class KdbxDataProvider extends DataProvider {
 			while ((nextItem = getNextItemData()) != null) {
 				for (final Entry<String, Object> itemProperty : nextItem.entrySet()) {
 					final String propertyName = itemProperty.getKey();
-					dataPropertyNames.add(propertyName);
+					// Each name only once (before, it was added once per data item)
+					if (!dataPropertyNames.contains(propertyName)) {
+						dataPropertyNames.add(propertyName);
+					}
 				}
 
 				itemCount++;
@@ -203,6 +215,9 @@ public class KdbxDataProvider extends DataProvider {
 		OutputStream outputStream = null;
 		File tempFile = null;
 		try {
+			// The database of the import run is still open at this point, so open it again from the start.
+			// Before, openKdbxDatabase() failed with "KdbxDatabase was already opened before".
+			close();
 			openKdbxDatabase();
 
 			File filteredDataFile;
@@ -227,12 +242,13 @@ public class KdbxDataProvider extends DataProvider {
 			}
 
 			final KdbxDatabase filteredKdbxDatabase = new KdbxDatabase();
+			// The item indices are 1-based (like in the other data providers), so count before checking
 			int count = 0;
 			for (final KdbxEntry entry : kdbxDatabase.getAllEntries()) {
+				count++;
 				if (indexList.contains(count)) {
 					filteredKdbxDatabase.getEntries().add(entry);
 				}
-				count++;
 			}
 
 			try (KdbxWriter kdbxWriter = new KdbxWriter(outputStream)) {

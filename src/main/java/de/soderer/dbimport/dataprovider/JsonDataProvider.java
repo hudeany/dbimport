@@ -32,6 +32,9 @@ import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 
+/**
+ * Data provider for JSON data. The data items are the objects of a JSON array.
+ */
 public class JsonDataProvider extends DataProvider {
 	private Json5Reader jsonReader = null;
 	private List<String> dataPropertyNames = null;
@@ -42,6 +45,16 @@ public class JsonDataProvider extends DataProvider {
 
 	private Charset encoding = StandardCharsets.UTF_8;
 
+	/**
+	 * Creates the data provider.
+	 *
+	 * @param isInlineData true if importFilePathOrData contains the data itself, false if it is a file path
+	 * @param importFilePathOrData path of the import file, or the data itself
+	 * @param zipPassword password of a zip import file, or null
+	 * @param encoding character encoding of the data
+	 * @param dataPath JSON path of the array containing the data items, or null for the root array
+	 * @param schemaFilePath path of a JSON schema file to validate the data, or null
+	 */
 	public JsonDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final String dataPath, final String schemaFilePath) {
 		super(isInlineData, importFilePathOrData, zipPassword);
 		if (encoding != null) {
@@ -155,7 +168,10 @@ public class JsonDataProvider extends DataProvider {
 			while ((nextItem = getNextItemData()) != null) {
 				for (final Entry<String, Object> itemProperty : nextItem.entrySet()) {
 					final String propertyName = itemProperty.getKey();
-					dataPropertyNames.add(propertyName);
+					// Each name only once (before, it was added once per data item)
+					if (!dataPropertyNames.contains(propertyName)) {
+						dataPropertyNames.add(propertyName);
+					}
 				}
 
 				itemCount++;
@@ -219,6 +235,10 @@ public class JsonDataProvider extends DataProvider {
 		OutputStream outputStream = null;
 		File tempFile = null;
 		try {
+			// The reader of the import run is still open at this point (positioned at the end of the data), so start
+			// a fresh one. Before, openReader() failed with "Reader was already opened before" and the erroneous data
+			// file was never written.
+			close();
 			openReader();
 
 			File filteredDataFile;

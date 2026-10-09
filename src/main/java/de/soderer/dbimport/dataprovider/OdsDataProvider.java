@@ -22,6 +22,9 @@ import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
 
+/**
+ * Data provider for OpenDocument spreadsheet data (ODS format).
+ */
 public class OdsDataProvider extends DataProvider {
 	private String sheetname = null;
 	private InputStream contentXmlZipInputStream = null;
@@ -38,6 +41,17 @@ public class OdsDataProvider extends DataProvider {
 	private List<String> columnNames = null;
 	private int currentRowNumber;
 
+	/**
+	 * Creates the data provider.
+	 *
+	 * @param importFilePath path of the import file
+	 * @param zipPassword password of a zip import file, or null
+	 * @param allowUnderfilledLines true to accept rows with fewer values than columns
+	 * @param noHeaders true if the first row contains data instead of the column names
+	 * @param nullValueText text which represents null values, or null
+	 * @param trimData true to trim the values
+	 * @param sheetname name of the sheet to import, or null for the first sheet
+	 */
 	public OdsDataProvider(final String importFilePath, final char[] zipPassword, final boolean allowUnderfilledLines, final boolean noHeaders, final String nullValueText, final boolean trimData, final String sheetname) {
 		super(false, importFilePath, zipPassword);
 		this.allowUnderfilledLines = allowUnderfilledLines;
@@ -267,6 +281,14 @@ public class OdsDataProvider extends DataProvider {
 		return null;
 	}
 
+	/**
+	 * Reads the text content of the current element including its child elements. Space elements
+	 * ("text:s") are converted to the given number of spaces.
+	 *
+	 * @param xmlStreamReader the reader positioned at the start of the element
+	 * @return the text content of the element
+	 * @throws Exception if the XML data cannot be read
+	 */
 	public static String readElementBody(final XMLStreamReader xmlStreamReader) throws Exception {
 		final StringBuilder buffer = new StringBuilder();
 		int depth = 0;

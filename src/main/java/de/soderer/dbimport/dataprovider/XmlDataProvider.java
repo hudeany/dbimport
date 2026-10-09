@@ -37,6 +37,9 @@ import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 
+/**
+ * Data provider for XML data. The data items are the child elements of the data path element.
+ */
 public class XmlDataProvider extends DataProvider {
 	// Default optional parameters
 	private String nullValueText = null;
@@ -52,6 +55,17 @@ public class XmlDataProvider extends DataProvider {
 
 	private final Charset encoding = StandardCharsets.UTF_8;
 
+	/**
+	 * Creates the data provider.
+	 *
+	 * @param isInlineData true if importFilePathOrData contains the data itself, false if it is a file path
+	 * @param importFilePathOrData path of the import file, or the data itself
+	 * @param zipPassword password of a zip import file, or null
+	 * @param nullValueText text which represents null values, or null
+	 * @param dataPath path of the element containing the data items (e.g. "root/items"), or null for the root element
+	 * @param schemaFilePath path of an XSD schema file to validate the data, or null
+	 * @throws Exception if the data provider cannot be created
+	 */
 	public XmlDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final String nullValueText, final String dataPath, final String schemaFilePath) throws Exception {
 		super(isInlineData, importFilePathOrData, zipPassword);
 		this.nullValueText = nullValueText;
@@ -107,7 +121,10 @@ public class XmlDataProvider extends DataProvider {
 			while ((nextItem = getNextItemData()) != null) {
 				for (final Entry<String, Object> itemProperty : nextItem.entrySet()) {
 					final String propertyName = itemProperty.getKey();
-					dataPropertyNames.add(propertyName);
+					// Each name only once (before, it was added once per data item)
+					if (!dataPropertyNames.contains(propertyName)) {
+						dataPropertyNames.add(propertyName);
+					}
 				}
 
 				itemCount++;
@@ -206,6 +223,10 @@ public class XmlDataProvider extends DataProvider {
 		OutputStream outputStream = null;
 		File tempFile = null;
 		try {
+			// The reader of the import run is still open at this point (positioned at the end of the data), so start
+			// a fresh one. Before, openReader() failed with "Reader was already opened before" and the erroneous data
+			// file was never written.
+			close();
 			openReader();
 
 			File filteredDataFile;
@@ -310,6 +331,9 @@ public class XmlDataProvider extends DataProvider {
 			final XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
 			xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
 			xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+			// getNextItemData() expects the whole text of a value element in one CHARACTERS event. Without coalescing,
+			// the parser may split it (e.g. around "&amp;" or CDATA sections) and the value was rejected.
+			xmlInputFactory.setProperty(XMLInputFactory.IS_COALESCING, true);
 			xmlReader = xmlInputFactory.createXMLStreamReader(getInputStream());
 
 			if (Utilities.isNotEmpty(dataPath)) {

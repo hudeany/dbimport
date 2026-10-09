@@ -34,6 +34,12 @@ import de.soderer.utilities.db.SqlDdlMigrationGenerator;
 import de.soderer.utilities.swing.QuestionDialog;
 import de.soderer.utilities.swing.SwingColor;
 
+/**
+ * Dialog to generate a SQL migration or merge script from two SQL DDL files, which describe the source
+ * and the destination database structure.
+ *
+ * @serial exclude
+ */
 public class SqlDdlMigrationDialog extends JDialog {
 	private static final long serialVersionUID = -5639244545181271366L;
 
@@ -48,6 +54,11 @@ public class SqlDdlMigrationDialog extends JDialog {
 	private final JButton generateMigrationButton;
 	private final JButton generateMergeButton;
 
+	/**
+	 * Creates the dialog.
+	 *
+	 * @param parent the parent window
+	 */
 	public SqlDdlMigrationDialog(final Frame parent) {
 		super(parent, DbImport.APPLICATION_NAME + " - SQL DDL Migration / Merge", true);
 
@@ -256,8 +267,8 @@ public class SqlDdlMigrationDialog extends JDialog {
 		final boolean destinationOk = isExistingFile(destinationFileField.getText());
 		final boolean outputOk = Utilities.isNotBlank(outputFileField.getText())
 				&& isValidPath(outputFileField.getText())
-				&& !outputFileField.getText().equals(sourceFileField.getText())
-				&& !outputFileField.getText().equals(destinationFileField.getText());
+				&& !isSameFile(outputFileField.getText(), sourceFileField.getText())
+				&& !isSameFile(outputFileField.getText(), destinationFileField.getText());
 		sourceFileField.setBackground(sourceOk ? UIManager.getColor("TextField.background") : new Color(255, 182, 193) );
 		destinationFileField.setBackground(destinationOk ? UIManager.getColor("TextField.background") : new Color(255, 182, 193) );
 		outputFileField.setBackground(outputOk ? UIManager.getColor("TextField.background") : new Color(255, 182, 193) );
@@ -272,6 +283,20 @@ public class SqlDdlMigrationDialog extends JDialog {
 		}
 		final File f = new File(path.trim());
 		return f.exists() && f.isFile();
+	}
+
+	/**
+	 * Compares two file paths after trimming and normalization (the files are opened with trimmed paths).
+	 */
+	private static boolean isSameFile(final String path1, final String path2) {
+		if (Utilities.isBlank(path1) || Utilities.isBlank(path2)) {
+			return false;
+		}
+		try {
+			return Paths.get(path1.trim()).toAbsolutePath().normalize().equals(Paths.get(path2.trim()).toAbsolutePath().normalize());
+		} catch (@SuppressWarnings("unused") final InvalidPathException e) {
+			return path1.trim().equals(path2.trim());
+		}
 	}
 
 	private static boolean isValidPath(final String path) {

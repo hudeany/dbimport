@@ -37,6 +37,9 @@ import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 
+/**
+ * Worker that executes the statements of a SQL script (optionally compressed) one after another.
+ */
 public class DbSqlWorker extends DbImportWorker {
 	private SqlScriptReader sqlScriptReader = null;
 	private Integer itemsAmount = null;
@@ -47,6 +50,17 @@ public class DbSqlWorker extends DbImportWorker {
 
 	private final Charset encoding = StandardCharsets.UTF_8;
 
+	/**
+	 * Creates the worker.
+	 *
+	 * @param parent parent to signal the progress to
+	 * @param dbDefinition the connection parameters of the database
+	 * @param tableName table name of the import (only used for the result output)
+	 * @param isInlineData true if importFilePathOrData contains the SQL statements, false if it is a file path
+	 * @param importFilePathOrData path of the SQL file, or the SQL statements themselves
+	 * @param zipPassword password of a zip file, or null
+	 * @throws Exception if the worker cannot be created
+	 */
 	public DbSqlWorker(final WorkerParentSimple parent, final DbConnectionDefinition dbDefinition, final String tableName, final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword) throws Exception {
 		super(parent, dbDefinition, tableName, null, null);
 
@@ -78,6 +92,12 @@ public class DbSqlWorker extends DbImportWorker {
 				+ "Encoding: " + encoding + "\n";
 	}
 
+	/**
+	 * Returns the number of SQL statements to execute. The script is read once completely to count them.
+	 *
+	 * @return the number of SQL statements
+	 * @throws Exception if the script cannot be read
+	 */
 	public int getItemsAmountToImport() throws Exception {
 		if (itemsAmount == null) {
 			try (SqlScriptReader scanSqlScriptReader = new SqlScriptReader(getInputStream(), encoding)) {
@@ -95,6 +115,9 @@ public class DbSqlWorker extends DbImportWorker {
 		return itemsAmount;
 	}
 
+	/**
+	 * Closes the reader of the SQL script.
+	 */
 	public void close() {
 		Utilities.closeQuietly(sqlScriptReader);
 		sqlScriptReader = null;
@@ -102,6 +125,13 @@ public class DbSqlWorker extends DbImportWorker {
 
 	@Override
 	public Boolean work() throws Exception {
+		if (analyseDataOnly) {
+			// Data analysis (e.g. the GUI's "create mapping") must never execute the SQL statements.
+			// Before, analyseDataOnly was ignored here and the whole script was executed.
+			availableDataPropertyNames = new ArrayList<>();
+			return !cancel;
+		}
+
 		OutputStream logOutputStream = null;
 
 		if (!isInlineData) {
@@ -157,7 +187,9 @@ public class DbSqlWorker extends DbImportWorker {
 								connection.rollback();
 								throw new DbImportException("Erroneous statement number " + (itemsDone + 1) + " at character index " + sqlScriptReader.getReadCharacters() + ": " + e.getMessage());
 							}
-							invalidItems.add((int) itemsDone);
+							// 1-based like in the other workers, and always together with a reason (result output reads both lists)
+							invalidItems.add((int) itemsDone + 1);
+							invalidItemsReasons.add(e.getClass().getSimpleName() + ": " + e.getMessage());
 							if (logErroneousData) {
 								if (erroneousDataFile == null) {
 									erroneousDataFile = new File(DateUtilities.formatDate(DateUtilities.DD_MM_YYYY_HH_MM_SS_ForFileName, getStartTime()) + ".errors");

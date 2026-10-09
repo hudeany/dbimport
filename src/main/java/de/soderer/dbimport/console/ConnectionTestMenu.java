@@ -19,24 +19,50 @@ import de.soderer.utilities.console.SimpleConsoleInput;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
 
+/**
+ * Console menu to configure and start a database connection test.
+ */
 public class ConnectionTestMenu extends ConsoleMenu {
 	private ConnectionTestDefinition connectionTestDefinition = new ConnectionTestDefinition();
 	private DbConnectionDefinition dbDefinitionCache = null;
 
+	/**
+	 * Returns the connection test definition edited by this menu.
+	 *
+	 * @return the connection test definition
+	 */
 	public ConnectionTestDefinition getConnectionTestDefinition() {
 		return connectionTestDefinition;
 	}
 
+	/**
+	 * Sets the connection test definition to edit in this menu.
+	 *
+	 * @param connectionTestDefinition the connection test definition
+	 */
 	public void setConnectionTestDefinition(final ConnectionTestDefinition connectionTestDefinition) {
 		this.connectionTestDefinition = connectionTestDefinition;
 	}
 
+	/**
+	 * Creates the menu.
+	 *
+	 * @param parentMenu the parent menu
+	 * @param dbDefinitionCache connection parameters already entered in other menus, used as default values
+	 * @throws Exception if the menu cannot be created
+	 */
 	public ConnectionTestMenu(final ConsoleMenu parentMenu, final DbConnectionDefinition dbDefinitionCache) throws Exception {
 		super(parentMenu, "Connection test");
 
 		this.dbDefinitionCache = dbDefinitionCache;
 	}
 
+	/**
+	 * Shows the menu in a loop until the user leaves it or starts the connection test.
+	 *
+	 * @return -3 to start the connection test, or 0 to return to the parent menu
+	 * @throws Exception if the console input or output fails
+	 */
 	@Override
 	public int show() throws Exception {
 		try {
@@ -222,7 +248,8 @@ public class ConnectionTestMenu extends ConsoleMenu {
 					connectionTestDefinition.setTrustStoreFile(null);
 					connectionTestDefinition.setTrustStorePassword(null);
 				} else if ("secure".equalsIgnoreCase(choice)) {
-					connectionTestDefinition.setSecureConnection(connectionTestDefinition.isSecureConnection());
+					// Toggle (the "!" was missing, so the setting could never be changed)
+					connectionTestDefinition.setSecureConnection(!connectionTestDefinition.isSecureConnection());
 				} else if ("truststore".equalsIgnoreCase(choice)) {
 					System.out.println();
 					System.out.println("Please enter database TrustStore filepath (Blank => None)");
@@ -250,7 +277,7 @@ public class ConnectionTestMenu extends ConsoleMenu {
 					if (Utilities.isBlank(choiceIterations)) {
 						System.out.println(ConsoleUtilities.getAnsiColoredText("Canceled by user", TextColor.Light_green));
 						return 0;
-					} else if (!NumberUtilities.isNumber(choiceIterations)) {
+					} else if (!NumberUtilities.isInteger(choiceIterations) || Integer.parseInt(choiceIterations) < 0) {
 						System.out.println(ConsoleUtilities.getAnsiColoredText("Invalid integer value: " + choiceIterations, TextColor.Light_red));
 					} else {
 						connectionTestDefinition.setIterations(Integer.parseInt(choiceIterations));
@@ -263,7 +290,7 @@ public class ConnectionTestMenu extends ConsoleMenu {
 					if (Utilities.isBlank(choiceIterations)) {
 						System.out.println(ConsoleUtilities.getAnsiColoredText("Canceled by user", TextColor.Light_green));
 						return 0;
-					} else if (!NumberUtilities.isNumber(choiceIterations)) {
+					} else if (!NumberUtilities.isInteger(choiceIterations) || Integer.parseInt(choiceIterations) < 0) {
 						System.out.println(ConsoleUtilities.getAnsiColoredText("Invalid integer value: " + choiceIterations, TextColor.Light_red));
 					} else {
 						connectionTestDefinition.setSleepTime(Integer.parseInt(choiceIterations));

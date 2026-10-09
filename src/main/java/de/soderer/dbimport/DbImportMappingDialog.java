@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
@@ -31,6 +32,11 @@ import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
 import de.soderer.utilities.swing.DropDown;
 import de.soderer.utilities.swing.ModalDialog;
 
+/**
+ * Dialog to edit the mapping of the database columns to the data properties and their format.
+ *
+ * @serial exclude
+ */
 public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	private static final long serialVersionUID = 396542497082344683L;
 
@@ -40,9 +46,19 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 
 	private final List<Triple<Label, DropDown, DropDown>> mappingEntries = new ArrayList<>();
 
-	/** Not final, so the DropDown listeners (lambdas) may read it before it is created */
+	/** Only enabled while all mapping entries are valid */
 	private final JButton okButton;
 
+	/**
+	 * Creates the dialog.
+	 *
+	 * @param parent the parent window
+	 * @param title the dialog title
+	 * @param columnTypes the columns of the destination table and their data types
+	 * @param dataColumns the property names of the import data
+	 * @param keyColumns the key columns of the import, which are listed first, or null
+	 * @throws Exception if the dialog cannot be created
+	 */
 	public DbImportMappingDialog(final Window parent, final String title, final CaseInsensitiveMap<DbColumnType> columnTypes, final List<String> dataColumns, final List<String> keyColumns) throws Exception {
 		super(parent, title);
 
@@ -361,22 +377,39 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 		okButton.setEnabled(allValid);
 	}
 
+	/**
+	 * Sets the mapping to show in the dialog.
+	 *
+	 * @param mappingString the mapping in the format of {@link #parseMappingString(String)}
+	 * @throws Exception if the mapping is invalid
+	 */
 	public void setMappingString(final String mappingString) throws Exception {
 		this.mappingString = mappingString;
 		fillMappingEntries(columnTypes, dataColumns);
 	}
 
+	/**
+	 * Returns the mapping edited in the dialog.
+	 *
+	 * @return the mapping in the format of {@link #parseMappingString(String)}
+	 */
 	public String getMappingString() {
 		return mappingString;
 	}
 
 	/**
-	 * Mapping Map contains dbColumn as key, csvFileColumn as valueTuples first and formatString as valeTuples second
+	 * Parses a mapping definition.
 	 *
-	 * @param mappingString
-	 * @return
-	 * @throws IOException
-	 * @throws Exception
+	 * <p>
+	 * Each mapping line ("dbcolumn = 'dataproperty' formatinfo") is separated by ';' or a line break. The result
+	 * contains the database column (lower case) as key, the data property as first and the format info as second
+	 * value of the tuple.
+	 * </p>
+	 *
+	 * @param mappingString the mapping definition
+	 * @return the mapping by database column
+	 * @throws IOException if the mapping definition cannot be read
+	 * @throws Exception if a mapping line is invalid
 	 */
 	public static Map<String, Tuple<String, String>> parseMappingString(final String mappingString) throws IOException, Exception {
 		final Map<String, Tuple<String, String>> mapping = new HashMap<>();
@@ -386,7 +419,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			if (dbColumnEnd <= 0) {
 				throw new DbImportException("Invalid mapping line: " + mappingLine);
 			}
-			final String dbColumn = mappingLine.substring(0, dbColumnEnd).toLowerCase().trim();
+			final String dbColumn = mappingLine.substring(0, dbColumnEnd).toLowerCase(Locale.ROOT).trim();
 			if (mapping.containsKey(dbColumn)) {
 				throw new DbImportException("Invalid mapping line with duplicate database column: " + mappingLine);
 			}
@@ -415,6 +448,9 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 					mapping.put(dbColumn, new Tuple<>(dataColumn, "lc"));
 				} else if ("uc".equalsIgnoreCase(rest)) {
 					mapping.put(dbColumn, new Tuple<>(dataColumn, "uc"));
+				} else if ("email".equalsIgnoreCase(rest)) {
+					// Documented in help.txt and handled by DbImportWorker, but was rejected here as invalid mapping line
+					mapping.put(dbColumn, new Tuple<>(dataColumn, "email"));
 				} else {
 					throw new DbImportException("Invalid mapping line: " + mappingLine);
 				}

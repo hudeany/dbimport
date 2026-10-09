@@ -29,7 +29,22 @@ import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.utilities.CaseInsensitiveSet;
 import de.soderer.utilities.worker.WorkerParentSimple;
 
+/**
+ * Import worker for NoSQL databases (Cassandra).
+ *
+ * <p>
+ * These databases do not support all features of the SQL import, so only the duplicate mode "UPDATE_ALL_JOIN",
+ * updates with null values and commits without "complete commit" are allowed.
+ * </p>
+ */
 public class DbNoSqlImportWorker extends DbImportWorker {
+	/**
+	 * Creates the worker.
+	 *
+	 * @param parent parent to signal the progress to
+	 * @param dbDefinition the connection parameters of the database
+	 * @param tableName the table to import into
+	 */
 	public DbNoSqlImportWorker(final WorkerParentSimple parent, final DbConnectionDefinition dbDefinition, final String tableName) {
 		super(parent, dbDefinition, tableName, null, null);
 
@@ -226,6 +241,16 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 		return !cancel;
 	}
 
+	/**
+	 * Inserts all data items without any duplicate check.
+	 *
+	 * @param connection the database connection
+	 * @param dbColumns the columns of the destination table
+	 * @param dbColumnsListToInsert the destination columns to fill
+	 * @param additionalInsertValuesToUse additional SQL values for inserted items, e.g. "col1 = 'abc', col2 = 123", or null
+	 * @param mappingToUse mapping of destination columns to data properties and their format
+	 * @throws Exception if the data cannot be read or the insert fails
+	 */
 	protected void insertItemsWithoutKeyColumns(final Connection connection, final Map<String, DbColumnType> dbColumns, final List<String> dbColumnsListToInsert, final String additionalInsertValuesToUse, final Map<String, Tuple<String, String>> mappingToUse) throws Exception {
 		final List<Closeable> itemsToCloseAfterwards = new ArrayList<>();
 
@@ -382,9 +407,11 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 			final List<String> waitingInsertKeys = new ArrayList<>();
 			boolean hasUnexecutedUpdateData = false;
 			int itemsToUpdate = 0;
+			int pendingUpdates = 0;
 			int invalidItemsToUpdate = 0;
 			boolean hasUnexecutedInsertData = false;
 			int itemsToInsert = 0;
+			int pendingInserts = 0;
 			int invalidItemsToInsert = 0;
 
 			final List<List<Object>> batchValues = new ArrayList<>();
@@ -451,6 +478,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 						}
 						connection.commit();
 						hasUnexecutedInsertData = false;
+						pendingInserts = 0;
 						signalProgress();
 
 						waitingInsertKeys.clear();
@@ -490,6 +518,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 
 						validItems++;
 						itemsToUpdate++;
+						pendingUpdates++;
 						signalProgress();
 					} catch (@SuppressWarnings("unused") final Exception e) {
 						invalidItems.add((int) itemsDone + 1);
@@ -515,6 +544,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 
 						validItems++;
 						itemsToInsert++;
+						pendingInserts++;
 						signalProgress();
 					} catch (@SuppressWarnings("unused") final Exception e) {
 						invalidItems.add((int) itemsDone + 1);
@@ -526,7 +556,9 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 				itemsDone++;
 
 				if (validItems > 0 && (itemsToUpdate > 0 || itemsToInsert > 0)) {
-					if (itemsToUpdate % batchBlockSize == 0) {
+					// Count the statements waiting in each batch: the cumulative counters are also multiples of the block size
+					// while they are 0 or did not change, which executed (empty) batches and committed after every data item
+					if (pendingUpdates >= batchBlockSize) {
 						final int[] results = preparedUpdateStatement.executeBatch();
 						for (final Closeable itemToClose : updateItemsToCloseAfterwards) {
 							Utilities.closeQuietly(itemToClose);
@@ -540,12 +572,13 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 						}
 						connection.commit();
 						hasUnexecutedUpdateData = false;
+						pendingUpdates = 0;
 						signalProgress();
-					} else {
+					} else if (pendingUpdates > 0) {
 						hasUnexecutedUpdateData = true;
 					}
 
-					if (itemsToInsert % batchBlockSize == 0) {
+					if (pendingInserts >= batchBlockSize) {
 						final int[] results = preparedInsertStatement.executeBatch();
 						for (final Closeable itemToClose : insertItemsToCloseAfterwards) {
 							Utilities.closeQuietly(itemToClose);
@@ -559,10 +592,11 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 						}
 						connection.commit();
 						hasUnexecutedInsertData = false;
+						pendingInserts = 0;
 						signalProgress();
 
 						waitingInsertKeys.clear();
-					} else {
+					} else if (pendingInserts > 0) {
 						hasUnexecutedInsertData = true;
 					}
 				}

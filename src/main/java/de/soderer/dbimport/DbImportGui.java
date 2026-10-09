@@ -68,11 +68,16 @@ import de.soderer.utilities.swing.UpdateableGuiApplication;
 
 /**
  * The GUI for DbImport.
+ *
+ * @serial exclude
  */
 public class DbImportGui extends UpdateableGuiApplication {
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 5969613637206441880L;
 
+	/**
+	 * KeyStore file of the application in the user's configuration directory.
+	 */
 	public static final File KEYSTORE_FILE = new File(System.getProperty("user.home") + File.separator + "." + DbImport.APPLICATION_NAME + File.separator + "." + DbImport.APPLICATION_NAME + ".keystore");
 
 	private final ConfigurationProperties applicationConfiguration;
@@ -636,8 +641,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 						if (!new File(structureFilePathField.getText()).exists()) {
 							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File does not exist: '" + structureFilePathField.getText() + "'").setBackgroundColor(SwingColor.LightRed).open();
 						} else {
-							try (FileInputStream jsonStructureDataInputStream = new FileInputStream(structureFilePathField.getText());
-									Connection connection = DbUtilities.createConnection(getConfigurationAsDefinition(), true)) {
+							// The worker opens its own connection, an additional one is not needed (and kept e.g. Derby busy)
+							try (FileInputStream jsonStructureDataInputStream = new FileInputStream(structureFilePathField.getText())) {
 								final DbStructureWorker worker = new DbStructureWorker(
 										null,
 										getConfigurationAsDefinition(),
@@ -1162,6 +1167,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 		new SqlDdlMigrationDialog(this).setVisible(true);
 	}
 
+	/**
+	 * Reads the columns of the destination table and the properties of the import data and shows the mapping
+	 * dialog to edit the mapping.
+	 *
+	 * @param configurationAsDefinition the current import configuration
+	 * @param dbImportGui the GUI, used as parent of the mapping dialog
+	 * @throws Exception if the import file or table name is missing, or the data or table cannot be read
+	 */
 	protected void createMapping(final DbImportDefinition configurationAsDefinition, final DbImportGui dbImportGui) throws Exception {
 		if (Utilities.isBlank(importFilePathOrDataField.getText())) {
 			throw new DbImportException("ImportFilePath is needed for mapping");
@@ -1240,6 +1253,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setPassword(passwordField.isEnabled() ? passwordField.getPassword() : null);
 		dbImportDefinition.setSecureConnection(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
 		dbImportDefinition.setTrustStoreFile(trustStoreFilePathField.isEnabled() && Utilities.isNotBlank(trustStoreFilePathField.getText()) ? new File(trustStoreFilePathField.getText()) : null);
+		// Was missing, so a password protected TrustStore could not be used from the GUI
+		dbImportDefinition.setTrustStorePassword(trustStorePasswordField.isEnabled() && trustStorePasswordField.getPassword().length > 0 ? trustStorePasswordField.getPassword() : null);
 		dbImportDefinition.setTableName(tableNameField.getText());
 		dbImportDefinition.setImportFilePathOrData(importFilePathOrDataField.getText(), false);
 		// First item is "by file extension", which means no explicit data type
@@ -1267,6 +1282,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setKeycolumns(Utilities.splitAndTrimList(keyColumnsField.getText()));
 		dbImportDefinition.setCreateTable(createTableBox.isSelected());
 		dbImportDefinition.setStructureFilePath(structureFilePathField.getText());
+		// The data path field was never read, so a data path (XPath, JSON path, sheet name) entered in the GUI was ignored
+		dbImportDefinition.setDataPath(dataPathField.isEnabled() && Utilities.isNotBlank(dataPathField.getText()) ? dataPathField.getText().trim() : null);
 		if (schemaFilePathField.isEnabled() && Utilities.isNotBlank(schemaFilePathField.getText())) {
 			dbImportDefinition.setSchemaFilePath(schemaFilePathField.getText());
 		}
@@ -1326,6 +1343,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		passwordField.setText(dbImportDefinition.getPassword() == null ? "" : new String(dbImportDefinition.getPassword()));
 		secureConnectionBox.setSelected(dbImportDefinition.isSecureConnection());
 		trustStoreFilePathField.setText(dbImportDefinition.getTrustStoreFile() == null ? "" : dbImportDefinition.getTrustStoreFile().getAbsolutePath());
+		trustStorePasswordField.setText(dbImportDefinition.getTrustStorePassword() == null ? "" : new String(dbImportDefinition.getTrustStorePassword()));
 		zipPasswordField.setText(dbImportDefinition.getZipPassword() == null ? "" : new String(dbImportDefinition.getZipPassword()));
 		kdbxPasswordField.setText(dbImportDefinition.getKdbxPassword() == null ? "" : new String(dbImportDefinition.getKdbxPassword()));
 
@@ -1333,6 +1351,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 		importFilePathOrDataField.setText(dbImportDefinition.getImportFilePathOrData());
 
 		structureFilePathField.setText(dbImportDefinition.getStructureFilePath());
+		dataPathField.setText(dbImportDefinition.getDataPath() == null ? "" : dbImportDefinition.getDataPath());
+		schemaFilePathField.setText(dbImportDefinition.getSchemaFilePath() == null ? "" : dbImportDefinition.getSchemaFilePath());
 
 		// Falls back to the first item "by file extension"
 		// (the former setSelectedItem(0) passed the Integer 0, which is no item and was silently ignored)
@@ -1656,7 +1676,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 					mappingField.setEnabled(true);
 					additionalInsertValuesField.setEnabled(true);
 					additionalUpdateValuesField.setEnabled(true);
-					dataPathField.setEnabled(true);
+					// A data path is not supported for KDBX (rejected by DbImportDefinition.checkParameters())
+					dataPathField.setEnabled(false);
 					schemaFilePathField.setEnabled(false);
 					schemaFileButton.setEnabled(false);
 					kdbxPasswordField.setEnabled(true);
@@ -1728,7 +1749,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 					mappingField.setEnabled(true);
 					additionalInsertValuesField.setEnabled(true);
 					additionalUpdateValuesField.setEnabled(true);
-					dataPathField.setEnabled(true);
+					// A data path is not supported for VCF (rejected by DbImportDefinition.checkParameters())
+					dataPathField.setEnabled(false);
 					schemaFilePathField.setEnabled(false);
 					schemaFileButton.setEnabled(false);
 					kdbxPasswordField.setEnabled(false);
@@ -1841,7 +1863,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 		if (!dbImportDefinition.isInlineData()) {
 			if (dbImportDefinition.getImportFilePathOrData().contains("?") || dbImportDefinition.getImportFilePathOrData().contains("*") || "*".equals(dbImportDefinition.getTableName())) {
 				final int lastSeparator = Math.max(dbImportDefinition.getImportFilePathOrData().lastIndexOf("/"), dbImportDefinition.getImportFilePathOrData().lastIndexOf("\\"));
-				String directoryPath = dbImportDefinition.getImportFilePathOrData().substring(0, lastSeparator);
+				// A pattern without directory (e.g. "*.csv") refers to the current directory
+				String directoryPath = lastSeparator < 0 ? "." : dbImportDefinition.getImportFilePathOrData().substring(0, lastSeparator);
 				directoryPath = Utilities.replaceUsersHome(directoryPath);
 				final String filePattern = dbImportDefinition.getImportFilePathOrData().substring(lastSeparator + 1);
 				if (directoryPath.contains("?") || directoryPath.contains("*")) {
@@ -1954,10 +1977,20 @@ public class DbImportGui extends UpdateableGuiApplication {
 		}
 	}
 
+	/**
+	 * Sets up the default values of the application configuration.
+	 *
+	 * @param applicationConfiguration the application configuration
+	 */
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
 		applicationConfiguration.setupDefaultConfig();
 	}
 
+	/**
+	 * Activates or deactivates the daily update check and schedules the next check for tomorrow.
+	 *
+	 * @param checkboxStatus true to activate the daily update check
+	 */
 	@Override
 	protected void setDailyUpdateCheckStatus(final boolean checkboxStatus) {
 		applicationConfiguration.set(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK, checkboxStatus);
@@ -1965,11 +1998,21 @@ public class DbImportGui extends UpdateableGuiApplication {
 		applicationConfiguration.save();
 	}
 
+	/**
+	 * Returns whether the daily update check is activated.
+	 *
+	 * @return true if the daily update check is activated
+	 */
 	@Override
 	protected Boolean isDailyUpdateCheckActivated() {
 		return applicationConfiguration.getBoolean(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK);
 	}
 
+	/**
+	 * Returns whether the daily update check is activated, due and a network connection is available.
+	 *
+	 * @return true if the daily update check should be executed now
+	 */
 	protected boolean dailyUpdateCheckIsPending() {
 		return applicationConfiguration.getBoolean(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK)
 				&& (applicationConfiguration.getDate(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))

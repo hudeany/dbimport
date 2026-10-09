@@ -1,7 +1,7 @@
 Usage: java -jar DbImport.jar [optional parameters] dbtype hostname[:port] dbname username -table tablename -import importfilepathOrData [password]
 
 Mandatory parameters for database import
-	dbtype: mysql | mariadb | oracle | postgresql | firebird | sqlite | derby | hsql | cassandra
+	dbtype: mysql | mariadb | oracle | postgresql | mssql | firebird | sqlite | derby | hsql | cassandra
 	hostname: With optional port (Not needed for sqlite and derby)
 	dbname: Dbname or filepath for sqlite database or derby database (for Oracle servicename use "/<servicename>", optional use Oracle TNS description)
 	username: Username (Not needed for sqlite and derby)
@@ -45,8 +45,8 @@ Optional parameters for database import
 		UPSERT: Updates and inserts, needs key columns
 	-d 'duplicatemode':
 		NO_CHECK: No duplicate check. Only insert
-		CKECK_SOURCE_ONLY_DROP: Check duplicates in import data only. Drop duplicates
-		CKECK_SOURCE_ONLY_JOIN: Check duplicates in import data only. Join duplicates
+		CHECK_SOURCE_ONLY_DROP: Check duplicates in import data only. Drop duplicates
+		CHECK_SOURCE_ONLY_JOIN: Check duplicates in import data only. Join duplicates
 		UPDATE_FIRST_DROP: Check duplicates in import data and database data. Only update the first occurrence in db. Drop duplicates
 		UPDATE_FIRST_JOIN: Check duplicates in import data and database data. Only update the first occurrence in db. Join duplicates
 		UPDATE_ALL_DROP: Check duplicates in import data and database data. Update all occurrences in db. Drop duplicates
@@ -74,10 +74,10 @@ Optional parameters for database import
 
 Global standalone parameters
 	help: Show this help manual
-	gui: Open a GUI
-	menu: Open a Console menu
+	gui: Open a GUI (only as first parameter, optionally followed by import parameters to prefill)
+	menu: Open a Console menu (only as first parameter, optionally followed by import parameters to prefill)
 	version: Show current local version of this tool
-	update: Check for online update and ask, whether an available update shell be installed. [username [password]]
+	update: Check for online update and ask, whether an available update should be installed. [username [password]]
 
 Blob import:
 	Usage: java -jar DbImport.jar importblob dbtype hostname[:port] dbname username -updatesql sqlUpdateStatementWithPlaceholder -blobfile filePath [password]

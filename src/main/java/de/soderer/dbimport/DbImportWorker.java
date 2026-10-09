@@ -69,56 +69,185 @@ import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 
+/**
+ * Worker that imports the data items of a {@link DataProvider} into a database table.
+ *
+ * <p>
+ * The data is written in batch updates. If a batch fails, it is repeated item by item ("single mode") to find
+ * and skip the erroneous data items, unless this is prevented. Depending on the import and duplicate mode, existing
+ * data is detected via the key columns and a temporary table.
+ * </p>
+ */
 public class DbImportWorker extends WorkerSimple<Boolean> {
 	// Mandatory parameters
+	/**
+	 * The connection parameters of the database.
+	 */
 	protected DbConnectionDefinition dbDefinition = null;
+	/**
+	 * The import mode.
+	 */
 	protected ImportMode importMode = ImportMode.INSERT;
+	/**
+	 * The duplicate mode.
+	 */
 	protected DuplicateMode duplicateMode = DuplicateMode.UPDATE_ALL_JOIN;
+	/**
+	 * The key columns (without functions), sorted by name.
+	 */
 	protected List<String> keyColumns = null;
+	/**
+	 * The key columns including their optional functions, e.g. "LOWER(email)", in the order of {@link #keyColumns}.
+	 */
 	protected List<String> keyColumnsWithFunctions = null;
+	/**
+	 * The table to import into.
+	 */
 	protected String tableName;
+	/**
+	 * Whether a missing table is created suitable for the import data.
+	 */
 	protected boolean createTableIfNotExists = false;
+	/**
+	 * The path of the JSON file describing the database structure for a new table, or null.
+	 */
 	protected String structureFilePath;
+	/**
+	 * Whether the data is only committed, if the whole import succeeds.
+	 */
 	protected boolean commitOnFullSuccessOnly = true;
+	/**
+	 * Whether a new index on the key columns is created, if it speeds up the import.
+	 */
 	protected boolean createNewIndexIfNeeded = true;
+	/**
+	 * Whether foreign key constraints are deactivated during the import.
+	 */
 	protected boolean deactivateForeignKeyConstraints = false;
+	/**
+	 * Whether triggers are deactivated during the import.
+	 */
 	protected boolean deactivateTriggers = false;
+	/**
+	 * The name of the index created by the import, or null.
+	 */
 	protected String newIndexName = null;
 
+	/**
+	 * The time zone of the database.
+	 */
 	protected ZoneId databaseZoneId = ZoneId.systemDefault();
+	/**
+	 * The time zone of the import data.
+	 */
 	protected ZoneId importDataZoneId = ZoneId.systemDefault();
 
+	/**
+	 * The database columns to fill, according to the mapping.
+	 */
 	protected List<String> dbTableColumnsListToInsert = null;
+	/**
+	 * The mapping of database columns to data properties (first) and their format info (second).
+	 */
 	protected Map<String, Tuple<String, String>> mapping = null;
 
 	// Default optional parameters
+	/**
+	 * The log file, or null for no logging.
+	 */
 	protected File logFile = null;
+	/**
+	 * The character encoding of clob files.
+	 */
 	protected Charset textFileEncoding = StandardCharsets.UTF_8;
+	/**
+	 * Whether existing values are overwritten by null values of the import data.
+	 */
 	protected boolean updateWithNullValues = true;
 
+	/**
+	 * The number of read data items.
+	 */
 	protected long dataItemsDone = 0;
+	/**
+	 * The number of valid (imported) data items.
+	 */
 	protected long validItems = 0;
+	/**
+	 * The number of duplicate data items in the import data.
+	 */
 	protected long duplicatesItems = 0;
+	/**
+	 * The 1-based indices of the invalid data items.
+	 */
 	protected List<Integer> invalidItems = new ArrayList<>();
+	/**
+	 * The reasons of the invalid data items, in the order of {@link #invalidItems}.
+	 */
 	protected List<String> invalidItemsReasons = new ArrayList<>();
+	/**
+	 * The amount of imported data in bytes.
+	 */
 	protected long importedDataAmount = 0;
+	/**
+	 * The number of batch blocks, which were repeated item by item because of errors.
+	 */
 	protected long singleImportModeBlocks = 0;
+	/**
+	 * The number of deleted database rows (import mode CLEARINSERT).
+	 */
 	protected long deletedItems = 0;
+	/**
+	 * The number of inserted database rows.
+	 */
 	protected long insertedItems = 0;
+	/**
+	 * The number of updated database rows.
+	 */
 	protected long updatedItems = 0;
+	/**
+	 * The number of rows in the destination table after the import.
+	 */
 	protected long countItems = 0;
+	/**
+	 * The number of deleted duplicate database rows (duplicate modes MAKE_UNIQUE_*).
+	 */
 	protected long deletedDuplicatesInDB = 0;
 
+	/**
+	 * Whether the data is only analysed (e.g. to create a mapping) without importing it.
+	 */
 	protected boolean analyseDataOnly = false;
+	/**
+	 * The property names of the import data, filled by the data analysis.
+	 */
 	protected List<String> availableDataPropertyNames = null;
 
+	/**
+	 * Additional values for inserted items, or null.
+	 */
 	protected String additionalInsertValues = null;
+	/**
+	 * Additional values for updated items, or null.
+	 */
 	protected String additionalUpdateValues = null;
 
+	/**
+	 * Whether erroneous data items are written to a file next to the import file.
+	 */
 	protected boolean logErroneousData = false;
+	/**
+	 * The file containing the erroneous data items, or null.
+	 */
 	protected File erroneousDataFile = null;
 
+	/**
+	 * The fallback date format pattern, or null.
+	 */
 	protected String dateFormatPattern = null;
+	/**
+	 * The fallback date time format pattern, or null.
+	 */
 	protected String dateTimeFormatPattern = null;
 
 	private DateTimeFormatter dateFormatterCache = null;
@@ -127,8 +256,20 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	private int batchBlockSize = 1000;
 	private boolean preventBatchFallbackToSingleLineOnErrors = false;
 
+	/**
+	 * The reader of the import data.
+	 */
 	protected DataProvider dataProvider = null;
 
+	/**
+	 * Creates the worker. The data provider and the import options are set via the setter methods.
+	 *
+	 * @param parent parent to signal the progress to
+	 * @param dbDefinition the connection parameters of the database
+	 * @param tableName the table to import into
+	 * @param dateFormatPattern fallback date format pattern, which is overridden by mapping formats, or null
+	 * @param dateTimeFormatPattern fallback date time format pattern, which is overridden by mapping formats, or null
+	 */
 	public DbImportWorker(final WorkerParentSimple parent, final DbConnectionDefinition dbDefinition, final String tableName, final String dateFormatPattern, final String dateTimeFormatPattern) {
 		super(parent);
 
@@ -138,38 +279,85 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		this.dateTimeFormatPattern = dateTimeFormatPattern;
 	}
 
+	/**
+	 * Sets whether the data is only analysed (e.g. to create a mapping) without importing it (default: false).
+	 *
+	 * @param analyseDataOnly true if the data is only analysed (e.g. to create a mapping) without importing it
+	 */
 	public void setAnalyseDataOnly(final boolean analyseDataOnly) {
 		this.analyseDataOnly = analyseDataOnly;
 	}
 
+	/**
+	 * Sets the log file. Null means no logging.
+	 *
+	 * @param logFile the log file
+	 */
 	public void setLogFile(final File logFile) {
 		this.logFile = logFile;
 	}
 
+	/**
+	 * Sets the character encoding of clob files. Default is UTF-8.
+	 *
+	 * @param textFileEncoding the character encoding of clob files
+	 */
 	public void setTextFileEncoding(final Charset textFileEncoding) {
 		this.textFileEncoding = textFileEncoding;
 	}
 
+	/**
+	 * Sets the reader of the import data.
+	 *
+	 * @param dataProvider the reader of the import data
+	 */
 	public void setDataProvider(final DataProvider dataProvider) {
 		this.dataProvider = dataProvider;
 	}
 
+	/**
+	 * Sets the time zone of the database.
+	 *
+	 * @param databaseTimeZone the time zone ID, e.g. "Europe/Berlin"
+	 */
 	public void setDatabaseTimeZone(final String databaseTimeZone) {
 		databaseZoneId = ZoneId.of(databaseTimeZone);
 	}
 
+	/**
+	 * Sets the time zone of the import data.
+	 *
+	 * @param importDataTimeZone the time zone ID, e.g. "Europe/Berlin"
+	 */
 	public void setImportDataTimeZone(final String importDataTimeZone) {
 		importDataZoneId = ZoneId.of(importDataTimeZone);
 	}
 
+	/**
+	 * Sets the number of data items per batch update. Default is 1000.
+	 *
+	 * @param batchBlockSize the number of data items per batch update
+	 */
 	public void setBatchBlockSize(final int batchBlockSize) {
 		this.batchBlockSize = batchBlockSize;
 	}
 
+	/**
+	 * Sets whether a failed batch update is not repeated item by item to find the erroneous items (default: false).
+	 *
+	 * @param preventBatchFallbackToSingleLineOnErrors true if a failed batch update is not repeated item by item to find the erroneous items
+	 */
 	public void setPreventBatchFallbackToSingleLineOnErrors(final boolean preventBatchFallbackToSingleLineOnErrors) {
 		this.preventBatchFallbackToSingleLineOnErrors = preventBatchFallbackToSingleLineOnErrors;
 	}
 
+	/**
+	 * Sets the mapping of database columns to data properties.
+	 *
+	 * @param mappingString the mapping (see {@link DbImportMappingDialog#parseMappingString(String)}), blank for automapping by name
+	 * @throws IOException if the mapping cannot be read
+	 * @throws Exception if a mapping line is invalid
+	 */
 	public void setMapping(final String mappingString) throws IOException, Exception {
 		if (Utilities.isNotBlank(mappingString)) {
 			mapping = DbImportMappingDialog.parseMappingString(mappingString);
@@ -182,11 +370,21 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
+	/**
+	 * Returns the mapping of database columns to data properties. Without a configured mapping, each data property
+	 * is mapped to the database column with the same name in lower case.
+	 *
+	 * @return the mapping by database column, with the data property as first and the format info as second value
+	 * @throws Exception if the data properties cannot be read
+	 */
 	public Map<String, Tuple<String, String>> getMapping() throws Exception {
 		if (mapping == null) {
 			mapping = new HashMap<>();
 			for (final String propertyName : dataProvider.getAvailableDataPropertyNames()) {
-				mapping.put(propertyName.toLowerCase(), new Tuple<>(propertyName, ""));
+				// Columns without name (e.g. Excel columns without header) cannot be mapped
+				if (propertyName != null) {
+					mapping.put(propertyName.toLowerCase(Locale.ROOT), new Tuple<>(propertyName, ""));
+				}
 			}
 			dbTableColumnsListToInsert = new ArrayList<>();
 			for (final String dbColumn : mapping.keySet()) {
@@ -196,6 +394,14 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return mapping;
 	}
 
+	/**
+	 * Checks the mapping against the columns of the destination table and the data properties. Without a configured
+	 * mapping, a mapping of the columns and data properties with equal names (case insensitive) is created.
+	 *
+	 * @param dbColumns the columns of the destination table
+	 * @throws Exception if the data properties cannot be read
+	 * @throws DbImportException if a mapped column or data property does not exist, or a key column is not mapped
+	 */
 	protected void checkMapping(final Map<String, DbColumnType> dbColumns) throws Exception, DbImportException {
 		final List<String> dataPropertyNames = dataProvider.getAvailableDataPropertyNames();
 		if (mapping != null) {
@@ -245,14 +451,31 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
+	/**
+	 * Sets the import mode. Default is INSERT.
+	 *
+	 * @param importMode the import mode
+	 */
 	public void setImportMode(final ImportMode importMode) {
 		this.importMode = importMode;
 	}
 
+	/**
+	 * Sets the duplicate mode (default: UPDATE_ALL_JOIN).
+	 *
+	 * @param duplicateMode the duplicate mode
+	 * @throws Exception if the duplicate mode is not supported by this worker (see {@link DbNoSqlImportWorker})
+	 */
 	public void setDuplicateMode(final DuplicateMode duplicateMode) throws Exception {
 		this.duplicateMode = duplicateMode;
 	}
 
+	/**
+	 * Sets the key columns used to detect existing data and duplicates. A key column may contain a function,
+	 * e.g. "LOWER(email)".
+	 *
+	 * @param keyColumnList the key columns, or null for none
+	 */
 	public void setKeycolumns(final List<String> keyColumnList) {
 		if (Utilities.isNotEmpty(keyColumnList)) {
 			Map<String, String> columnFunctions = new CaseInsensitiveMap<>();
@@ -287,46 +510,104 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
+	/**
+	 * Sets whether the data is only committed, if the whole import succeeds (default: true).
+	 *
+	 * @param commitOnFullSuccessOnly true if the data is only committed, if the whole import succeeds
+	 * @throws Exception if the value is not supported by this worker (see {@link DbNoSqlImportWorker})
+	 */
 	public void setCompleteCommit(final boolean commitOnFullSuccessOnly) throws Exception {
 		this.commitOnFullSuccessOnly = commitOnFullSuccessOnly;
 	}
 
+	/**
+	 * Sets whether a new index on the key columns is created, if it speeds up the import (default: true).
+	 *
+	 * @param createNewIndexIfNeeded true if a new index on the key columns is created, if it speeds up the import
+	 */
 	public void setCreateNewIndexIfNeeded(final boolean createNewIndexIfNeeded) {
 		this.createNewIndexIfNeeded = createNewIndexIfNeeded;
 	}
 
+	/**
+	 * Sets whether foreign key constraints are deactivated during the import (default: false).
+	 *
+	 * @param deactivateForeignKeyConstraints true if foreign key constraints are deactivated during the import
+	 */
 	public void setDeactivateForeignKeyConstraints(final boolean deactivateForeignKeyConstraints) {
 		this.deactivateForeignKeyConstraints = deactivateForeignKeyConstraints;
 	}
 
+	/**
+	 * Sets whether triggers are deactivated during the import (default: false).
+	 *
+	 * @param deactivateTriggers true if triggers are deactivated during the import
+	 */
 	public void setDeactivateTriggers(final boolean deactivateTriggers) {
 		this.deactivateTriggers = deactivateTriggers;
 	}
 
+	/**
+	 * Sets additional values for inserted items, which are not part of the import data. Semicolon separated, e.g. "id=test_seq.NEXTVAL;flag='abc'".
+	 *
+	 * @param additionalInsertValues additional values for inserted items, which are not part of the import data
+	 */
 	public void setAdditionalInsertValues(final String additionalInsertValues) {
 		this.additionalInsertValues = additionalInsertValues;
 	}
 
+	/**
+	 * Sets additional values for updated items, which are not part of the import data. Semicolon separated, e.g. "changed=current_timestamp;flag='abc'".
+	 *
+	 * @param additionalUpdateValues additional values for updated items, which are not part of the import data
+	 */
 	public void setAdditionalUpdateValues(final String additionalUpdateValues) {
 		this.additionalUpdateValues = additionalUpdateValues;
 	}
 
+	/**
+	 * Sets whether existing values are overwritten by null values of the import data (default: true).
+	 *
+	 * @param updateWithNullValues true if existing values are overwritten by null values of the import data
+	 * @throws Exception if the value is not supported by this worker (see {@link DbNoSqlImportWorker})
+	 */
 	public void setUpdateNullData(final boolean updateWithNullValues) throws Exception {
 		this.updateWithNullValues = updateWithNullValues;
 	}
 
+	/**
+	 * Sets whether a missing table is created suitable for the import data (default: false).
+	 *
+	 * @param createTableIfNotExists true if a missing table is created suitable for the import data
+	 */
 	public void setCreateTableIfNotExists(final boolean createTableIfNotExists) {
 		this.createTableIfNotExists = createTableIfNotExists;
 	}
 
+	/**
+	 * Sets the path of the JSON file describing the database structure for a new table. Null means, that the table is created from the scanned data types.
+	 *
+	 * @param structureFilePath the path of the JSON file describing the database structure for a new table
+	 */
 	public void setStructureFilePath(final String structureFilePath) {
 		this.structureFilePath = structureFilePath;
 	}
 
+	/**
+	 * Sets whether erroneous data items are written to a file next to the import file (default: false).
+	 *
+	 * @param logErroneousData true if erroneous data items are written to a file next to the import file
+	 */
 	public void setLogErroneousData(final boolean logErroneousData) {
 		this.logErroneousData = logErroneousData;
 	}
 
+	/**
+	 * Executes the import (or only the data analysis).
+	 *
+	 * @return true if the import was not canceled
+	 * @throws Exception if the data cannot be read, the configuration is invalid or the database access fails
+	 */
 	@Override
 	public Boolean work() throws Exception {
 		dataItemsDone = 0;
@@ -476,9 +757,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					// Handle duplicates in import data
 					if (duplicateMode == DuplicateMode.NO_CHECK) {
 						// Do not check for duplicates
-					} else if (duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.UPDATE_FIRST_DROP || duplicateMode == DuplicateMode.UPDATE_ALL_DROP || duplicateMode == DuplicateMode.MAKE_UNIQUE_DROP) {
+					} else if (duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.UPDATE_FIRST_DROP || duplicateMode == DuplicateMode.UPDATE_ALL_DROP || duplicateMode == DuplicateMode.MAKE_UNIQUE_DROP) {
 						duplicatesItems = DbUtilities.dropDuplicates(connection, tempTableName, keyColumns);
-					} else if (duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_JOIN || duplicateMode == DuplicateMode.UPDATE_FIRST_JOIN || duplicateMode == DuplicateMode.UPDATE_ALL_JOIN || duplicateMode == DuplicateMode.MAKE_UNIQUE_JOIN) {
+					} else if (duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_JOIN || duplicateMode == DuplicateMode.UPDATE_FIRST_JOIN || duplicateMode == DuplicateMode.UPDATE_ALL_JOIN || duplicateMode == DuplicateMode.MAKE_UNIQUE_JOIN) {
 						duplicatesItems = DbUtilities.joinDuplicates(connection, tempTableName, keyColumns, updateWithNullValues);
 					} else {
 						throw new DbImportException("Invalid duplicate mode");
@@ -493,7 +774,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 						insertedItems = DbUtilities.insertNotExistingItems(connection, tempTableName, tableName, dbTableColumnsListToInsert, keyColumnsWithFunctions, additionalInsertValues);
 					} else if (importMode == ImportMode.INSERT) {
-						if (duplicateMode == DuplicateMode.NO_CHECK || duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_JOIN) {
+						if (duplicateMode == DuplicateMode.NO_CHECK || duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_JOIN) {
 							parent.changeTitle(LangResources.get("insertData"));
 
 							// Insert all entries
@@ -513,7 +794,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 							insertedItems = DbUtilities.insertNotExistingItems(connection, tempTableName, tableName, dbTableColumnsListToInsert, keyColumnsWithFunctions, additionalInsertValues);
 						}
 					} else if (importMode == ImportMode.UPDATE) {
-						if (duplicateMode == DuplicateMode.NO_CHECK || duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_JOIN) {
+						if (duplicateMode == DuplicateMode.NO_CHECK || duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_JOIN) {
 							// Do nothing
 						} else if (DbUtilities.detectDuplicates(connection, tableName, keyColumnsWithFunctions) > 0 && (duplicateMode == DuplicateMode.UPDATE_FIRST_DROP || duplicateMode == DuplicateMode.UPDATE_FIRST_JOIN)) {
 							if (cancel) {
@@ -535,7 +816,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 							updatedItems = DbUtilities.updateAllExistingItems(connection, tempTableName, tableName, dbTableColumnsListToInsert, keyColumns, tempItemIndexColumn, updateWithNullValues, additionalUpdateValues);
 						}
 					} else if (importMode == ImportMode.UPSERT) {
-						if (duplicateMode == DuplicateMode.NO_CHECK || duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.CKECK_SOURCE_ONLY_JOIN) {
+						if (duplicateMode == DuplicateMode.NO_CHECK || duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_DROP || duplicateMode == DuplicateMode.CHECK_SOURCE_ONLY_JOIN) {
 							parent.changeTitle(LangResources.get("insertData"));
 
 							// Insert all entries
@@ -597,9 +878,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				try {
 					logToFile(logOutputStream, "SQL Error: " + sqle.getMessage());
 					if (logOutputStream != null) {
-						try (PrintStream printStream = new PrintStream(logOutputStream)) {
-							sqle.printStackTrace(printStream);
-						}
+						// Not closed: closing the PrintStream would also close the log file, so the later log writes
+						// in the finally block would fail and hide this error behind a "Stream Closed" IOException
+						final PrintStream printStream = new PrintStream(logOutputStream);
+						sqle.printStackTrace(printStream);
+						printStream.flush();
 					}
 				} catch (final Exception e1) {
 					e1.printStackTrace();
@@ -609,9 +892,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				try {
 					logToFile(logOutputStream, "Error: " + e.getMessage());
 					if (logOutputStream != null) {
-						try (PrintStream printStream = new PrintStream(logOutputStream)) {
-							e.printStackTrace(printStream);
-						}
+						// Not closed, see above
+						final PrintStream printStream = new PrintStream(logOutputStream);
+						e.printStackTrace(printStream);
+						printStream.flush();
 					}
 				} catch (final Exception e1) {
 					e1.printStackTrace();
@@ -685,6 +969,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return !cancel;
 	}
 
+	/**
+	 * Returns the configuration of this import for the import log.
+	 *
+	 * @return the configuration as text with one line per parameter
+	 * @throws Exception if the mapping cannot be determined
+	 */
 	public String getConfigurationLogString() throws Exception {
 		return dataProvider.getConfigurationLogString()
 				+ "CommitOnFullSuccessOnly: " + commitOnFullSuccessOnly + "\n"
@@ -706,6 +996,18 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				+ "PreventBatchFallbackToSingleLineOnErrors: " + preventBatchFallbackToSingleLineOnErrors + "\n";
 	}
 
+	/**
+	 * Creates the destination table, if it does not exist and the creation is activated. The table is created from the
+	 * structure file or from the scanned data types of the import data.
+	 *
+	 * @param connection the database connection
+	 * @param tableNameToUse the name of the table
+	 * @param keyColumnsToUse the key columns for the primary key of a new table, or null
+	 * @return true if the table was created
+	 * @throws Exception if the data cannot be scanned
+	 * @throws DbImportException if the table cannot be created
+	 * @throws SQLException if the database access fails
+	 */
 	protected boolean createTableIfNeeded(final Connection connection, final String tableNameToUse, final List<String> keyColumnsToUse) throws Exception, DbImportException, SQLException {
 		if (!DbUtilities.checkTableExist(connection, tableNameToUse)) {
 			if (createTableIfNotExists) {
@@ -845,7 +1147,8 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		final DbSimpleDataType simpleDataType = DbSimpleDataType.getSimpleDataTypeByName((String) columnJsonObject.getSimpleValue("datatype"));
 		int characterByteSize = -1;
 		if (columnJsonObject.containsKey("datasize")) {
-			characterByteSize = (Integer) columnJsonObject.getSimpleValue("datasize");
+			// Via Number, the JSON reader does not necessarily return an Integer
+			characterByteSize = ((Number) columnJsonObject.getSimpleValue("datasize")).intValue();
 		}
 
 		Object defaultvalue = null;
@@ -876,6 +1179,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return name + " " + DbUtilities.getDataType(dbDefinition.getDbVendor(), simpleDataType) + (characterByteSize > -1 ? "(" + characterByteSize + ")" : "") + defaultvaluePart;
 	}
 
+	/**
+	 * Returns the statistics of the import, e.g. the numbers of valid, invalid, inserted and updated items.
+	 *
+	 * @return the statistics as text
+	 */
 	public String getResultStatistics() {
 		final StringBuilder statistics = new StringBuilder();
 
@@ -1001,6 +1309,9 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 					validItems++;
 					signalProgress();
 				} catch (final Exception e) {
+					// This item was not added to the JDBC batch, so it must not stay in the values used by the
+					// single item fallback mode (it would be inserted there with partly stale parameter values)
+					batchValues.remove(batchValues.size() - 1);
 					invalidItems.add((int) dataItemsDone + 1);
 					invalidItemsReasons.add(e.getClass().getSimpleName() + ": " + e.getMessage());
 					if (commitOnFullSuccessOnly) {
@@ -1110,6 +1421,21 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 	}
 
+	/**
+	 * Converts a data value to the data type of its column and sets it as parameter of the statement.
+	 *
+	 * @param preparedStatement the statement
+	 * @param columnIndex the 1-based parameter index
+	 * @param columnName the name of the column (for error messages)
+	 * @param simpleDataType the data type of the column
+	 * @param isNullable whether the column accepts null values
+	 * @param dataValue the data value
+	 * @param formatInfo the format info of the mapping (e.g. a date pattern, decimal separator, "file", "lc", "uc" or "email"), or null
+	 * @param batchValueItem list, to which the converted value is added (to repeat the item in single mode)
+	 * @param maxBlobSize maximum size of blob data in bytes, or a negative value for unlimited
+	 * @return a stream, which must be closed after the statement is executed (e.g. for file data), or null
+	 * @throws Exception if the value is invalid for the column
+	 */
 	protected Closeable validateAndSetParameter(
 			final PreparedStatement preparedStatement,
 			final int columnIndex,
@@ -1658,20 +1984,27 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		int notImportedBySingleMode = 0;
 		for (int entryIndex = 0; entryIndex < batchValues.size(); entryIndex++) {
 			final List<Object> batchValueEntry = batchValues.get(entryIndex);
+			boolean entryCanBeExecuted = true;
 			for (int i = 0; i < batchValueEntry.size(); i++) {
 				final Object dataValue = batchValueEntry.get(i);
+				if (dataValue instanceof Closeable) {
+					// Streams and readers (file data) were already consumed by the failed batch and cannot be sent again
+					entryCanBeExecuted = false;
+					break;
+				}
 				if (dataValue != null
 						&& !(dataValue instanceof Timestamp)
 						&& !(dataValue instanceof java.sql.Date)
 						&& !(dataValue instanceof Date)
-						&& !(dataValue instanceof Integer)
-						&& !(dataValue instanceof Long)
-						&& !(dataValue instanceof Double)
-						&& !(dataValue instanceof Float)
+						&& !(dataValue instanceof Number)
+						&& !(dataValue instanceof Boolean)
+						&& !(dataValue instanceof byte[])
 						&& !(dataValue instanceof String)) {
 					throw new Exception("Unexpected datatype: " + dataValue.getClass().getSimpleName());
 				}
-				if (dataValue != null && dataValue instanceof String) {
+				if (dataValue instanceof byte[]) {
+					preparedStatement.setBytes(i + 1, (byte[]) dataValue);
+				} else if (dataValue != null && dataValue instanceof String) {
 					if (dbDefinition.getDbVendor() == DbVendor.SQLite || dbDefinition.getDbVendor() == DbVendor.Derby || dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
 						preparedStatement.setString(i + 1, (String) dataValue);
 					} else {
@@ -1680,6 +2013,12 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				} else {
 					preparedStatement.setObject(i + 1, dataValue);
 				}
+			}
+			if (!entryCanBeExecuted) {
+				notImportedBySingleMode++;
+				invalidItems.add((int) startingDataEntryIndex + entryIndex + 1);
+				invalidItemsReasons.add("DB import data error: File data cannot be sent again in single item mode");
+				continue;
 			}
 			try {
 				preparedStatement.execute();
@@ -1695,52 +2034,114 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return notImportedBySingleMode;
 	}
 
+	/**
+	 * Writes a message as a line to the log.
+	 *
+	 * @param logOutputStream the log stream, or null for no logging
+	 * @param message the message
+	 * @throws Exception if the log cannot be written
+	 */
 	protected static void logToFile(final OutputStream logOutputStream, final String message) throws Exception {
 		if (logOutputStream != null) {
 			logOutputStream.write((message.trim() + "\n").getBytes(StandardCharsets.UTF_8));
 		}
 	}
 
+	/**
+	 * Returns the number of deleted database rows (import mode CLEARINSERT).
+	 *
+	 * @return the number of deleted database rows
+	 */
 	public long getDeletedItems() {
 		return deletedItems;
 	}
 
+	/**
+	 * Returns the number of updated database rows.
+	 *
+	 * @return the number of updated database rows
+	 */
 	public long getUpdatedItems() {
 		return updatedItems;
 	}
 
+	/**
+	 * Returns the number of valid (imported) data items.
+	 *
+	 * @return the number of valid data items
+	 */
 	public long getImportedItems() {
 		return validItems;
 	}
 
+	/**
+	 * Returns the name of the index created by the import.
+	 *
+	 * @return the index name, or null if no index was created
+	 */
 	public String getCreatedNewIndexName() {
 		return newIndexName;
 	}
 
+	/**
+	 * Returns the indices of the invalid data items.
+	 *
+	 * @return the 1-based indices of the invalid data items
+	 */
 	public List<Integer> getNotImportedItems() {
 		return invalidItems;
 	}
 
+	/**
+	 * Returns the reasons of the invalid data items.
+	 *
+	 * @return the reasons, in the order of {@link #getNotImportedItems()}
+	 */
 	public List<String> getNotImportedItemsReasons() {
 		return invalidItemsReasons;
 	}
 
+	/**
+	 * Returns the number of read data items.
+	 *
+	 * @return the number of read data items
+	 */
 	public long getImportedDataItems() {
 		return dataItemsDone;
 	}
 
+	/**
+	 * Returns the amount of imported data.
+	 *
+	 * @return the amount of imported data in bytes
+	 */
 	public long getImportedDataAmount() {
 		return importedDataAmount;
 	}
 
+	/**
+	 * Returns the number of duplicate data items in the import data.
+	 *
+	 * @return the number of duplicate data items
+	 */
 	public long getIgnoredDuplicates() {
 		return duplicatesItems;
 	}
 
+	/**
+	 * Returns the number of inserted database rows.
+	 *
+	 * @return the number of inserted database rows
+	 */
 	public long getInsertedItems() {
 		return insertedItems;
 	}
 
+	/**
+	 * Returns the property names of the import data, which are determined by the data analysis.
+	 *
+	 * @return the property names, or null if no data analysis was done
+	 */
 	public List<String> getDataPropertyNames() {
 		return availableDataPropertyNames;
 	}
@@ -1762,6 +2163,11 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		return returnValue.toString().trim();
 	}
 
+	/**
+	 * Returns the result text of the import.
+	 *
+	 * @return the statistics of the import (see {@link #getResultStatistics()})
+	 */
 	@Override
 	public String getResultText() {
 		return getResultStatistics();

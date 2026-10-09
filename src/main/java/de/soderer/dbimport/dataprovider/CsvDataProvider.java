@@ -25,6 +25,9 @@ import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 
+/**
+ * Data provider for CSV data.
+ */
 public class CsvDataProvider extends DataProvider {
 	// Default optional parameters
 	private char separator = ';';
@@ -45,6 +48,23 @@ public class CsvDataProvider extends DataProvider {
 
 	private Charset encoding = StandardCharsets.UTF_8;
 
+	/**
+	 * Creates the data provider.
+	 *
+	 * @param isInlineData true if importFilePathOrData contains the data itself, false if it is a file path
+	 * @param importFilePathOrData path of the import file, or the data itself
+	 * @param zipPassword password of a zip import file, or null
+	 * @param encoding character encoding of the data
+	 * @param separator value separator, e.g. ';'
+	 * @param stringQuote quote character of string values, or null for none
+	 * @param escapeStringQuote character to escape the quote character within quoted values
+	 * @param interpretEscapeSequences true to interpret escape sequences like \n or \t in string values
+	 * @param allowUnderfilledLines true to accept lines with fewer values than columns
+	 * @param removeSurplusEmptyTrailingColumns true to ignore empty surplus values at the end of a line
+	 * @param noHeaders true if the first line contains data instead of the column names
+	 * @param nullValueText text which represents null values, or null
+	 * @param trimData true to trim the values
+	 */
 	public CsvDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final char separator, final Character stringQuote, final char escapeStringQuote, final boolean interpretEscapeSequences, final boolean allowUnderfilledLines, final boolean removeSurplusEmptyTrailingColumns, final boolean noHeaders, final String nullValueText, final boolean trimData) {
 		super(isInlineData, importFilePathOrData, zipPassword);
 		if (encoding != null) {
@@ -228,6 +248,10 @@ public class CsvDataProvider extends DataProvider {
 		OutputStream outputStream = null;
 		File tempFile = null;
 		try {
+			// The reader of the import run is still open at this point (positioned at the end of the data), so start
+			// a fresh one. Before, openReader() failed with "Reader was already opened before" and the erroneous data
+			// file was never written.
+			close();
 			openReader();
 
 			File filteredDataFile;

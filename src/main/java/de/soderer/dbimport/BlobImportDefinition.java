@@ -7,6 +7,10 @@ import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.exception.DbDefinitionException;
 
+/**
+ * Parameters of a blob import ("importblob"): the data of a single file is written to a database blob or clob
+ * column via an update statement with one '?' placeholder.
+ */
 public class BlobImportDefinition extends DbConnectionDefinition {
 	// Mandatory parameters
 
@@ -18,22 +22,54 @@ public class BlobImportDefinition extends DbConnectionDefinition {
 
 	// Default optional parameters
 
+	/**
+	 * Creates an empty definition, the parameters are set via the setter methods.
+	 */
+	public BlobImportDefinition() {
+		// Nothing to initialize
+	}
+
+	/**
+	 * Returns the SQL update statement, which contains a '?' placeholder for the file data.
+	 *
+	 * @return the SQL update statement
+	 */
 	public String getBlobImportStatement() {
 		return blobImportStatement;
 	}
 
+	/**
+	 * Sets the SQL update statement, which must contain a '?' placeholder for the file data.
+	 *
+	 * @param blobImportStatement the SQL update statement
+	 */
 	public void setBlobImportStatement(final String blobImportStatement) {
 		this.blobImportStatement = blobImportStatement;
 	}
 
+	/**
+	 * Returns the path of the file to import.
+	 *
+	 * @return the path of the file to import
+	 */
 	public String getImportFilePath() {
 		return importFilePath;
 	}
 
+	/**
+	 * Sets the path of the file to import. A leading "~" is replaced by the user's home directory.
+	 *
+	 * @param importFilePath the path of the file to import
+	 */
 	public void setImportFilePath(final String importFilePath) {
 		this.importFilePath = Utilities.replaceUsersHome(importFilePath);
 	}
 
+	/**
+	 * Checks the parameters and supplies the database driver (it may be asked for interactively, if it is missing).
+	 *
+	 * @throws Exception if the database driver is not available, or a parameter is missing or invalid
+	 */
 	@Override
 	public void checkParameters() throws Exception {
 		if (getDbVendor() != null) {
@@ -63,6 +99,11 @@ public class BlobImportDefinition extends DbConnectionDefinition {
 		}
 	}
 
+	/**
+	 * Returns the command line parameters for this blob import, e.g. to show them in the console menu.
+	 *
+	 * @return the command line parameters, starting with "importblob"
+	 */
 	public String toParamsString() {
 		String params = "importblob";
 		params += " " + getDbVendor().name();

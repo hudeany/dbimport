@@ -18,24 +18,50 @@ import de.soderer.utilities.console.SimpleConsoleInput;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
 
+/**
+ * Console menu to configure and start a blob import.
+ */
 public class BlobUpdateMenu extends ConsoleMenu {
 	private BlobImportDefinition blobImportDefinition = new BlobImportDefinition();
 	private DbConnectionDefinition dbDefinitionCache = null;
 
+	/**
+	 * Returns the blob import definition edited by this menu.
+	 *
+	 * @return the blob import definition
+	 */
 	public BlobImportDefinition getBlobImportDefinition() {
 		return blobImportDefinition;
 	}
 
+	/**
+	 * Sets the blob import definition to edit in this menu.
+	 *
+	 * @param blobImportDefinition the blob import definition
+	 */
 	public void setBlobImportDefinition(final BlobImportDefinition blobImportDefinition) {
 		this.blobImportDefinition = blobImportDefinition;
 	}
 
+	/**
+	 * Creates the menu.
+	 *
+	 * @param parentMenu the parent menu
+	 * @param dbDefinitionCache connection parameters already entered in other menus, used as default values
+	 * @throws Exception if the menu cannot be created
+	 */
 	public BlobUpdateMenu(final ConsoleMenu parentMenu, final DbConnectionDefinition dbDefinitionCache) throws Exception {
 		super(parentMenu, "Blob update");
 
 		this.dbDefinitionCache = dbDefinitionCache;
 	}
 
+	/**
+	 * Shows the menu in a loop until the user leaves it or starts the blob import.
+	 *
+	 * @return -2 to start the blob import, or 0 to return to the parent menu
+	 * @throws Exception if the console input or output fails
+	 */
 	@Override
 	public int show() throws Exception {
 		try {
@@ -249,7 +275,8 @@ public class BlobUpdateMenu extends ConsoleMenu {
 					blobImportDefinition.setTrustStoreFile(null);
 					blobImportDefinition.setTrustStorePassword(null);
 				} else if ("secure".equalsIgnoreCase(choice)) {
-					blobImportDefinition.setSecureConnection(blobImportDefinition.isSecureConnection());
+					// Toggle (the "!" was missing, so the setting could never be changed)
+					blobImportDefinition.setSecureConnection(!blobImportDefinition.isSecureConnection());
 				} else if ("truststore".equalsIgnoreCase(choice)) {
 					System.out.println();
 					System.out.println("Please enter database TrustStore filepath (Blank => None)");

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingUtilities;
@@ -64,15 +65,24 @@ import de.soderer.utilities.worker.WorkerParentDual;
 public class DbImport extends UpdateableConsoleApplication implements WorkerParentDual {
 	/** The Constant APPLICATION_NAME. */
 	public static final String APPLICATION_NAME = "DbImport";
+	/**
+	 * Name of the startup class used for the application update.
+	 */
 	public static final String APPLICATION_STARTUPCLASS_NAME = "de-soderer-DbImport";
 
 	/** The Constant VERSION_RESOURCE_FILE, which contains version number and versioninfo download url. */
 	public static final String VERSION_RESOURCE_FILE = "/version.txt";
 
+	/**
+	 * Resource file containing the help text.
+	 */
 	public static final String HELP_RESOURCE_FILE = "/help.txt";
 
 	/** The Constant CONFIGURATION_FILE. */
 	public static final File CONFIGURATION_FILE = new File(System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + File.separator + "." + APPLICATION_NAME + ".config");
+	/**
+	 * Property name of the driver file path in the configuration file.
+	 */
 	public static final String CONFIGURATION_DRIVERLOCATIONPROPERTYNAME = "driver_location";
 
 	/** The Constant SECURE_PREFERENCES_FILE. */
@@ -94,12 +104,31 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 	private static String getUsageMessage() {
 		try (InputStream helpInputStream = DbImport.class.getResourceAsStream(HELP_RESOURCE_FILE)) {
 			return "DbImport (by Andreas Soderer, mail: dbimport@soderer.de)\n"
-					+ "VERSION: " + VERSION.toString() + " (" + DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, VERSION_BUILDTIME) + ")" + "\n\n"
+					+ "VERSION: " + VERSION.toString() + getBuildTimeText() + "\n\n"
 					+ new String(IoUtilities.toByteArray(helpInputStream), StandardCharsets.UTF_8);
 		} catch (@SuppressWarnings("unused") final Exception e) {
 			return "Help info is missing";
 		}
 	}
+
+	/**
+	 * Returns the build time for the version output, e.g. " (2026-10-07 10:50:48)".
+	 *
+	 * @return the formatted build time in brackets, or an empty string, if the version file contains no build time
+	 */
+	public static String getBuildTimeText() {
+		// The build time is optional in version.txt, so it must not break the help output
+		return VERSION_BUILDTIME == null ? "" : " (" + DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, VERSION_BUILDTIME) + ")";
+	}
+
+	/** Lower case keywords for the help text, only recognized as single argument */
+	private static final Set<String> HELP_KEYWORDS = Set.of("help", "-help", "--help", "-h", "--h", "-?", "--?");
+
+	/** Lower case flags only known by the blob import parameters (see menu mode parsing in _main) */
+	private static final Set<String> BLOB_IMPORT_FLAGS = Set.of("-updatesql", "-blobfile");
+
+	/** Lower case flags only known by the connection test parameters (see menu mode parsing in _main) */
+	private static final Set<String> CONNECTION_TEST_FLAGS = Set.of("-iter", "-sleep", "-check");
 
 	/** The database import definition. */
 	private DbImportDefinition dbImportDefinitionToExecute;
@@ -119,10 +148,10 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 	}
 
 	/**
-	 * Method used for main but with no System.exit call to make it junit testable
+	 * Method used for main but with no System.exit call to make it junit testable.
 	 *
-	 * @param arguments
-	 * @return
+	 * @param args the command line arguments
+	 * @return the exit code (0 for success, 1 for errors), or a negative value if the application keeps running (GUI)
 	 */
 	protected static int _main(final String[] args) {
 		ApplicationUpdateUtilities.removeUpdateLeftovers();
@@ -171,91 +200,41 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				} else {
 					openGui = true;
 				}
+			} else if (arguments.length == 1 && HELP_KEYWORDS.contains(arguments[0].toLowerCase(Locale.ROOT))) {
+				// Only as single argument, otherwise e.g. a table name, username or password "help" showed the help text
+				System.out.println(getUsageMessage());
+				return 1;
+			} else if (arguments.length == 1 && "version".equalsIgnoreCase(arguments[0])) {
+				System.out.println(VERSION);
+				return 1;
 			} else {
-				for (int i = 0; i < arguments.length; i++) {
-					if ("help".equalsIgnoreCase(arguments[i]) || "-help".equalsIgnoreCase(arguments[i]) || "--help".equalsIgnoreCase(arguments[i]) || "-h".equalsIgnoreCase(arguments[i]) || "--h".equalsIgnoreCase(arguments[i])
-							|| "-?".equalsIgnoreCase(arguments[i]) || "--?".equalsIgnoreCase(arguments[i])) {
-						System.out.println(getUsageMessage());
-						return 1;
-					} else if ("version".equalsIgnoreCase(arguments[i]) && arguments.length == 1) {
-						System.out.println(VERSION);
-						return 1;
-					} else if ("update".equalsIgnoreCase(arguments[i]) && i == 0 && arguments.length <= 3) {
-						if (arguments.length > i + 2) {
-							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, false, false);
-						} else if (arguments.length > i + 1) {
-							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, false, false);
-						} else {
-							final DbImport dbImport = new DbImport();
-							ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, false, false);
-						}
-						return 1;
-					} else if ("gui".equalsIgnoreCase(arguments[i])) {
-						if (GraphicsEnvironment.isHeadless()) {
-							throw new DbImportException("GUI can only be shown on a non-headless environment");
-						}
-						openGui = true;
-						if (openMenu) {
-							throw new DbImportException("Only one of gui or menu can be opend at a time");
-						} else if (connectionTest) {
-							throw new DbImportException("Only one of gui or connection test can be used at a time");
-						} else if (blobImport) {
-							throw new DbImportException("Only one of gui or blob import can be used at a time");
-						} else if (createTrustStore) {
-							throw new DbImportException("Only one of gui or create truststore can be used at a time");
-						}
-						arguments = Utilities.removeItemAtIndex(arguments, i--);
-					} else if ("menu".equalsIgnoreCase(arguments[i])) {
-						openMenu = true;
-						if (openGui) {
-							throw new DbImportException("Only one of menu or gui can be opend at a time");
-						} else if (connectionTest) {
-							throw new DbImportException("Only one of menu or connection test can be used at a time");
-						} else if (blobImport) {
-							throw new DbImportException("Only one of menu or blob import can be used at a time");
-						} else if (createTrustStore) {
-							throw new DbImportException("Only one of menu or create truststore can be used at a time");
-						}
-						arguments = Utilities.removeItemAtIndex(arguments, i--);
-					} else if ("connectiontest".equalsIgnoreCase(arguments[i])) {
-						connectionTest = true;
-						if (openGui) {
-							throw new DbImportException("Only one of connection test or gui can be used at a time");
-						} else if (openMenu) {
-							throw new DbImportException("Only one of connection test or menu can be used at a time");
-						} else if (blobImport) {
-							throw new DbImportException("Only one of connection test or blob import can be used at a time");
-						} else if (createTrustStore) {
-							throw new DbImportException("Only one of connection test or create truststore can be used at a time");
-						}
-						arguments = Utilities.removeItemAtIndex(arguments, i--);
-					} else if ("importblob".equalsIgnoreCase(arguments[i])) {
-						blobImport = true;
-						if (openGui) {
-							throw new DbImportException("Only one of blob import or gui can be used at a time");
-						} else if (connectionTest) {
-							throw new DbImportException("Only one of blob import or connection test can be used at a time");
-						} else if (openMenu) {
-							throw new DbImportException("Only one of blob import or menu can be used at a time");
-						} else if (createTrustStore) {
-							throw new DbImportException("Only one of blob import or create truststore can be used at a time");
-						}
-						arguments = Utilities.removeItemAtIndex(arguments, i--);
-					} else if ("createtruststore".equalsIgnoreCase(arguments[i])) {
-						createTrustStore = true;
-						if (openGui) {
-							throw new DbImportException("Only one of create truststore or gui can be used at a time");
-						} else if (connectionTest) {
-							throw new DbImportException("Only one of create truststore or connection test can be used at a time");
-						} else if (openMenu) {
-							throw new DbImportException("Only one of create truststore or menu can be used at a time");
-						} else if (blobImport) {
-							throw new DbImportException("Only one of create truststore or blobImport can be used at a time");
-						}
-						arguments = Utilities.removeItemAtIndex(arguments, i--);
+				// The mode keywords are only recognized as first argument. Before, they were recognized at any position,
+				// so e.g. a password, username or table name "menu" or "gui" changed the mode and was removed from the arguments.
+				final String modeKeyword = arguments[0].toLowerCase(Locale.ROOT);
+				if ("update".equals(modeKeyword) && arguments.length <= 3) {
+					final DbImport dbImport = new DbImport();
+					final String username = arguments.length > 1 ? arguments[1] : null;
+					final char[] password = arguments.length > 2 ? arguments[2].toCharArray() : null;
+					ApplicationUpdateUtilities.executeUpdate(dbImport, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, username, password, null, false, false);
+					return 1;
+				} else if ("gui".equals(modeKeyword)) {
+					if (GraphicsEnvironment.isHeadless()) {
+						throw new DbImportException("GUI can only be shown on a non-headless environment");
 					}
+					openGui = true;
+					arguments = Utilities.removeItemAtIndex(arguments, 0);
+				} else if ("menu".equals(modeKeyword)) {
+					openMenu = true;
+					arguments = Utilities.removeItemAtIndex(arguments, 0);
+				} else if ("connectiontest".equals(modeKeyword)) {
+					connectionTest = true;
+					arguments = Utilities.removeItemAtIndex(arguments, 0);
+				} else if ("importblob".equals(modeKeyword)) {
+					blobImport = true;
+					arguments = Utilities.removeItemAtIndex(arguments, 0);
+				} else if ("createtruststore".equals(modeKeyword)) {
+					createTrustStore = true;
+					arguments = Utilities.removeItemAtIndex(arguments, 0);
 				}
 			}
 
@@ -267,7 +246,18 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			for (int i = 0; i < arguments.length; i++) {
 				boolean wasAllowedParam = createTrustStore;
 
+				// In menu mode the import, blob import and connection test parameters are all read from the same
+				// arguments. A flag handled by one parameter set (including its value, which advances "i") must not
+				// be taken as a positional parameter (vendor, host, ...) of the next parameter set.
+				final int startIndex = i;
+				final String argumentLowerCase = arguments[i].toLowerCase(Locale.ROOT);
+				final boolean isBlobImportFlag = BLOB_IMPORT_FLAGS.contains(argumentLowerCase);
+				final boolean isConnectionTestFlag = CONNECTION_TEST_FLAGS.contains(argumentLowerCase);
+				boolean importFlagHandled = false;
+				boolean blobImportFlagHandled = false;
+
 				if (openGui || openMenu || (!blobImport && !connectionTest && !createTrustStore)) {
+					boolean positionalParameter = false;
 					if ("-x".equalsIgnoreCase(arguments[i])) {
 						i++;
 						if (i >= arguments.length) {
@@ -501,6 +491,19 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							dbImportDefinition.setZipPassword(zipPassword.toCharArray());
 						}
 						wasAllowedParam = true;
+					} else if ("-kdbxpassword".equalsIgnoreCase(arguments[i])) {
+						// Documented in help.txt, but was missing here
+						i++;
+						if (i >= arguments.length) {
+							throw new ParameterException(arguments[i - 1], "Missing value for parameter kdbxpassword");
+						} else {
+							String kdbxPassword = arguments[i];
+							if ((kdbxPassword.startsWith("\"") && kdbxPassword.endsWith("\"")) || (kdbxPassword.startsWith("'") && kdbxPassword.endsWith("'"))) {
+								kdbxPassword = kdbxPassword.substring(1, kdbxPassword.length() - 1);
+							}
+							dbImportDefinition.setKdbxPassword(kdbxPassword.toCharArray());
+						}
+						wasAllowedParam = true;
 					} else if ("-dbtz".equalsIgnoreCase(arguments[i])) {
 						i++;
 						if (i >= arguments.length) {
@@ -589,7 +592,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					} else if ("-noSingleMode".equalsIgnoreCase(arguments[i])) {
 						dbImportDefinition.setPreventBatchFallbackToSingleLineOnErrors(true);
 						wasAllowedParam = true;
-					} else {
+					} else if (!(openMenu && (isBlobImportFlag || isConnectionTestFlag))) {
+						positionalParameter = true;
 						if (dbImportDefinition.getDbVendor() == null) {
 							dbImportDefinition.setDbVendor(DbVendor.getDbVendorByName(arguments[i]));
 							wasAllowedParam = true;
@@ -607,9 +611,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							wasAllowedParam = true;
 						}
 					}
+					importFlagHandled = wasAllowedParam && !positionalParameter;
 				}
 
-				if (openMenu || blobImport) {
+				if ((openMenu || blobImport) && i == startIndex && !importFlagHandled) {
+					boolean positionalParameter = false;
 					if ("-updatesql".equalsIgnoreCase(arguments[i])) {
 						i++;
 						if (i >= arguments.length) {
@@ -649,7 +655,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							blobImportDefinition.setTrustStorePassword(Utilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
 						}
 						wasAllowedParam = true;
-					} else {
+					} else if (!(openMenu && isConnectionTestFlag)) {
+						positionalParameter = true;
 						if (blobImportDefinition.getDbVendor() == null) {
 							blobImportDefinition.setDbVendor(DbVendor.getDbVendorByName(arguments[i]));
 							wasAllowedParam = true;
@@ -667,9 +674,10 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							wasAllowedParam = true;
 						}
 					}
+					blobImportFlagHandled = wasAllowedParam && !positionalParameter;
 				}
 
-				if (openMenu || connectionTest) {
+				if ((openMenu || connectionTest) && i == startIndex && !importFlagHandled && !blobImportFlagHandled) {
 					if ("-iter".equalsIgnoreCase(arguments[i])) {
 						i++;
 						if (i >= arguments.length) {
@@ -743,7 +751,12 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			}
 
 			if (createTrustStore) {
-				TrustManagerUtilities.createTrustStoreFile(arguments[0], 443, new File(arguments[1]), Utilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null, null);
+				// "createtruststore hostname[:port] truststorefilePath [truststorepassword]"
+				if (arguments.length < 2 || arguments.length > 3) {
+					throw new ParameterException("createtruststore", "Expected parameters: hostname[:port] truststorefilePath [truststorepassword]");
+				}
+				final char[] trustStorePassword = arguments.length > 2 && Utilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null;
+				TrustManagerUtilities.createTrustStoreFile(arguments[0], 443, new File(arguments[1]), trustStorePassword, null);
 				System.out.println();
 				System.out.println("Created TrustStore in file '" + arguments[1] + "'");
 				return 0;
@@ -757,7 +770,10 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					return 1;
 				}
 
-				final int consoleMenuExecutionCode = openConsoleMenu(dbImportDefinition, blobImport ? blobImportDefinition : null, connectionTestDefinition);
+				// Always the same definition objects, which are then used below for the chosen action. Before, the blob
+				// definition was only passed for "importblob", which can never be combined with "menu", so the blob update
+				// menu edited its own definition and the action below used the (empty) one parsed from the command line.
+				final int consoleMenuExecutionCode = openConsoleMenu(dbImportDefinition, blobImportDefinition, connectionTestDefinition);
 
 				if (consoleMenuExecutionCode == -1) {
 					// Validate all given parameters
@@ -879,7 +895,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			System.err.println(getUsageMessage());
 			return 1;
 		} catch (final Exception e) {
-			System.err.println(e.getMessage());
+			// Some exceptions (e.g. NullPointerException) carry no message, which would print just "null"
+			System.err.println(e.getMessage() != null ? e.getMessage() : e.toString());
 			return 1;
 		}
 	}
@@ -906,7 +923,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		if (!dbImportDefinitionToExecute.isInlineData()) {
 			if (dbImportDefinitionToExecute.getImportFilePathOrData().contains("?") || dbImportDefinitionToExecute.getImportFilePathOrData().contains("*")) {
 				final int lastSeparator = Math.max(dbImportDefinitionToExecute.getImportFilePathOrData().lastIndexOf("/"), dbImportDefinitionToExecute.getImportFilePathOrData().lastIndexOf("\\"));
-				String directoryPath = dbImportDefinitionToExecute.getImportFilePathOrData().substring(0, lastSeparator);
+				// A pattern without directory (e.g. "*.csv") refers to the current directory
+				String directoryPath = lastSeparator < 0 ? "." : dbImportDefinitionToExecute.getImportFilePathOrData().substring(0, lastSeparator);
 				directoryPath = Utilities.replaceUsersHome(directoryPath);
 				final String filePattern = dbImportDefinitionToExecute.getImportFilePathOrData().substring(lastSeparator + 1);
 				if (directoryPath.contains("?") || directoryPath.contains("*")) {
@@ -1064,7 +1082,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				if (Utilities.isNotBlank(connectionTestDefinition.getCheckStatement())) {
 					try (Statement statement = testConnection.createStatement()) {
 						String statementString = connectionTestDefinition.getCheckStatement();
-						if ("check".equalsIgnoreCase(statementString)) {
+						// help.txt and the console menu document the keyword "vendor", "check" is kept for compatibility
+						if ("vendor".equalsIgnoreCase(statementString) || "check".equalsIgnoreCase(statementString)) {
 							statementString = connectionTestDefinition.getDbVendor().getTestStatement();
 						}
 
@@ -1125,30 +1144,41 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		return returnCode;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.soderer.utilities.WorkerParentSimple#showUnlimitedProgress()
+	/**
+	 * Signals progress with an unknown total amount. Nothing is shown on the console.
 	 */
 	@Override
 	public void receiveUnlimitedProgressSignal() {
 		// Do nothing
 	}
 
-	/* (non-Javadoc)
-	 * @see de.soderer.utilities.WorkerParentSimple#showProgress(java.util.Date, long, long)
+	/**
+	 * Shows the progress bar of the import on the console (verbose mode only).
+	 *
+	 * @param start start time of the import
+	 * @param itemsToDo amount of items to import
+	 * @param itemsDone amount of items imported so far
+	 * @param itemsUnitSign unit sign of the amounts (e.g. "B" for bytes), or null for data items
 	 */
 	@Override
 	public void receiveProgressSignal(final LocalDateTime start, final long itemsToDo, final long itemsDone, final String itemsUnitSign) {
-		if (dbImportDefinitionToExecute.isVerbose() && !"*".equals(dbImportDefinitionToExecute.getTableName())) {
+		if (isVerbose() && !"*".equals(dbImportDefinitionToExecute.getTableName())) {
 			printProgressBar(start, itemsToDo, itemsDone, itemsUnitSign);
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see de.soderer.utilities.WorkerParentSimple#showDone(java.util.Date, java.util.Date, long)
+	/**
+	 * Shows the summary and the result text of the import on the console (verbose mode only).
+	 *
+	 * @param start start time of the import
+	 * @param end end time of the import
+	 * @param itemsDone amount of imported items
+	 * @param itemsUnitSign unit sign of the amount (e.g. "B" for bytes), or null for data items
+	 * @param resultText result text of the import
 	 */
 	@Override
 	public void receiveDoneSignal(final LocalDateTime start, final LocalDateTime end, final long itemsDone, final String itemsUnitSign, final String resultText) {
-		if (dbImportDefinitionToExecute.isVerbose()) {
+		if (isVerbose()) {
 			int currentTerminalWidth;
 			try {
 				currentTerminalWidth = ConsoleUtilities.getTerminalSize().getWidth();
@@ -1174,8 +1204,10 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see de.soderer.utilities.WorkerParentSimple#cancel()
+	/**
+	 * Signals the cancellation of the import on the console.
+	 *
+	 * @return always true
 	 */
 	@Override
 	public boolean cancel() {
@@ -1183,9 +1215,14 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		return true;
 	}
 
+	/**
+	 * Shows a title change on the console (verbose mode only).
+	 *
+	 * @param text the new title
+	 */
 	@Override
 	public void changeTitle(final String text) {
-		if (dbImportDefinitionToExecute.isVerbose()) {
+		if (isVerbose()) {
 			System.out.println(text);
 		}
 	}
@@ -1244,24 +1281,49 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		}
 	}
 
+	/**
+	 * Signals sub progress with an unknown total amount. Nothing is shown on the console.
+	 */
 	@Override
 	public void receiveUnlimitedSubProgressSignal() {
 		// Do nothing
 	}
 
+	/**
+	 * Shows the start of the import of a single file on the console (the description in verbose mode only).
+	 *
+	 * @param itemName name of the imported file
+	 * @param description description of the import
+	 */
 	@Override
 	public void receiveItemStartSignal(final String itemName, final String description) {
 		System.out.println("Importing " + itemName);
-		if (dbImportDefinitionToExecute.isVerbose()) {
+		if (isVerbose()) {
 			System.out.println(description);
 		}
 	}
 
+	/**
+	 * Shows the progress bar of the import of a single file on the console (verbose mode only).
+	 *
+	 * @param itemStart start time of the import of the file
+	 * @param subItemToDo amount of items to import from the file
+	 * @param subItemDone amount of items imported so far
+	 * @param itemsUnitSign unit sign of the amounts (e.g. "B" for bytes), or null for data items
+	 */
 	@Override
 	public void receiveItemProgressSignal(final LocalDateTime itemStart, final long subItemToDo, final long subItemDone, final String itemsUnitSign) {
-		if (dbImportDefinitionToExecute.isVerbose() && subItemToDo > 0) {
+		if (isVerbose() && subItemToDo > 0) {
 			printProgressBar(itemStart, subItemToDo, subItemDone, itemsUnitSign);
 		}
+	}
+
+	/**
+	 * The worker signals are also received while no import runs (e.g. as parent of the application update),
+	 * so there may be no import definition at all.
+	 */
+	private boolean isVerbose() {
+		return dbImportDefinitionToExecute != null && dbImportDefinitionToExecute.isVerbose();
 	}
 
 	private void printProgressBar(final LocalDateTime itemStart, final long subItemToDo, final long subItemDone, final String itemsUnitSign) {
@@ -1292,9 +1354,18 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		}
 	}
 
+	/**
+	 * Shows the summary and the result text of the import of a single file on the console (verbose mode only).
+	 *
+	 * @param itemStart start time of the import of the file
+	 * @param itemEnd end time of the import of the file
+	 * @param subItemsDone amount of imported items
+	 * @param itemsUnitSign unit sign of the amount (e.g. "B" for bytes), or null for data items
+	 * @param resultText result text of the import of the file
+	 */
 	@Override
 	public void receiveItemDoneSignal(final LocalDateTime itemStart, final LocalDateTime itemEnd, final long subItemsDone, final String itemsUnitSign, final String resultText) {
-		if (dbImportDefinitionToExecute.isVerbose()) {
+		if (isVerbose()) {
 			if (subItemsDone > 0) {
 				printProgressBar(itemStart, subItemsDone, subItemsDone, itemsUnitSign);
 			}
@@ -1313,8 +1384,15 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		}
 	}
 
+	/**
+	 * Derives the table name for a multiple file import ("*" as table name) from a file name, by removing the
+	 * compression and data format extensions, e.g. "customer.csv.zip" results in "customer".
+	 *
+	 * @param filename the file name
+	 * @return the table name in lower case
+	 */
 	public static String getImportTablenameFromFilename(final String filename) {
-		String tableNameToImport = filename.toLowerCase();
+		String tableNameToImport = filename.toLowerCase(Locale.ROOT);
 		if (Utilities.endsWithIgnoreCase(tableNameToImport, ".zip")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
 		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tar.gz")) {

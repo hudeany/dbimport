@@ -14,7 +14,6 @@ import de.soderer.dbimport.DbImportDefinition;
 import de.soderer.dbimport.DbImportDefinition.DataType;
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
-import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.NumberUtilities;
 import de.soderer.utilities.Utilities;
@@ -26,21 +25,46 @@ import de.soderer.utilities.console.PasswordConsoleInput;
 import de.soderer.utilities.console.SimpleConsoleInput;
 import de.soderer.utilities.db.data.DbVendor;
 
+/**
+ * Console menu to configure and start a data import.
+ */
 public class ImportMenu extends ConsoleMenu {
 	private DbImportDefinition dbImportDefinition = new DbImportDefinition();
 
+	/**
+	 * Returns the import definition edited by this menu.
+	 *
+	 * @return the import definition
+	 */
 	public DbImportDefinition getDbImportDefinition() {
 		return dbImportDefinition;
 	}
 
+	/**
+	 * Sets the import definition to edit in this menu.
+	 *
+	 * @param dbImportDefinition the import definition
+	 */
 	public void setDbImportDefinition(final DbImportDefinition dbImportDefinition) {
 		this.dbImportDefinition = dbImportDefinition;
 	}
 
+	/**
+	 * Creates the menu.
+	 *
+	 * @param parentMenu the parent menu
+	 * @throws Exception if the menu cannot be created
+	 */
 	public ImportMenu(final ConsoleMenu parentMenu) throws Exception {
 		super(parentMenu, "Import data");
 	}
 
+	/**
+	 * Shows the menu in a loop until the user leaves it or starts the import.
+	 *
+	 * @return -1 to start the import, or 0 to return to the parent menu
+	 * @throws Exception if the console input or output fails
+	 */
 	@Override
 	public int show() throws Exception {
 		try {
@@ -277,7 +301,7 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println("  " + Utilities.rightPad("noheaders)", bulletSize) + " " + Utilities.rightPad("CSV file has no headers:", nameSize) + dbImportDefinition.isNoHeaders());
 					autoCompletionStrings.add("noheaders");
 				}
-				System.out.println("  " + Utilities.rightPad("c)", bulletSize) + " " + Utilities.rightPad("Complete commit only:", nameSize) + dbImportDefinition.isInlineData());
+				System.out.println("  " + Utilities.rightPad("c)", bulletSize) + " " + Utilities.rightPad("Complete commit only:", nameSize) + dbImportDefinition.isCompleteCommit());
 				autoCompletionStrings.add("c");
 				System.out.println("  " + Utilities.rightPad("nonewindex)", bulletSize) + " " + Utilities.rightPad("No new indexes on destination table:", nameSize) + !dbImportDefinition.isCreateNewIndexIfNeeded());
 				autoCompletionStrings.add("nonewindex");
@@ -290,7 +314,7 @@ public class ImportMenu extends ConsoleMenu {
 					autoCompletionStrings.add("a");
 				}
 				if (dbImportDefinition.getDataType() == DataType.CSV) {
-					System.out.println("  " + Utilities.rightPad("r)", bulletSize) + " " + Utilities.rightPad("Allow lines with surplus empty trailing columns:", nameSize) + !dbImportDefinition.isRemoveSurplusEmptyTrailingColumns());
+					System.out.println("  " + Utilities.rightPad("r)", bulletSize) + " " + Utilities.rightPad("Allow lines with surplus empty trailing columns:", nameSize) + dbImportDefinition.isRemoveSurplusEmptyTrailingColumns());
 					autoCompletionStrings.add("r");
 				}
 				System.out.println("  " + Utilities.rightPad("t)", bulletSize) + " " + Utilities.rightPad("Trim data values:", nameSize) + dbImportDefinition.isTrimData());
@@ -299,7 +323,7 @@ public class ImportMenu extends ConsoleMenu {
 				autoCompletionStrings.add("i");
 				System.out.println("  " + Utilities.rightPad("d)", bulletSize) + " " + Utilities.rightPad("Duplicate mode:", nameSize) + dbImportDefinition.getDuplicateMode().name());
 				autoCompletionStrings.add("d");
-				System.out.println("  " + Utilities.rightPad("u)", bulletSize) + " " + Utilities.rightPad("Don't update with null values:", nameSize) + dbImportDefinition.isUpdateNullData());
+				System.out.println("  " + Utilities.rightPad("u)", bulletSize) + " " + Utilities.rightPad("Don't update with null values:", nameSize) + !dbImportDefinition.isUpdateNullData());
 				autoCompletionStrings.add("u");
 
 				System.out.println("  " + Utilities.rightPad("k)", bulletSize) + " " + Utilities.rightPad("Keycolumns:", nameSize) + (dbImportDefinition.getKeycolumns() == null || dbImportDefinition.getKeycolumns().isEmpty() ? "<empty>" : Utilities.join(dbImportDefinition.getKeycolumns(), ", ")));
@@ -399,11 +423,6 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println("Please enter data path");
 					final String dataPath = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					dbImportDefinition.setDataPath(dataPath);
-				} else if ("structure".equalsIgnoreCase(choice)) {
-					System.out.println();
-					System.out.println("Please enter structure file path");
-					final String structureFilePath = new FilepathConsoleInput().withPrompt(" > ").readInput();
-					dbImportDefinition.setStructureFilePath(Utilities.isBlank(structureFilePath) ? null : structureFilePath);
 				} else if ("sp".equalsIgnoreCase(choice)) {
 					System.out.println();
 					System.out.println("Please enter schema file path");
@@ -419,10 +438,11 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println("Please enter mapping file path");
 					final String mappingFilePath = new FilepathConsoleInput().withPrompt(" > ").readInput();
 					if (Utilities.isNotBlank(mappingFilePath)) {
+						// Reported as error message, an exception would end the whole program (see catch block below)
 						if (!new File(mappingFilePath).exists()) {
-							throw new DbImportException("Mapping file does not exist");
+							getErrors().add("Mapping file does not exist");
 						} else if (Utilities.isNotBlank(dbImportDefinition.getMapping())) {
-							throw new DbImportException("Mapping is already defined");
+							getErrors().add("Mapping is already defined");
 						} else {
 							dbImportDefinition.setMapping(new String(Utilities.readFileToByteArray(new File(mappingFilePath)), StandardCharsets.UTF_8));
 						}

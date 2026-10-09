@@ -29,6 +29,9 @@ import de.soderer.yaml.data.YamlMapping;
 import de.soderer.yaml.data.YamlNode;
 import de.soderer.yaml.data.YamlScalar;
 
+/**
+ * Data provider for YAML data. The data items are the objects of a YAML list.
+ */
 public class YamlDataProvider extends DataProvider {
 	private YamlReader yamlReader = null;
 	private List<String> dataPropertyNames = null;
@@ -38,6 +41,15 @@ public class YamlDataProvider extends DataProvider {
 
 	private Charset encoding = StandardCharsets.UTF_8;
 
+	/**
+	 * Creates the data provider.
+	 *
+	 * @param isInlineData true if importFilePathOrData contains the data itself, false if it is a file path
+	 * @param importFilePathOrData path of the import file, or the data itself
+	 * @param zipPassword password of a zip import file, or null
+	 * @param encoding character encoding of the data
+	 * @param dataPath path of the list containing the data items, or null for the root list
+	 */
 	public YamlDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword, final Charset encoding, final String dataPath) {
 		super(isInlineData, importFilePathOrData, zipPassword);
 		if (encoding != null) {
@@ -49,7 +61,7 @@ public class YamlDataProvider extends DataProvider {
 	@Override
 	public String getConfigurationLogString() {
 		return super.getConfigurationLogString()
-				+ "Format: JSON" + "\n"
+				+ "Format: YAML" + "\n"
 				+ "Encoding: " + encoding + "\n";
 	}
 
@@ -150,7 +162,10 @@ public class YamlDataProvider extends DataProvider {
 			while ((nextItem = getNextItemData()) != null) {
 				for (final Entry<String, Object> itemProperty : nextItem.entrySet()) {
 					final String propertyName = itemProperty.getKey();
-					dataPropertyNames.add(propertyName);
+					// Each name only once (before, it was added once per data item)
+					if (!dataPropertyNames.contains(propertyName)) {
+						dataPropertyNames.add(propertyName);
+					}
 				}
 
 				itemCount++;
@@ -221,6 +236,10 @@ public class YamlDataProvider extends DataProvider {
 		OutputStream outputStream = null;
 		File tempFile = null;
 		try {
+			// The reader of the import run is still open at this point (positioned at the end of the data), so start
+			// a fresh one. Before, openReader() failed with "Reader was already opened before" and the erroneous data
+			// file was never written.
+			close();
 			openReader();
 
 			File filteredDataFile;

@@ -27,6 +27,9 @@ import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.utilities.zip.Zip4jUtilities;
 import de.soderer.utilities.zip.ZipUtilities;
 
+/**
+ * Data provider for vCard data (VCF format). The data items are the contained vCards.
+ */
 public class VcfDataProvider extends DataProvider {
 	private VcfReader vcfReader = null;
 	private List<String> dataPropertyNames = null;
@@ -35,6 +38,13 @@ public class VcfDataProvider extends DataProvider {
 
 	private final Charset encoding = StandardCharsets.UTF_8;
 
+	/**
+	 * Creates the data provider.
+	 *
+	 * @param isInlineData true if importFilePathOrData contains the data itself, false if it is a file path
+	 * @param importFilePathOrData path of the import file, or the data itself
+	 * @param zipPassword password of a zip import file, or null
+	 */
 	public VcfDataProvider(final boolean isInlineData, final String importFilePathOrData, final char[] zipPassword) {
 		super(isInlineData, importFilePathOrData, zipPassword);
 	}
@@ -146,7 +156,10 @@ public class VcfDataProvider extends DataProvider {
 			while ((nextItem = getNextItemData()) != null) {
 				for (final Entry<String, Object> itemProperty : nextItem.entrySet()) {
 					final String propertyName = itemProperty.getKey();
-					dataPropertyNames.add(propertyName);
+					// Each name only once (before, it was added once per data item)
+					if (!dataPropertyNames.contains(propertyName)) {
+						dataPropertyNames.add(propertyName);
+					}
 				}
 
 				itemCount++;
@@ -233,6 +246,10 @@ public class VcfDataProvider extends DataProvider {
 		OutputStream outputStream = null;
 		File tempFile = null;
 		try {
+			// The reader of the import run is still open at this point (positioned at the end of the data), so start
+			// a fresh one. Before, openReader() failed with "Reader was already opened before" and the erroneous data
+			// file was never written.
+			close();
 			openReader();
 
 			File filteredDataFile;
