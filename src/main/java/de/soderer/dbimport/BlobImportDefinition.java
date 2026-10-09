@@ -107,17 +107,29 @@ public class BlobImportDefinition extends DbConnectionDefinition {
 	public String toParamsString() {
 		String params = "importblob";
 		params += " " + getDbVendor().name();
-		if (getDbVendor() != DbVendor.SQLite && getDbVendor() != DbVendor.HSQL && getDbVendor() != DbVendor.Derby) {
-			params += " " + getHostnameAndPort();
+		if (getDbVendor() == DbVendor.HSQL) {
+			// HSQL: hostname only for a server database. A file database path is marked by a path separator, so it is
+			// not taken as hostname when the parameters are read again (see DbImport.isHsqlFileDatabasePath()).
+			if (Utilities.isNotBlank(getHostnameAndPort())) {
+				params += " " + getHostnameAndPort();
+				params += " " + getDbName();
+			} else {
+				params += " " + (DbImport.isHsqlFileDatabasePath(getDbName()) ? getDbName() : "." + File.separator + getDbName());
+			}
+		} else {
+			if (getDbVendor() != DbVendor.SQLite && getDbVendor() != DbVendor.Derby) {
+				params += " " + getHostnameAndPort();
+			}
+			params += " " + getDbName();
 		}
-		params += " " + getDbName();
 		if (getDbVendor() != DbVendor.SQLite && getDbVendor() != DbVendor.Derby) {
 			if (getUsername() != null) {
 				params += " " + getUsername();
 			}
 		}
-		params += " '" + getBlobImportStatement().replace("'", "\\'") + "'";
-		params += " '" + getImportFilePath().replace("'", "\\'") + "'";
+		// With their flags (before, they were output as positional parameters, which the command line does not accept)
+		params += " -updatesql '" + getBlobImportStatement().replace("'", "\\'") + "'";
+		params += " -blobfile '" + getImportFilePath().replace("'", "\\'") + "'";
 		if (getPassword() != null) {
 			params += " '" + new String(getPassword()).replace("'", "\\'") + "'";
 		}

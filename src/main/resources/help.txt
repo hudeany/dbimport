@@ -2,10 +2,11 @@ Usage: java -jar DbImport.jar [optional parameters] dbtype hostname[:port] dbnam
 
 Mandatory parameters for database import
 	dbtype: mysql | mariadb | oracle | postgresql | mssql | firebird | sqlite | derby | hsql | cassandra
-	hostname: With optional port (Not needed for sqlite and derby)
-	dbname: Dbname or filepath for sqlite database or derby database (for Oracle servicename use "/<servicename>", optional use Oracle TNS description)
+	hostname: With optional port (Not needed for sqlite and derby, for hsql only needed for a server database:
+		a hsql file database path must contain a path separator or start with '.' or '~', e.g. ./mydb)
+	dbname: Dbname or filepath for sqlite, derby or hsql file database (for Oracle servicename use "/<servicename>", optional use Oracle TNS description)
 	username: Username (Not needed for sqlite and derby)
-	password: Is asked interactivly, if not given as parameter (Not needed for sqlite and derby)
+	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, derby and hsql file databases)
 	
 	-table tablename: Table to import to (* for name by filename)
 	-import importfilepathOrData: File to import (?, * as wildcards, automapping only), maybe zipped (.zip, .tar.gz, .tgz, .gz)
@@ -84,7 +85,7 @@ Blob import:
 	
 	-updatesql sqlUpdateStatementWithPlaceholder: Import a single file as BLOB into a DB. (Placeholder for filedata is '?' like in prepared statements)
 	-blobfile filePath: Import blob file path
-	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, hsql or derby)
+	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, derby and hsql file databases)
 
 Connection test:
 	Usage: java -jar DbImport.jar connectiontest dbtype hostname[:port] dbname username [-iter n] [-sleep n] [-check checksql] [password]
@@ -92,7 +93,7 @@ Connection test:
 	-iter n: Iterations to execute. Default = 1, 0 = unlimited
 	-sleep n: Sleep for n seconds after each check. Default = 1
 	-check checksql: SQL statement to check or the keyword "vendor" for the vendors default check statement
-	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, hsql or derby)
+	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, derby and hsql file databases)
 
 Create TrustStore:
 	Usage: java -jar DbImport.jar createtruststore hostname:port truststorefilePath [truststorepassword]

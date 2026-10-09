@@ -121,6 +121,17 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		return VERSION_BUILDTIME == null ? "" : " (" + DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, VERSION_BUILDTIME) + ")";
 	}
 
+	/**
+	 * Checks whether a command line value for a HSQL database is the path of a file database instead of a hostname.
+	 * A file database path contains a path separator or starts with "~" or ".", e.g. "./mydb" or "~/data/mydb".
+	 *
+	 * @param value the command line value
+	 * @return true if the value is a file database path, false if it is a hostname (optionally with port)
+	 */
+	public static boolean isHsqlFileDatabasePath(final String value) {
+		return value != null && (value.contains("/") || value.contains("\\") || value.startsWith("~") || value.startsWith("."));
+	}
+
 	/** Lower case keywords for the help text, only recognized as single argument */
 	private static final Set<String> HELP_KEYWORDS = Set.of("help", "-help", "--help", "-h", "--h", "-?", "--?");
 
@@ -597,7 +608,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						if (dbImportDefinition.getDbVendor() == null) {
 							dbImportDefinition.setDbVendor(DbVendor.getDbVendorByName(arguments[i]));
 							wasAllowedParam = true;
-						} else if (dbImportDefinition.getHostnameAndPort() == null && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.Derby) {
+						} else if (dbImportDefinition.getHostnameAndPort() == null && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.Derby
+								&& !(dbImportDefinition.getDbVendor() == DbVendor.HSQL && isHsqlFileDatabasePath(arguments[i]))) {
+							// HSQL needs no hostname for a file database (before, its path was taken as hostname)
 							dbImportDefinition.setHostnameAndPort(arguments[i]);
 							wasAllowedParam = true;
 						} else if (dbImportDefinition.getDbName() == null) {
@@ -660,7 +673,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						if (blobImportDefinition.getDbVendor() == null) {
 							blobImportDefinition.setDbVendor(DbVendor.getDbVendorByName(arguments[i]));
 							wasAllowedParam = true;
-						} else if (blobImportDefinition.getHostnameAndPort() == null && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.Derby) {
+						} else if (blobImportDefinition.getHostnameAndPort() == null && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.Derby
+								&& !(blobImportDefinition.getDbVendor() == DbVendor.HSQL && isHsqlFileDatabasePath(arguments[i]))) {
+							// HSQL needs no hostname for a file database (before, its path was taken as hostname)
 							blobImportDefinition.setHostnameAndPort(arguments[i]);
 							wasAllowedParam = true;
 						} else if (blobImportDefinition.getDbName() == null) {
@@ -729,7 +744,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						if (connectionTestDefinition.getDbVendor() == null) {
 							connectionTestDefinition.setDbVendor(DbVendor.getDbVendorByName(arguments[i]));
 							wasAllowedParam = true;
-						} else if (connectionTestDefinition.getHostnameAndPort() == null && connectionTestDefinition.getDbVendor() != DbVendor.SQLite && connectionTestDefinition.getDbVendor() != DbVendor.Derby) {
+						} else if (connectionTestDefinition.getHostnameAndPort() == null && connectionTestDefinition.getDbVendor() != DbVendor.SQLite && connectionTestDefinition.getDbVendor() != DbVendor.Derby
+								&& !(connectionTestDefinition.getDbVendor() == DbVendor.HSQL && isHsqlFileDatabasePath(arguments[i]))) {
+							// HSQL needs no hostname for a file database (before, its path was taken as hostname)
 							connectionTestDefinition.setHostnameAndPort(arguments[i]);
 							wasAllowedParam = true;
 						} else if (connectionTestDefinition.getDbName() == null) {
@@ -839,10 +856,12 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				LangResources.enforceDefaultLocale();
 
 				// If started without GUI we may enter the missing password via the terminal
+				// Not for a HSQL file database, which needs no password (see help)
 				if (Utilities.isNotBlank(blobImportDefinition.getUsername()) && blobImportDefinition.getPassword() == null
 						&& blobImportDefinition.getDbVendor() != DbVendor.SQLite
 						&& blobImportDefinition.getDbVendor() != DbVendor.Derby
-						&& blobImportDefinition.getDbVendor() != DbVendor.Cassandra) {
+						&& blobImportDefinition.getDbVendor() != DbVendor.Cassandra
+						&& !(blobImportDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(blobImportDefinition.getHostnameAndPort()))) {
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					blobImportDefinition.setPassword(passwordArray);
 				}
@@ -853,10 +872,12 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				LangResources.enforceDefaultLocale();
 
 				// If started without GUI we may enter the missing password via the terminal
+				// Not for a HSQL file database, which needs no password (see help)
 				if (Utilities.isNotBlank(connectionTestDefinition.getUsername()) && connectionTestDefinition.getPassword() == null
 						&& connectionTestDefinition.getDbVendor() != DbVendor.SQLite
 						&& connectionTestDefinition.getDbVendor() != DbVendor.Derby
-						&& connectionTestDefinition.getDbVendor() != DbVendor.Cassandra) {
+						&& connectionTestDefinition.getDbVendor() != DbVendor.Cassandra
+						&& !(connectionTestDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(connectionTestDefinition.getHostnameAndPort()))) {
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					connectionTestDefinition.setPassword(passwordArray);
 				}
@@ -866,10 +887,12 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				LangResources.enforceDefaultLocale();
 
 				// If started without GUI we may enter the missing password via the terminal
+				// Not for a HSQL file database, which needs no password (see help)
 				if (Utilities.isNotBlank(dbImportDefinition.getUsername()) && dbImportDefinition.getPassword() == null
 						&& dbImportDefinition.getDbVendor() != DbVendor.SQLite
 						&& dbImportDefinition.getDbVendor() != DbVendor.Derby
-						&& dbImportDefinition.getDbVendor() != DbVendor.Cassandra) {
+						&& dbImportDefinition.getDbVendor() != DbVendor.Cassandra
+						&& !(dbImportDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(dbImportDefinition.getHostnameAndPort()))) {
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					dbImportDefinition.setPassword(passwordArray);
 				}
