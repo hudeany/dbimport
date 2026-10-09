@@ -1,14 +1,16 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.utilities.FileUtilities;
@@ -29,7 +31,7 @@ public class DbImportTest_Oracle {
 
 	public static File INPUTFILE_CSV = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.csv"));
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 
@@ -50,7 +52,7 @@ public class DbImportTest_Oracle {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 
@@ -181,13 +183,13 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV,
 					("column_integer; column_double; column_varchar; column_clob\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF123\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "123;; aBcDeF123;;123.456;; aBcDeF123\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -200,13 +202,13 @@ public class DbImportTest_Oracle {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "123;; aBcDeF1234;2003-02-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -225,18 +227,18 @@ public class DbImportTest_Oracle {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
 
 			final StringBuilder expectedDataPart = new StringBuilder();
 			for (int i = 0; i < numberOfLines; i++) {
 				expectedDataPart.append(i + ";; aBcDeF1234;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ expectedDataPart,
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -249,13 +251,13 @@ public class DbImportTest_Oracle {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "123;;aBcDeF1234;2003-02-01 21:22:23.0;123.456;2003-02-01 11:12:13;aBcDeF123\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -268,13 +270,13 @@ public class DbImportTest_Oracle {
 					("column integer; column_double; column_varchar; column_blob; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; " + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + "; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob='column_blob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "123;YWJj;aBcDeF1234;2003-02-01 21:22:23.0;123.456;2003-02-01 11:12:13;aBcDeF123\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -289,14 +291,14 @@ public class DbImportTest_Oracle {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "121;; aBcDeF1234;2003-02-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123\n"
 							+ "123;; aBcDeF1234;2003-02-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -311,12 +313,12 @@ public class DbImportTest_Oracle {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(1, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n",
 					exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -331,12 +333,12 @@ public class DbImportTest_Oracle {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(1, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n",
 					exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -359,8 +361,8 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;;;;;\"<test_text>_1\"\n"
 							+ "2;; aBcDeF1235;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13;\n"
@@ -369,7 +371,7 @@ public class DbImportTest_Oracle {
 							+ "999;;;;;;\"<test_text>_999\"\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -392,15 +394,15 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13;\n"
 							+ "3;; aBcDeF1235_3;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13;\n"
 							+ "999;;;;;;\"<test_text>_999\"\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -423,15 +425,15 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_11;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "3;; aBcDeF1235_31;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123_3\n"
 							+ "999;;;;;;\"<test_text>_999\"\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -454,7 +456,7 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"oracle",
 					HOSTNAME,
 					USERNAME,
@@ -465,7 +467,7 @@ public class DbImportTest_Oracle {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_2;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13;\n"
@@ -475,7 +477,7 @@ public class DbImportTest_Oracle {
 							+ "999;;;;;;\"<test_text>_999\"\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -498,8 +500,8 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_2;2003-03-01 21:22:23.0;123.456;2003-02-01 11:12:13; aBcDeF123_2\n"
@@ -509,7 +511,7 @@ public class DbImportTest_Oracle {
 							+ "999;;;;;;\"<test_text>_999\"\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -531,8 +533,8 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob'";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'", PASSWORD }));
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;Original2;;;;Update\n"
 							+ "2;;Original2;;;;Insert\n"
@@ -541,7 +543,7 @@ public class DbImportTest_Oracle {
 							+ "999;;;;;;\"<test_text>_999\"\n",
 							exportTestTableOrderBy("column_integer"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -564,7 +566,7 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"oracle",
 					HOSTNAME,
 					USERNAME,
@@ -577,7 +579,7 @@ public class DbImportTest_Oracle {
 					"-u",
 					"-insvalues", "id=test_tbl_seq.NEXTVAL",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01 21:22:23.0;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01 21:22:23.0;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
@@ -587,7 +589,7 @@ public class DbImportTest_Oracle {
 							+ "6;; aBcDeF1234;2003-03-01 21:22:23.0;123.456;5;2003-02-01 11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -610,8 +612,8 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-d", "MAKE_UNIQUE_JOIN", "-k", "column_integer", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "oracle", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-d", "MAKE_UNIQUE_JOIN", "-k", "column_integer", PASSWORD }));
+			assertEquals(
 					"COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "; aBcDeF1235_1;2003-03-01 21:22:23.0;123.456;1;2003-02-01 11:12:13;\n"
 							+ "; aBcDeF1235_3;2003-03-01 21:22:23.0;123.456;3;2003-02-01 11:12:13;\n"
@@ -621,7 +623,7 @@ public class DbImportTest_Oracle {
 							+ "; aBcDeF1234;2003-03-01 21:22:23.0;123.456;5;2003-02-01 11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -645,7 +647,7 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"oracle",
 					HOSTNAME,
 					USERNAME,
@@ -657,7 +659,7 @@ public class DbImportTest_Oracle {
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString(),
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "; aBcDeF1235_1;2003-03-01 21:22:23.0;123.456;1;2003-02-01 11:12:13;\n"
 							+ "; aBcDeF1235_3;2003-03-01 21:22:23.0;123.456;3;2003-02-01 11:12:13;\n"
@@ -670,7 +672,7 @@ public class DbImportTest_Oracle {
 							+ "; aBcDeF1234;2003-03-01 21:22:23.0;123.456;5;2003-02-01 11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -694,7 +696,7 @@ public class DbImportTest_Oracle {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"oracle",
 					HOSTNAME,
 					USERNAME,
@@ -707,7 +709,7 @@ public class DbImportTest_Oracle {
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString(),
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "; aBcDeF1235_1;2003-03-01 21:22:23.0;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "; aBcDeF1235_3;2003-03-01 21:22:23.0;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
@@ -720,7 +722,7 @@ public class DbImportTest_Oracle {
 							+ "; aBcDeF1234;2003-03-01 21:22:23.0;123.456;5;2003-02-01 11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

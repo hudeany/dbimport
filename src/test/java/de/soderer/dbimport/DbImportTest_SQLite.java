@@ -1,17 +1,19 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
@@ -37,7 +39,7 @@ public class DbImportTest_SQLite {
 	public static File INPUTFILE_XML = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.xml"));
 	public static File BLOB_DATA_FILE = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test.blob"));
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupTestClass() throws Exception {
 		try {
 			DbUtilities.deleteDatabase(DbVendor.SQLite, SQLITE_DB_FILE);
@@ -50,7 +52,7 @@ public class DbImportTest_SQLite {
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 		if (INPUTFILE2_CSV.exists()) {
@@ -72,7 +74,7 @@ public class DbImportTest_SQLite {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 		if (INPUTFILE2_CSV.exists()) {
@@ -94,7 +96,7 @@ public class DbImportTest_SQLite {
 		}
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void tearDownTestClass() throws Exception {
 		try {
 			DbUtilities.deleteDatabase(DbVendor.SQLite, SQLITE_DB_FILE);
@@ -169,13 +171,13 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV,
 					("column_integer; column_double; column_varchar; column_clob\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF123\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF123;;123.456;123;; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -188,13 +190,13 @@ public class DbImportTest_SQLite {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;123;2003-02-01T11:12:13; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -213,18 +215,18 @@ public class DbImportTest_SQLite {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
 
 			final StringBuilder expectedDataPart = new StringBuilder();
 			for (int i = 0; i < numberOfLines; i++) {
 				expectedDataPart.append((i + 1) + ";; aBcDeF1234;2003-03-01;123.456;" + i + ";2003-02-01T11:12:13; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ expectedDataPart,
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -237,13 +239,13 @@ public class DbImportTest_SQLite {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;aBcDeF1234;2003-02-01;123.456;123;2003-02-01T11:12:13;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -256,13 +258,13 @@ public class DbImportTest_SQLite {
 					("column integer; column_double; column_varchar; column_blob; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; " + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + "; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob='column_blob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;" + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + ";aBcDeF1234;2003-02-01;123.456;123;2003-02-01T11:12:13;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -277,14 +279,14 @@ public class DbImportTest_SQLite {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;121;2003-02-01T11:12:13; aBcDeF123\n"
 							+ "2;; aBcDeF1234;2003-02-01;123.456;123;2003-02-01T11:12:13; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -299,12 +301,12 @@ public class DbImportTest_SQLite {
 							+ "122; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
-			Assert.assertEquals(
+			assertEquals(1, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -319,12 +321,12 @@ public class DbImportTest_SQLite {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c" }));
-			Assert.assertEquals(
+			assertEquals(1, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -346,8 +348,8 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;;;;1;;\"<test_text>_1\"\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -356,7 +358,7 @@ public class DbImportTest_SQLite {
 							+ "5;; aBcDeF1235;2003-03-01;123.456;4;2003-02-01T11:12:13;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -379,15 +381,15 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13;\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -410,15 +412,15 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_11;2003-03-01;123.456;1;2003-02-01T11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_31;2003-03-01;123.456;3;2003-02-01T11:12:13; aBcDeF123_3\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -441,8 +443,8 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13;\n"
@@ -452,7 +454,7 @@ public class DbImportTest_SQLite {
 							+ "6;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -475,8 +477,8 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13; aBcDeF123_3\n"
@@ -486,7 +488,7 @@ public class DbImportTest_SQLite {
 							+ "6;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -508,8 +510,8 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob'";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;Original2;;;1;;Update\n"
 							+ "2;;Original2;;;3;;Update\n"
@@ -518,7 +520,7 @@ public class DbImportTest_SQLite {
 							+ "5;;Original;;;4;;Insert\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -536,15 +538,15 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;\"<test_text>\";;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -562,7 +564,7 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_blob='column_blob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite",
 					SQLITE_DB_FILE,
 					"-table", "test_tbl",
@@ -573,14 +575,14 @@ public class DbImportTest_SQLite {
 					"-u",
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'" }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkgw6TDtsO8w5/DhMOWw5zCtSE/wqdA4oKsJCUmL1w8Pigpe31bXSciwrRgXsKwwrnCssKzKiMuLDs6PSstfl98wr3CvMKs;;;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -596,13 +598,13 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar';column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-create", "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-create", "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u" }));
+			assertEquals(
 					"column_integer;column_double;column_varchar\n"
 							+ "1;1.23;AbcÄ123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -619,13 +621,13 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar';column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-create", "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-create", "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u" }));
+			assertEquals(
 					"column_integer;column_double;column_varchar\n"
 							+ "1;1.23;AbcÄ123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -716,7 +718,7 @@ public class DbImportTest_SQLite {
 			jsonWriter = null;
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite",
+			assertEquals(0, DbImport._main(new String[] { "sqlite",
 					SQLITE_DB_FILE,
 					"-table", "test_tbl",
 					"-x", "JSON",
@@ -724,7 +726,7 @@ public class DbImportTest_SQLite {
 					"-m", mapping,
 					"-i", "UPSERT",
 					"-k", "column_integer" }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13;\n"
@@ -734,7 +736,7 @@ public class DbImportTest_SQLite {
 							+ "6;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -817,8 +819,8 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_XML, XmlUtilities.convertXML2ByteArray(xmlRootTag, StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column_integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-x", "XML", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.xml", "-m", mapping, "-i", "UPSERT", "-k", "column_integer" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "sqlite", SQLITE_DB_FILE, "-table", "test_tbl", "-x", "XML", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.xml", "-m", mapping, "-i", "UPSERT", "-k", "column_integer" }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13;\n"
@@ -828,7 +830,7 @@ public class DbImportTest_SQLite {
 							+ "6;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -854,7 +856,7 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite",
 					SQLITE_DB_FILE,
 					"-table", "test_tbl",
@@ -863,7 +865,7 @@ public class DbImportTest_SQLite {
 					"-i", "UPSERT",
 					"-d", DuplicateMode.MAKE_UNIQUE_JOIN.toString(),
 					"-k", "column_integer" }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13;\n"
@@ -873,7 +875,7 @@ public class DbImportTest_SQLite {
 							+ "6;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -897,7 +899,7 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite",
 					SQLITE_DB_FILE,
 					"-table", "test_tbl",
@@ -906,7 +908,7 @@ public class DbImportTest_SQLite {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString() }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13;\n"
@@ -919,7 +921,7 @@ public class DbImportTest_SQLite {
 							+ "9;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -943,7 +945,7 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite",
 					SQLITE_DB_FILE,
 					"-table", "test_tbl",
@@ -953,7 +955,7 @@ public class DbImportTest_SQLite {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString() }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T11:12:13; aBcDeF123_3\n"
@@ -966,7 +968,7 @@ public class DbImportTest_SQLite {
 							+ "9;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T11:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -989,7 +991,7 @@ public class DbImportTest_SQLite {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite", SQLITE_DB_FILE,
 					"-table", "test_tbl",
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
@@ -999,7 +1001,7 @@ public class DbImportTest_SQLite {
 					"-u",
 					"-dbtz", "Europe/Sofia", // UTC+02:00
 					"-idtz", "Europe/Dublin" })); // UTC+00:00
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01T13:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01T13:12:13; aBcDeF123_3\n"
@@ -1009,7 +1011,7 @@ public class DbImportTest_SQLite {
 							+ "6;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01T13:12:13; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1040,13 +1042,13 @@ public class DbImportTest_SQLite {
 			data2.append("5;123.456;aBcDeF123_5;aBcDeF1234;01.02.2003 11:12:13;01.03.2003\n");
 			FileUtilities.write(INPUTFILE2_CSV, data2.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite", SQLITE_DB_FILE,
 					"-create",
 					"-table", "*",
 					"-import", "~" + File.separator + "temp" + File.separator + "test*_tbl.csv",
 					"-i", "INSERT" }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_integer;column_double;column_varchar;column_clob;column_timestamp;column_date\n"
 							+ "1;123.456;;aBcDeF1235_1;2003-02-01T11:12:13;2003-03-01\n"
 							+ "1;123.456;aBcDeF123_1;aBcDeF1234;2003-02-01T11:12:13;2003-03-01\n"
@@ -1057,7 +1059,7 @@ public class DbImportTest_SQLite {
 							+ "4;123.456;;aBcDeF1235_4;2003-02-01T11:12:13;2003-03-01\n"
 							+ "5;123.456;aBcDeF123_5;aBcDeF1234;2003-02-01T11:12:13;2003-03-01\n",
 							export("SELECT column_integer, column_double, column_varchar, column_clob, column_timestamp, column_date FROM test_tbl ORDER BY column_integer, column_double, column_varchar"));
-			Assert.assertEquals(
+			assertEquals(
 					"column_integer;column_double;column_varchar;column_clob;column_timestamp;column_date\n"
 							+ "1;123.456;;aBcDeF1235_1;2003-02-01T11:12:13;2003-03-01\n"
 							+ "1;123.456;aBcDeF123_1;aBcDeF1234;2003-02-01T11:12:13;2003-03-01\n"
@@ -1069,7 +1071,7 @@ public class DbImportTest_SQLite {
 							+ "5;123.456;aBcDeF123_5;aBcDeF1234;2003-02-01T11:12:13;2003-03-01\n",
 							export("SELECT column_integer, column_double, column_varchar, column_clob, column_timestamp, column_date FROM test2_tbl ORDER BY column_integer, column_double, column_varchar"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1088,7 +1090,7 @@ public class DbImportTest_SQLite {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite", SQLITE_DB_FILE,
 					"-table", "test_tbl",
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
@@ -1100,12 +1102,12 @@ public class DbImportTest_SQLite {
 			for (int i = 0; i < numberOfLines; i++) {
 				expectedDataPart.append((i + 1) + ";; aBcDeF1234;2003-03-01;123.456;" + i + ";2003-02-01T11:12:13; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ expectedDataPart,
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1129,7 +1131,7 @@ public class DbImportTest_SQLite {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite", SQLITE_DB_FILE,
 					"-table", "test_tbl",
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
@@ -1145,12 +1147,12 @@ public class DbImportTest_SQLite {
 				}
 				expectedDataPart.append((i + 1) + ";; aBcDeF1234;2003-03-01;123.456;" + (checkCount++) + ";2003-02-01T11:12:13; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ expectedDataPart,
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1171,7 +1173,7 @@ public class DbImportTest_SQLite {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"sqlite", SQLITE_DB_FILE,
 					"-table", "test_tbl",
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
@@ -1184,9 +1186,9 @@ public class DbImportTest_SQLite {
 			expectedDataPart.append("2;; aBcDeF1234;2003-03-01;123.456;1234567890;2003-02-01T11:12:13; aBcDeF123\n");
 			expectedDataPart.append("3;; aBcDeF1234;2003-03-01;123.456;2147483647;2003-02-01T11:12:13; aBcDeF123\n");
 
-			Assert.assertEquals(expectedDataPart.toString(), exportTestTable());
+			assertEquals(expectedDataPart.toString(), exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

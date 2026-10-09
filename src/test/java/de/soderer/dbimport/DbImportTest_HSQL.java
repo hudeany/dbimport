@@ -1,17 +1,19 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
@@ -45,11 +47,11 @@ public class DbImportTest_HSQL {
 	public static File INPUTFILE_XML = new File(TEMP_DIR, "test_tbl.xml");
 	public static File BLOB_DATA_FILE = new File(TEMP_DIR, "test.blob");
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupTestClass() throws Exception {
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		if (TEMP_DIR.exists()) {
 			FileUtilities.delete(TEMP_DIR);
@@ -81,7 +83,7 @@ public class DbImportTest_HSQL {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (TEMP_DIR.exists()) {
 			FileUtilities.delete(TEMP_DIR);
@@ -105,7 +107,7 @@ public class DbImportTest_HSQL {
 		}
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void tearDownTestClass() throws Exception {
 	}
 
@@ -201,19 +203,19 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV,
 					("column_integer; column_double; column_varchar; column_clob\n"
 							+ "123; 123.456E0; aBcDeF123; aBcDeF123\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
 					"-table", "test_tbl",
 					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv"
 			}));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF123;;123.456E0;123;; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -226,7 +228,7 @@ public class DbImportTest_HSQL {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456E0; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -234,12 +236,12 @@ public class DbImportTest_HSQL {
 					"-import", "~" + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test_tbl.csv",
 					"-m", mapping
 			}));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -258,7 +260,7 @@ public class DbImportTest_HSQL {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -271,12 +273,12 @@ public class DbImportTest_HSQL {
 			for (int i = 0; i < numberOfLines; i++) {
 				expectedDataPart.append((i + 1) + ";; aBcDeF1234;2003-03-01;123.456E0;" + i + ";2003-02-01 11:12:13.000000; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ expectedDataPart,
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -289,7 +291,7 @@ public class DbImportTest_HSQL {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456E0; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -299,12 +301,12 @@ public class DbImportTest_HSQL {
 					"-t"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -317,7 +319,7 @@ public class DbImportTest_HSQL {
 					("column integer; column_double; column_varchar; column_blob; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456E0; aBcDeF123; " + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + "; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob='column_blob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -327,12 +329,12 @@ public class DbImportTest_HSQL {
 					"-t"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;" + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + ";aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -347,7 +349,7 @@ public class DbImportTest_HSQL {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456E0; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -356,13 +358,13 @@ public class DbImportTest_HSQL {
 					"-m", mapping
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;121;2003-02-01 11:12:13.000000; aBcDeF123\n"
 							+ "2;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -377,7 +379,7 @@ public class DbImportTest_HSQL {
 							+ "122; 123.456E0; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23"
 							+ "123; 123.456E0; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -386,11 +388,11 @@ public class DbImportTest_HSQL {
 					"-m", mapping
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -405,7 +407,7 @@ public class DbImportTest_HSQL {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456E0; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -415,11 +417,11 @@ public class DbImportTest_HSQL {
 					"-c"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -442,7 +444,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -453,7 +455,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;;;;1;;\"<test_text>_1\"\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -462,7 +464,7 @@ public class DbImportTest_HSQL {
 							+ "5;; aBcDeF1235;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -485,7 +487,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -496,14 +498,14 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -526,7 +528,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -538,14 +540,14 @@ public class DbImportTest_HSQL {
 					"-u"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_11;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_31;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000; aBcDeF123_3\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -568,7 +570,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -579,7 +581,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -589,7 +591,7 @@ public class DbImportTest_HSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -612,7 +614,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -624,7 +626,7 @@ public class DbImportTest_HSQL {
 					"-u"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000; aBcDeF123_3\n"
@@ -634,7 +636,7 @@ public class DbImportTest_HSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000; aBcDeF123_2\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -656,7 +658,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -670,7 +672,7 @@ public class DbImportTest_HSQL {
 					"-updvalues", "column_varchar='Update'"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;Original2;;;1;;Update\n"
 							+ "2;;Original2;;;3;;Update\n"
@@ -679,7 +681,7 @@ public class DbImportTest_HSQL {
 							+ "5;;Original2;;;2;;Insert\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -697,7 +699,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -711,14 +713,14 @@ public class DbImportTest_HSQL {
 					"-updvalues", "column_varchar='Update'"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;\"<test_text>\";;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -733,7 +735,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar';column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -746,12 +748,12 @@ public class DbImportTest_HSQL {
 					"-u"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_DOUBLE;COLUMN_VARCHAR\n"
 							+ "1;1.23E0;AbcÄ123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -766,7 +768,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar';column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -779,12 +781,12 @@ public class DbImportTest_HSQL {
 					"-u"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"COLUMN_INTEGER;COLUMN_DOUBLE;COLUMN_VARCHAR\n"
 							+ "1;1.23E0;AbcÄ123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -875,7 +877,7 @@ public class DbImportTest_HSQL {
 			jsonWriter = null;
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -887,7 +889,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -898,7 +900,7 @@ public class DbImportTest_HSQL {
 
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -980,7 +982,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_XML, XmlUtilities.convertXML2ByteArray(xmlRootTag, StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column_integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -992,7 +994,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -1002,7 +1004,7 @@ public class DbImportTest_HSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1026,7 +1028,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1038,7 +1040,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -1048,7 +1050,7 @@ public class DbImportTest_HSQL {
 							+ "9;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1072,7 +1074,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1084,7 +1086,7 @@ public class DbImportTest_HSQL {
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString()
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -1097,7 +1099,7 @@ public class DbImportTest_HSQL {
 							+ "9;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1121,7 +1123,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1134,7 +1136,7 @@ public class DbImportTest_HSQL {
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString()
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000; aBcDeF123_3\n"
@@ -1147,7 +1149,7 @@ public class DbImportTest_HSQL {
 							+ "9;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000; aBcDeF123_2\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1158,7 +1160,7 @@ public class DbImportTest_HSQL {
 			prefillTestTable();
 
 			final String mapping = "column_integer='column_integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'; column_date='column_date'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1170,7 +1172,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -1180,7 +1182,7 @@ public class DbImportTest_HSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456E0;2;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1190,7 +1192,7 @@ public class DbImportTest_HSQL {
 			createEmptyTestTable();
 
 			final String mapping = "column_integer='Column integer'; column_double='Column double'; column_varchar='Column varchar'; column_clob='Column clob'; column_blob=; column_timestamp='Column timestamp'dd.MM.yyyy HH:mm:ss; column_date='Column date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1199,7 +1201,7 @@ public class DbImportTest_HSQL {
 					"-x", "EXCEL",
 					"-m", mapping
 			}));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
@@ -1211,7 +1213,7 @@ public class DbImportTest_HSQL {
 							+ "8;; aBcDeF1234;2003-03-01;123.456E0;5;2003-02-01 11:12:13.000000; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1221,7 +1223,7 @@ public class DbImportTest_HSQL {
 			createEmptyTestTable();
 
 			final String mapping = "column_integer='Column integer'; column_double='Column double'; column_varchar='Column varchar'; column_clob='Column clob'; column_blob=; column_timestamp='Column timestamp'dd.MM.yyyy HH:mm:ss; column_date='Column date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1230,7 +1232,7 @@ public class DbImportTest_HSQL {
 					"-x", "EXCEL",
 					"-m", mapping
 			}));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
@@ -1242,7 +1244,7 @@ public class DbImportTest_HSQL {
 							+ "8;; aBcDeF1234;2003-03-01;123.456E0;5;2003-02-01 11:12:13.000000; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1252,7 +1254,7 @@ public class DbImportTest_HSQL {
 			createEmptyTestTable();
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1260,12 +1262,12 @@ public class DbImportTest_HSQL {
 					"-import", new File(getClass().getResource("Test.csv.zip").getFile()).getAbsolutePath(),
 					"-m", mapping
 			}));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1275,7 +1277,7 @@ public class DbImportTest_HSQL {
 			createEmptyTestTable();
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1284,12 +1286,12 @@ public class DbImportTest_HSQL {
 					"-zippassword", "abc123",
 					"-m", mapping
 			}));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1299,7 +1301,7 @@ public class DbImportTest_HSQL {
 			createEmptyTestTable();
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1308,12 +1310,12 @@ public class DbImportTest_HSQL {
 					"-zippassword", "abc123",
 					"-m", mapping
 			}));
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1335,7 +1337,7 @@ public class DbImportTest_HSQL {
 			data.append((i++) + "; 123.456E0;; aBcDeF1235; 01.02.2003 11:12:13; 01.03.2003 21:22:23\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1344,7 +1346,7 @@ public class DbImportTest_HSQL {
 					"-table", "*"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "4;; aBcDeF1234;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123\n"
 							+ "5;; aBcDeF1235;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
@@ -1355,7 +1357,7 @@ public class DbImportTest_HSQL {
 							+ "10;; aBcDeF1235;2003-03-01;123.456E0;4;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1377,7 +1379,7 @@ public class DbImportTest_HSQL {
 			data.append((i++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1388,7 +1390,7 @@ public class DbImportTest_HSQL {
 					"-datetimeformat", "yyyy-MM-dd HH:mm:ss"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "4;; aBcDeF1234;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123\n"
 							+ "5;; aBcDeF1235;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
@@ -1399,7 +1401,7 @@ public class DbImportTest_HSQL {
 							+ "10;; aBcDeF1235;2003-03-01;123.456E0;4;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1421,7 +1423,7 @@ public class DbImportTest_HSQL {
 			data.append((i++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01 02:00\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1432,7 +1434,7 @@ public class DbImportTest_HSQL {
 					"-datetimeformat", "yyyy-MM-dd HH:mm:ss"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "4;; aBcDeF1234;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123\n"
 							+ "5;; aBcDeF1235;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
@@ -1443,7 +1445,7 @@ public class DbImportTest_HSQL {
 							+ "10;; aBcDeF1235;2003-03-01;123.456E0;4;2003-02-01 11:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1465,7 +1467,7 @@ public class DbImportTest_HSQL {
 			data.append((i++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1478,7 +1480,7 @@ public class DbImportTest_HSQL {
 					"-idtz", "Europe/Dublin"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "4;; aBcDeF1234;2003-03-01;123.456E0;1;2003-02-01 12:12:13.000000; aBcDeF123\n"
 							+ "5;; aBcDeF1235;2003-03-01;123.456E0;1;2003-02-01 12:12:13.000000;\n"
@@ -1489,7 +1491,7 @@ public class DbImportTest_HSQL {
 							+ "10;; aBcDeF1235;2003-03-01;123.456E0;4;2003-02-01 12:12:13.000000;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1526,7 +1528,7 @@ public class DbImportTest_HSQL {
 			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
 			FileUtilities.write(INPUTFILE_CSV2, data2.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1538,9 +1540,9 @@ public class DbImportTest_HSQL {
 					"-v"
 			}));
 
-			Assert.assertEquals(8, TextUtilities.getLineCount(exportTestTable()));
+			assertEquals(8, TextUtilities.getLineCount(exportTestTable()));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000; aBcDeF123\n"
 							+ "2;; aBcDeF1235;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
@@ -1551,7 +1553,7 @@ public class DbImportTest_HSQL {
 							+ "7;; aBcDeF1235;2003-03-01;123.456E0;4;2003-02-01 11:12:13.000000;\n",
 							exportTest2Table());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1588,7 +1590,7 @@ public class DbImportTest_HSQL {
 			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01\n");
 			FileUtilities.write(INPUTFILE_CSV2, data2.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1600,7 +1602,7 @@ public class DbImportTest_HSQL {
 					"-v"
 			}));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1639,7 +1641,7 @@ public class DbImportTest_HSQL {
 			data2.append((i2++) + "; 123.456E0;; aBcDeF1235; 2003-02-01 11:12:13; 2003-03-01;missing\n");
 			FileUtilities.write(INPUTFILE_CSV2, data2.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1652,14 +1654,14 @@ public class DbImportTest_HSQL {
 					"-v"
 			}));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
 	@Test
 	public void testVcfImport() {
 		try {
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1671,14 +1673,14 @@ public class DbImportTest_HSQL {
 
 			final String exportResult = exportTestTable();
 
-			Assert.assertEquals(
+			assertEquals(
 				"ADDRESS_1_ATTR;ADDRESS_1_STREET;FIRSTNAME;FORMATTEDNAME;LASTNAME;TELEPHONENUMBER_1;TELEPHONENUMBER_1_ATTR\n"
 				+ "HOME;Porgesstraße 16, 81247 München, Deutschland;Tester;Tester Testermann;Testermann;+4947110815;CELL\n"
 				+ "HOME;Porgesstraße 16, 81247 München, Deutschland;Testerin;Testerin Testermann;Testermann;+4947110816;CELL\n"
 				+ "HOME;Porgesstraße 16, 81247 München, Deutschland;Testerchen;Testerchen Testermann;Testermann;+4947110817;CELL\n",
 				exportResult);
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1687,7 +1689,7 @@ public class DbImportTest_HSQL {
 		try {
 			createEmptyTestTable();
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1699,12 +1701,12 @@ public class DbImportTest_HSQL {
 
 			final String exportResult = exportTestTable();
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportResult);
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1713,7 +1715,7 @@ public class DbImportTest_HSQL {
 		try {
 			createEmptyTestTable();
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1725,12 +1727,12 @@ public class DbImportTest_HSQL {
 
 			final String exportResult = exportTestTable();
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportResult);
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1739,7 +1741,7 @@ public class DbImportTest_HSQL {
 		try {
 			createEmptyTestTable();
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1751,12 +1753,12 @@ public class DbImportTest_HSQL {
 
 			final String exportResult = exportTestTable();
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456E0;123;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportResult);
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1796,7 +1798,7 @@ public class DbImportTest_HSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1810,7 +1812,7 @@ public class DbImportTest_HSQL {
 					"-updvalues", "column_varchar='Update'"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;\"<test_text>1\";;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -1818,7 +1820,7 @@ public class DbImportTest_HSQL {
 							+ "4;;\"<test_text>2\";;;2;;Insert\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			if (data_file_1.exists()) {
 				data_file_1.delete();
@@ -1922,7 +1924,7 @@ public class DbImportTest_HSQL {
 			jsonWriter = null;
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -1933,7 +1935,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -1944,7 +1946,7 @@ public class DbImportTest_HSQL {
 
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -2035,7 +2037,7 @@ public class DbImportTest_HSQL {
 			}
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"hsql",
 					"",
 					HSQL_DB_FILE,
@@ -2046,7 +2048,7 @@ public class DbImportTest_HSQL {
 					"-k", "column_integer"
 			}));
 
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456E0;1;2003-02-01 11:12:13.000000;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456E0;3;2003-02-01 11:12:13.000000;\n"
@@ -2057,7 +2059,7 @@ public class DbImportTest_HSQL {
 
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

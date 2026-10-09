@@ -24,8 +24,6 @@
 	<classpathentry kind="lib" path="lib/xmlbeans-5.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/zip4j-2.11.5.jar"/>
 	<classpathentry kind="lib" path="lib_test/hamcrest-2.2.jar"/>
-	<classpathentry kind="lib" path="lib_test/hamcrest-core-2.2.jar"/>
-	<classpathentry kind="lib" path="lib_test/junit-4.13.2.jar"/>
 	<classpathentry kind="lib" path="lib/dbutilities-26.1.5.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.99.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
@@ -44,5 +42,6 @@
 	<classpathentry kind="lib" path="lib_db/orai18n-23.26.3.0.0.jar"/>
 	<classpathentry kind="lib" path="lib_db/postgresql-42.7.13.jar"/>
 	<classpathentry kind="lib" path="lib_db/sqlite-jdbc-3.53.2.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/6"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

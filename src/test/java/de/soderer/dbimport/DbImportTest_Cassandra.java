@@ -1,5 +1,9 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
@@ -7,10 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
@@ -40,7 +43,7 @@ public class DbImportTest_Cassandra {
 	public static File INPUTFILE_XML = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.xml"));
 	public static File BLOB_DATA_FILE = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test.blob"));
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
@@ -61,7 +64,7 @@ public class DbImportTest_Cassandra {
 		deleteLogFiles();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
@@ -151,7 +154,7 @@ public class DbImportTest_Cassandra {
 				valueFound = true;
 			}
 		}
-		Assert.assertTrue(logData, valueFound);
+		assertTrue(valueFound, logData);
 	}
 
 	@Test
@@ -162,7 +165,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV,
 					("id;column_int; column_double; column_varchar; column_text\n"
 							+ "123;123; 123.456; aBcDeF123; aBcDeF123\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -172,7 +175,7 @@ public class DbImportTest_Cassandra {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-i", "INSERT",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "123;;;123.456;123; aBcDeF123;; aBcDeF123\n",
 							exportTestTable());
@@ -184,21 +187,21 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Imported data amount", "97 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
 	@Test
 	public void testConnection() {
 		try {
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"connectiontest",
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
 					"-iter", "5" }));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -207,7 +210,7 @@ public class DbImportTest_Cassandra {
 		try {
 			FileUtilities.write(INPUTFILE_CSV,
 					("123; 123.456; aBcDeF123; aBcDeF123; 1234567890; 12345678901234567890; 123456789012345678901\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -221,7 +224,7 @@ public class DbImportTest_Cassandra {
 					PASSWORD }));
 			// Creation of new table needs key column definition in NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -234,7 +237,7 @@ public class DbImportTest_Cassandra {
 					("id;column int; column_double; column_varchar; column_text; column_timestamp; column_date\n"
 							+ "123;123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -245,7 +248,7 @@ public class DbImportTest_Cassandra {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "123;;2003-02-01;123.456;123; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportTestTable());
@@ -257,7 +260,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Imported data amount", "171 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -276,7 +279,7 @@ public class DbImportTest_Cassandra {
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -292,7 +295,7 @@ public class DbImportTest_Cassandra {
 			for (int i = 0; i < numberOfLines; i++) {
 				expectedDataPart.append(i + ";;2003-03-01;123.456;" + i + "; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ expectedDataPart,
 							exportTestTable());
@@ -304,7 +307,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Imported data amount", "96,356 KiByte");
 			assertLogContains(logData, "Inserted items", "1200");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -317,7 +320,7 @@ public class DbImportTest_Cassandra {
 					("id;column int; column_double; column_varchar; column_text; column_timestamp; column_date\n"
 							+ "123;123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -329,7 +332,7 @@ public class DbImportTest_Cassandra {
 					"-m", mapping,
 					"-t",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "123;;2003-02-01;123.456;123;aBcDeF1234;2003-02-01 11:12:13.000000;aBcDeF123\n",
 							exportTestTable());
@@ -341,7 +344,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Imported data amount", "171 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -354,7 +357,7 @@ public class DbImportTest_Cassandra {
 					("id;column int; column_double; column_varchar; column_blob; column_text; column_timestamp; column_date\n"
 							+ "123;123; 123.456; aBcDeF123; " + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + "; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob='column_blob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -366,7 +369,7 @@ public class DbImportTest_Cassandra {
 					"-m", mapping,
 					"-t",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "123;YWJj;2003-02-01;123.456;123;aBcDeF1234;2003-02-01 11:12:13.000000;aBcDeF123\n",
 							exportTestTable());
@@ -378,7 +381,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Imported data amount", "190 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -393,7 +396,7 @@ public class DbImportTest_Cassandra {
 							+ "122;122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123;123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -404,7 +407,7 @@ public class DbImportTest_Cassandra {
 					"-m", mapping,
 					"-i", "INSERT",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "121;;2003-02-01;123.456;121; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n"
 							+ "123;;2003-02-01;123.456;123; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n",
@@ -419,7 +422,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "2");
 			assertLogContains(logData, "Count items after import", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -434,7 +437,7 @@ public class DbImportTest_Cassandra {
 							+ "122;122; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23"
 							+ "123;123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -445,14 +448,14 @@ public class DbImportTest_Cassandra {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n",
 					exportTestTable());
 
 			final String logData = getLogFileData();
-			Assert.assertTrue(logData.contains("Inconsistent number of values in line 3"));
+			assertTrue(logData.contains("Inconsistent number of values in line 3"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -467,7 +470,7 @@ public class DbImportTest_Cassandra {
 							+ "122;122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123;123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -479,13 +482,13 @@ public class DbImportTest_Cassandra {
 					"-m", mapping,
 					"-c",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n",
 					exportTestTable());
 
 			// Only commitOnFullSuccessOnly mode 'always commit' is allowed for this NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -507,7 +510,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -519,7 +522,7 @@ public class DbImportTest_Cassandra {
 					"-i", "INSERT",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;;;1;;;\"<test_text>_1\"\n"
 							+ "2;;2003-03-01;123.456;2; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n"
@@ -535,7 +538,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Imported data amount", "595 Byte");
 			assertLogContains(logData, "Inserted items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -558,7 +561,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -570,7 +573,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPDATE",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;2003-03-01;123.456;1; aBcDeF1235_1;2003-02-01 11:12:13.000000;\n"
 							+ "3;;2003-03-01;123.456;3; aBcDeF1235_3;2003-02-01 11:12:13.000000;\n"
@@ -584,7 +587,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Imported data amount", "689 Byte");
 			assertLogContains(logData, "Updated items", "4");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -607,7 +610,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -622,7 +625,7 @@ public class DbImportTest_Cassandra {
 					PASSWORD }));
 			// Only UpdateNullData mode 'Update with null values' is allowed for this NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -645,7 +648,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -657,7 +660,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPSERT",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;2003-03-01;123.456;1; aBcDeF1235_1;2003-02-01 11:12:13.000000;\n"
 							+ "2;;2003-03-01;123.456;2; aBcDeF1235_2;2003-02-01 11:12:13.000000;\n"
@@ -675,7 +678,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "5");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -698,7 +701,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -713,7 +716,7 @@ public class DbImportTest_Cassandra {
 					PASSWORD }));
 			// Only UpdateNullData mode 'Update with null values' is allowed for this NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -735,7 +738,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_text='column_text'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -749,7 +752,7 @@ public class DbImportTest_Cassandra {
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;;;1;Original2;;Update\n"
 							+ "2;;;;2;Original2;;Update\n"
@@ -766,7 +769,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "2");
 			assertLogContains(logData, "Updated items", "5");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -784,7 +787,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_text='column_text' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -798,7 +801,7 @@ public class DbImportTest_Cassandra {
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;;;1;\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 äöüßÄÖÜµ!?§@€$%&/\\<>(){}[]'\"\"´`^°¹²³*#.,;:=+-~_|½¼¬\";;Update\n"
 							+ "3;;;;3;;;\"<test_text>_3\"\n"
@@ -813,7 +816,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "0");
 			assertLogContains(logData, "Updated items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -831,7 +834,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_blob='column_blob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -845,7 +848,7 @@ public class DbImportTest_Cassandra {
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkgw6TDtsO8w5/DhMOWw5zCtSE/wqdA4oKsJCUmL1w8Pigpe31bXSciwrRgXsKwwrnCssKzKiMuLDs6PSstfl98wr3CvMKs;;;1;;;Update\n"
 							+ "3;;;;3;;;\"<test_text>_3\"\n"
@@ -860,7 +863,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "0");
 			assertLogContains(logData, "Updated items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -875,7 +878,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_varchar='column_varchar';column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -888,7 +891,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPSERT",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_double;column_int;column_varchar\n"
 							+ "1;1.23;1;AbcÄ123\n",
 							exportTestTable());
@@ -901,7 +904,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -916,7 +919,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_varchar='column_varchar' lc;column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -929,7 +932,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPSERT",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_double;column_int;column_varchar\n"
 							+ "1;1.23;1;abcä123\n",
 							exportTestTable());
@@ -942,7 +945,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -959,7 +962,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int';column_varchar='column_varchar' lc;column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -972,7 +975,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPSERT",
 					"-k", "lower(column_varchar)",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_varchar;column_double;column_int;id\n"
 							+ "abcä123;1.23;3;3\n",
 							exportTestTable());
@@ -985,7 +988,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -999,7 +1002,7 @@ public class DbImportTest_Cassandra {
 			data.append("1;001;AbcÄ123;1.2300\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1011,7 +1014,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPSERT",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_double;column_int;column_varchar\n"
 							+ "1;1.23;1;AbcÄ123\n",
 							exportTestTable());
@@ -1024,7 +1027,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1038,7 +1041,7 @@ public class DbImportTest_Cassandra {
 			data.append("1;001;AbcÄ123;1.2300\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1051,7 +1054,7 @@ public class DbImportTest_Cassandra {
 					PASSWORD }));
 			// Creation of new table needs key column definition in NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1150,7 +1153,7 @@ public class DbImportTest_Cassandra {
 			jsonWriter = null;
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1163,7 +1166,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPSERT",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;2003-03-01;123.456;1; aBcDeF1235_1;2003-02-01 11:12:13.000000;\n"
 							+ "2;;2003-03-01;123.456;2; aBcDeF1235_2;2003-02-01 11:12:13.000000;\n"
@@ -1181,7 +1184,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "5");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -1272,7 +1275,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_XML, XmlUtilities.convertXML2ByteArray(xmlRootTag, StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column_int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1285,7 +1288,7 @@ public class DbImportTest_Cassandra {
 					"-i", "UPSERT",
 					"-k", "id",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;2003-03-01;123.456;1; aBcDeF1235_1;2003-02-01 11:12:13.000000;\n"
 							+ "2;;2003-03-01;123.456;2; aBcDeF1235_2;2003-02-01 11:12:13.000000;\n"
@@ -1303,7 +1306,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "5");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -1315,7 +1318,7 @@ public class DbImportTest_Cassandra {
 			createEmptyTestTable();
 			prefillTestTable();
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1324,7 +1327,7 @@ public class DbImportTest_Cassandra {
 					"-data",
 					"-import", "INSERT INTO test_tbl (id, column_varchar) VALUES (1, 'Inline Insert');INSERT INTO test_tbl (id, column_varchar) VALUES (2, 'Inline Insert')",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;;;1;;;Inline Insert\n"
 							+ "2;;;;;;;Inline Insert\n"
@@ -1332,7 +1335,7 @@ public class DbImportTest_Cassandra {
 							+ "999;;;;999;;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1348,7 +1351,7 @@ public class DbImportTest_Cassandra {
 							+ "123;123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 					).getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1360,7 +1363,7 @@ public class DbImportTest_Cassandra {
 					"-k", "id",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "123;;2003-02-01;123.456;123; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n",
 							exportTestTable());
@@ -1373,7 +1376,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1391,7 +1394,7 @@ public class DbImportTest_Cassandra {
 							+ "3;3; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 					).getBytes(StandardCharsets.UTF_8));
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1403,7 +1406,7 @@ public class DbImportTest_Cassandra {
 					"-k", "id",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_date;column_double;column_int;column_text;column_timestamp;column_varchar\n"
 							+ "1;;2003-02-01;123.456;1; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n"
 							+ "3;;2003-02-01;123.456;3; aBcDeF1234;2003-02-01 11:12:13.000000; aBcDeF123\n"
@@ -1418,7 +1421,7 @@ public class DbImportTest_Cassandra {
 			assertLogContains(logData, "Inserted items", "0");
 			assertLogContains(logData, "Updated items", "3");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1442,7 +1445,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1457,7 +1460,7 @@ public class DbImportTest_Cassandra {
 					PASSWORD }));
 			// Only duplicate mode 'UPDATE_ALL_JOIN' is allowed for this NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1481,7 +1484,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1496,7 +1499,7 @@ public class DbImportTest_Cassandra {
 					PASSWORD }));
 			// Only duplicate mode 'UPDATE_ALL_JOIN' is allowed for this NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1520,7 +1523,7 @@ public class DbImportTest_Cassandra {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "id='id';column_int='column int'; column_double='column_double'; column_varchar='column_varchar'; column_text='column_text'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"cassandra",
 					HOSTNAME,
 					DBNAME,
@@ -1536,7 +1539,7 @@ public class DbImportTest_Cassandra {
 					PASSWORD }));
 			// // Only duplicate mode 'UPDATE_ALL_JOIN' is allowed for this NoSql import
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

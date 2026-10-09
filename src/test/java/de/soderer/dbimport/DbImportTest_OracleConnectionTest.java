@@ -1,10 +1,11 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.sql.Connection;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbUtilities;
@@ -30,7 +31,7 @@ public class DbImportTest_OracleConnectionTest {
 				}
 			}
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

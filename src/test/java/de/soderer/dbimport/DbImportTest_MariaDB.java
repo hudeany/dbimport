@@ -1,5 +1,9 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
@@ -8,10 +12,9 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
@@ -41,7 +44,7 @@ public class DbImportTest_MariaDB {
 	public static File INPUTFILE_XML = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.xml"));
 	public static File BLOB_DATA_FILE = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test.blob"));
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		BLOB_DATA_FILE.getParentFile().mkdirs();
 
@@ -64,7 +67,7 @@ public class DbImportTest_MariaDB {
 		deleteLogFiles();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
@@ -168,7 +171,7 @@ public class DbImportTest_MariaDB {
 				valueFound = true;
 			}
 		}
-		Assert.assertTrue(logData, valueFound);
+		assertTrue(valueFound, logData);
 	}
 
 	@Test
@@ -179,7 +182,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV,
 					("column_integer; column_double; column_varchar; column_clob\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF123\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -189,7 +192,7 @@ public class DbImportTest_MariaDB {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-i", "INSERT",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF123;;123.456;123;; aBcDeF123\n",
 							exportTestTable());
@@ -201,14 +204,14 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "94 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
 	@Test
 	public void testConnection() {
 		try {
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"connectiontest",
 					"mariadb",
 					HOSTNAME,
@@ -217,7 +220,7 @@ public class DbImportTest_MariaDB {
 					"-iter", "5",
 					PASSWORD }));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -226,7 +229,7 @@ public class DbImportTest_MariaDB {
 		try {
 			FileUtilities.write(INPUTFILE_CSV,
 					("123; 123.456; aBcDeF123; aBcDeF123; 1234567890; 12345678901234567890; 123456789012345678901\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -238,7 +241,7 @@ public class DbImportTest_MariaDB {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-noheaders",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_1;column_2;column_3;column_4;column_5;column_6;column_7\n",
 					exportTestTable());
 
@@ -249,7 +252,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "92 Byte");
 			assertLogContains(logData, "Inserted items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -262,7 +265,7 @@ public class DbImportTest_MariaDB {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -273,7 +276,7 @@ public class DbImportTest_MariaDB {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13; aBcDeF123\n",
 							exportTestTable());
@@ -285,7 +288,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "168 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -304,7 +307,7 @@ public class DbImportTest_MariaDB {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -321,7 +324,7 @@ public class DbImportTest_MariaDB {
 				expectedDataPart.append("; aBcDeF1234;2003-03-01;123.456;" + i + ";2003-02-01 11:12:13; aBcDeF123\n");
 			}
 
-			Assert.assertEquals(
+			assertEquals(
 					"column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ expectedDataPart,
 							exportTestTableColumns("column_blob, column_clob, column_date, column_double, column_integer, column_timestamp, column_varchar"));
@@ -333,7 +336,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "91.582 KiByte");
 			assertLogContains(logData, "Inserted items", "1200");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -346,7 +349,7 @@ public class DbImportTest_MariaDB {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -358,7 +361,7 @@ public class DbImportTest_MariaDB {
 					"-m", mapping,
 					"-t",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13;aBcDeF123\n",
 							exportTestTable());
@@ -370,7 +373,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "168 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -383,7 +386,7 @@ public class DbImportTest_MariaDB {
 					("column integer; column_double; column_varchar; column_blob; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; " + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + "; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob='column_blob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -395,7 +398,7 @@ public class DbImportTest_MariaDB {
 					"-m", mapping,
 					"-t",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;YWJj;aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13;aBcDeF123\n",
 							exportTestTable());
@@ -407,7 +410,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "187 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -422,7 +425,7 @@ public class DbImportTest_MariaDB {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -433,7 +436,7 @@ public class DbImportTest_MariaDB {
 					"-m", mapping,
 					"-i", "INSERT",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;121;2003-02-01 11:12:13; aBcDeF123\n"
 							+ "2;; aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13; aBcDeF123\n",
@@ -449,7 +452,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "2");
 			assertLogContains(logData, "Count items after import", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -464,7 +467,7 @@ public class DbImportTest_MariaDB {
 							+ "122; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -475,14 +478,14 @@ public class DbImportTest_MariaDB {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n",
 					exportTestTable());
 
 			final String logData = getLogFileData();
-			Assert.assertTrue(logData.contains("Inconsistent number of values in line 3"));
+			assertTrue(logData.contains("Inconsistent number of values in line 3"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -497,7 +500,7 @@ public class DbImportTest_MariaDB {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -509,14 +512,14 @@ public class DbImportTest_MariaDB {
 					"-m", mapping,
 					"-c",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n",
 					exportTestTable());
 
 			final String logData = getLogFileData();
-			Assert.assertTrue(logData.contains("Error: DbImportException error in item index 2: Invalid value for numeric column 'column_double': 123x456"));
+			assertTrue(logData.contains("Error: DbImportException error in item index 2: Invalid value for numeric column 'column_double': 123x456"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -538,7 +541,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -550,7 +553,7 @@ public class DbImportTest_MariaDB {
 					"-i", "INSERT",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;;;;1;;\"<test_text>_1\"\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -567,7 +570,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Duplicate items", "3");
 			assertLogContains(logData, "Inserted items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -590,7 +593,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -602,7 +605,7 @@ public class DbImportTest_MariaDB {
 					"-i", "UPDATE",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -617,7 +620,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Duplicate items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -640,7 +643,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -653,7 +656,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_11;2003-03-01;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_31;2003-03-01;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
@@ -668,7 +671,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Duplicate items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -691,7 +694,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -703,7 +706,7 @@ public class DbImportTest_MariaDB {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -722,7 +725,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -745,7 +748,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -758,7 +761,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
@@ -777,7 +780,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -799,7 +802,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -814,7 +817,7 @@ public class DbImportTest_MariaDB {
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;Original2;;;1;;Update\n"
 							+ "2;;Original2;;;3;;Update\n"
@@ -832,7 +835,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "2");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -850,7 +853,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -865,7 +868,7 @@ public class DbImportTest_MariaDB {
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;\"<test_text>\";;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -880,7 +883,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "0");
 			assertLogContains(logData, "Updated items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -898,7 +901,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_blob='column_blob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -913,7 +916,7 @@ public class DbImportTest_MariaDB {
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkgw6TDtsO8w5/DhMOWw5zCtSE/wqdA4oKsJCUmL1w8Pigpe31bXSciwrRgXsKwwrnCssKzKiMuLDs6PSstfl98wr3CvMKs;;;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -928,7 +931,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "0");
 			assertLogContains(logData, "Updated items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -942,7 +945,7 @@ public class DbImportTest_MariaDB {
 			new Random().nextBytes(randomByteArray);
 			FileUtilities.write(BLOB_DATA_FILE, randomByteArray);
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"importblob",
 					"mariadb",
 					HOSTNAME,
@@ -952,7 +955,7 @@ public class DbImportTest_MariaDB {
 					"-blobfile", BLOB_DATA_FILE.getAbsolutePath(),
 					PASSWORD }));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -967,7 +970,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar';column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -981,7 +984,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_integer;column_double;column_varchar\n"
 							+ "1;1.23;AbcÄ123\n",
 							exportTestTable());
@@ -994,7 +997,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1009,7 +1012,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar' lc;column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1023,7 +1026,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_integer;column_double;column_varchar\n"
 							+ "1;1.23;abcä123\n",
 							exportTestTable());
@@ -1036,7 +1039,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1053,7 +1056,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar' lc;column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1067,7 +1070,7 @@ public class DbImportTest_MariaDB {
 					"-k", "lower(column_varchar)",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_varchar;column_double;column_integer\n"
 							+ "abcä123;1.23;3\n",
 							exportTestTable());
@@ -1081,7 +1084,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1095,7 +1098,7 @@ public class DbImportTest_MariaDB {
 			data.append("001;AbcÄ123;1.2300\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1108,7 +1111,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_integer;column_double;column_varchar\n"
 							+ "1;1.23;AbcÄ123\n",
 							exportTestTable());
@@ -1121,7 +1124,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1135,7 +1138,7 @@ public class DbImportTest_MariaDB {
 			data.append("001;AbcÄ123;1.2300\n");
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1147,7 +1150,7 @@ public class DbImportTest_MariaDB {
 					"-i", "INSERT",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_double;column_integer;column_varchar\n"
 							+ "1.23;1;AbcÄ123\n",
 							exportTestTable());
@@ -1159,7 +1162,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Imported data amount", "67 Byte");
 			assertLogContains(logData, "Inserted items", "1");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1250,7 +1253,7 @@ public class DbImportTest_MariaDB {
 			jsonWriter = null;
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1263,7 +1266,7 @@ public class DbImportTest_MariaDB {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -1282,7 +1285,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -1365,7 +1368,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_XML, XmlUtilities.convertXML2ByteArray(xmlRootTag, StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column_integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1378,7 +1381,7 @@ public class DbImportTest_MariaDB {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -1397,7 +1400,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -1409,7 +1412,7 @@ public class DbImportTest_MariaDB {
 			createEmptyTestTable();
 			prefillTestTable();
 
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1418,7 +1421,7 @@ public class DbImportTest_MariaDB {
 					"-data",
 					"-import", "INSERT INTO test_tbl (column_varchar) VALUES ('Inline Insert');INSERT INTO test_tbl (column_varchar) VALUES ('Inline Insert')",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;;;;1;;\"<test_text>_1\"\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -1427,7 +1430,7 @@ public class DbImportTest_MariaDB {
 							+ "5;;;;;;;Inline Insert\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1443,7 +1446,7 @@ public class DbImportTest_MariaDB {
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 					).getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1455,7 +1458,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13; aBcDeF123\n",
 							exportTestTable());
@@ -1469,7 +1472,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "1");
 			assertLogContains(logData, "Updated items", "0");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1487,7 +1490,7 @@ public class DbImportTest_MariaDB {
 							+ "3; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 					).getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1499,7 +1502,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;1;2003-02-01 11:12:13; aBcDeF123\n"
 							+ "2;; aBcDeF1234;2003-02-01;123.456;3;2003-02-01 11:12:13; aBcDeF123\n"
@@ -1518,7 +1521,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "0");
 			assertLogContains(logData, "Updated items", "4");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1542,7 +1545,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1555,7 +1558,7 @@ public class DbImportTest_MariaDB {
 					"-d", DuplicateMode.MAKE_UNIQUE_JOIN.toString(),
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -1575,7 +1578,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1599,7 +1602,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1612,7 +1615,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString(),
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -1634,7 +1637,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -1658,7 +1661,7 @@ public class DbImportTest_MariaDB {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"mariadb",
 					HOSTNAME,
 					DBNAME,
@@ -1672,7 +1675,7 @@ public class DbImportTest_MariaDB {
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString(),
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
@@ -1694,7 +1697,7 @@ public class DbImportTest_MariaDB {
 			assertLogContains(logData, "Inserted items", "3");
 			assertLogContains(logData, "Updated items", "2");
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

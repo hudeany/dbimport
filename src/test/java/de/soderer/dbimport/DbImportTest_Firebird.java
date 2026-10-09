@@ -1,14 +1,16 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
@@ -27,7 +29,7 @@ public class DbImportTest_Firebird {
 
 	public static File INPUTFILE_CSV = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.csv"));
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 
@@ -43,7 +45,7 @@ public class DbImportTest_Firebird {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 
@@ -121,13 +123,13 @@ public class DbImportTest_Firebird {
 			FileUtilities.write(INPUTFILE_CSV,
 					("column_integer; column_double; column_varchar; column_clob\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF123\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF123;123.456;123;; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -140,13 +142,13 @@ public class DbImportTest_Firebird {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;123.456;123;2003-02-01 11:12:13.0; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -165,18 +167,18 @@ public class DbImportTest_Firebird {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
 
 			final StringBuilder expectedDataPart = new StringBuilder();
 			for (int i = 0; i < numberOfLines; i++) {
 				expectedDataPart.append((i + 1) + ";; aBcDeF1234;123.456;" + i + ";2003-02-01 11:12:13.0; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ expectedDataPart,
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -189,13 +191,13 @@ public class DbImportTest_Firebird {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;aBcDeF1234;123.456;123;2003-02-01 11:12:13.0;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -208,13 +210,13 @@ public class DbImportTest_Firebird {
 					("column integer; column_double; column_varchar; column_blob; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; " + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + "; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob='column_blob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;YWJj;aBcDeF1234;123.456;123;2003-02-01 11:12:13.0;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -229,14 +231,14 @@ public class DbImportTest_Firebird {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1234;123.456;121;2003-02-01 11:12:13.0; aBcDeF123\n"
 							+ "2;; aBcDeF1234;123.456;123;2003-02-01 11:12:13.0; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -251,12 +253,12 @@ public class DbImportTest_Firebird {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(1, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -271,12 +273,12 @@ public class DbImportTest_Firebird {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(1, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -299,8 +301,8 @@ public class DbImportTest_Firebird {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;;;1;;\"<test_text>_1\"\n"
 							+ "2;;;;3;;\"<test_text>_3\"\n"
@@ -309,7 +311,7 @@ public class DbImportTest_Firebird {
 							+ "5;; aBcDeF1235;123.456;4;2003-02-01 11:12:13.0;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -332,15 +334,15 @@ public class DbImportTest_Firebird {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;123.456;1;2003-02-01 11:12:13.0;\n"
 							+ "2;; aBcDeF1235_3;123.456;3;2003-02-01 11:12:13.0;\n"
 							+ "3;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -363,15 +365,15 @@ public class DbImportTest_Firebird {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_11;123.456;1;2003-02-01 11:12:13.0; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_31;123.456;3;2003-02-01 11:12:13.0; aBcDeF123_3\n"
 							+ "3;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -394,8 +396,8 @@ public class DbImportTest_Firebird {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;123.456;1;2003-02-01 11:12:13.0;\n"
 							+ "2;; aBcDeF1235_3;123.456;3;2003-02-01 11:12:13.0;\n"
@@ -405,7 +407,7 @@ public class DbImportTest_Firebird {
 							+ "6;; aBcDeF1234;123.456;5;2003-02-01 11:12:13.0; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -428,8 +430,8 @@ public class DbImportTest_Firebird {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;123.456;1;2003-02-01 11:12:13.0; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;123.456;3;2003-02-01 11:12:13.0; aBcDeF123_3\n"
@@ -439,7 +441,7 @@ public class DbImportTest_Firebird {
 							+ "6;; aBcDeF1234;123.456;5;2003-02-01 11:12:13.0; aBcDeF123_5\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -461,8 +463,8 @@ public class DbImportTest_Firebird {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob'";
-			Assert.assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert';id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", "-updvalues", "column_varchar='Update'", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "firebird", HOSTNAME, USERNAME, DBNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert';id=COALESCE((SELECT MAX(id) + 1 FROM test_tbl), 1)", "-updvalues", "column_varchar='Update'", PASSWORD }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DOUBLE;COLUMN_INTEGER;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;;Original2;;1;;Update\n"
 							+ "2;;Original2;;3;;Update\n"
@@ -471,7 +473,7 @@ public class DbImportTest_Firebird {
 							+ "5;;Original;;4;;Insert\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

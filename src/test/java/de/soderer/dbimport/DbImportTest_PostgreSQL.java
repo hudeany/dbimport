@@ -1,15 +1,17 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
@@ -37,7 +39,7 @@ public class DbImportTest_PostgreSQL {
 	public static File INPUTFILE_XML = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.xml"));
 	public static File BLOB_DATA_FILE = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test.blob"));
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
@@ -56,7 +58,7 @@ public class DbImportTest_PostgreSQL {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
@@ -134,13 +136,13 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV,
 					("column_integer; column_double; column_varchar; column_clob\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF123\n").getBytes(StandardCharsets.UTF_8));
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF123;;123.456;123;; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -153,13 +155,13 @@ public class DbImportTest_PostgreSQL {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -178,18 +180,18 @@ public class DbImportTest_PostgreSQL {
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
 
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
 
 			final StringBuilder expectedDataPart = new StringBuilder();
 			for (int i = 0; i < numberOfLines; i++) {
 				expectedDataPart.append((i + 1) + ";; aBcDeF1234;2003-03-01;123.456;" + i + ";2003-02-01 11:12:13; aBcDeF123\n");
 			}
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ expectedDataPart,
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -202,13 +204,13 @@ public class DbImportTest_PostgreSQL {
 					("column integer; column_double; column_varchar; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -221,13 +223,13 @@ public class DbImportTest_PostgreSQL {
 					("column integer; column_double; column_varchar; column_blob; column_clob; column_timestamp; column_date\n"
 							+ "123; 123.456; aBcDeF123; " + Utilities.encodeBase64("abc".getBytes(StandardCharsets.UTF_8)) + "; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob='column_blob'; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-t", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;YWJj;aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13;aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -242,14 +244,14 @@ public class DbImportTest_PostgreSQL {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1234;2003-02-01;123.456;121;2003-02-01 11:12:13; aBcDeF123\n"
 							+ "2;; aBcDeF1234;2003-02-01;123.456;123;2003-02-01 11:12:13; aBcDeF123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -264,7 +266,7 @@ public class DbImportTest_PostgreSQL {
 							+ "122; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] {
+			assertEquals(1, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -273,11 +275,11 @@ public class DbImportTest_PostgreSQL {
 					"-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv",
 					"-m", mapping,
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -292,12 +294,12 @@ public class DbImportTest_PostgreSQL {
 							+ "122; 123x456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n"
 							+ "123; 123.456; aBcDeF123; aBcDeF1234; 01.02.2003 11:12:13; 01.02.2003 21:22:23\n").getBytes(StandardCharsets.UTF_8));
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(1, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(1, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-c", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n",
 					exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -320,8 +322,8 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "INSERT", "-k", "column_integer", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;;;;1;;\"<test_text>_1\"\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
@@ -330,7 +332,7 @@ public class DbImportTest_PostgreSQL {
 							+ "5;; aBcDeF1235;2003-03-01;123.456;2;2003-02-01 11:12:13;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -353,15 +355,15 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -384,15 +386,15 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPDATE", "-k", "column_integer", "-u", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_11;2003-03-01;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_31;2003-03-01;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -415,8 +417,8 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -426,7 +428,7 @@ public class DbImportTest_PostgreSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -449,8 +451,8 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
@@ -460,7 +462,7 @@ public class DbImportTest_PostgreSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13; aBcDeF123_2\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -482,8 +484,8 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob'";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;Original2;;;1;;Update\n"
 							+ "2;;Original2;;;3;;Update\n"
@@ -492,7 +494,7 @@ public class DbImportTest_PostgreSQL {
 							+ "5;;Original2;;;2;;Insert\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -510,15 +512,15 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_clob='column_clob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'", PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "postgresql", HOSTNAME, DBNAME, USERNAME, "-table", "test_tbl", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.csv", "-m", mapping, "-i", "UPSERT", "-k", "column_integer", "-u", "-insvalues", "column_varchar='Insert'", "-updvalues", "column_varchar='Update'", PASSWORD }));
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;;\"<test_text>\";;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -536,7 +538,7 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_blob='column_blob' file";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -550,14 +552,14 @@ public class DbImportTest_PostgreSQL {
 					"-insvalues", "column_varchar='Insert'",
 					"-updvalues", "column_varchar='Update'",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkgw6TDtsO8w5/DhMOWw5zCtSE/wqdA4oKsJCUmL1w8Pigpe31bXSciwrRgXsKwwrnCssKzKiMuLDs6PSstfl98wr3CvMKs;;;;1;;Update\n"
 							+ "2;;;;;3;;\"<test_text>_3\"\n"
 							+ "3;;;;;999;;\"<test_text>_999\"\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -572,7 +574,7 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer';column_varchar='column_varchar';column_double='column_double'";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -585,12 +587,12 @@ public class DbImportTest_PostgreSQL {
 					"-k", "column_integer",
 					"-u",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"column_integer;column_double;column_varchar\n"
 							+ "1;1.23;AbcÄ123\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -681,7 +683,7 @@ public class DbImportTest_PostgreSQL {
 			jsonWriter = null;
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -693,7 +695,7 @@ public class DbImportTest_PostgreSQL {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -703,7 +705,7 @@ public class DbImportTest_PostgreSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -786,7 +788,7 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_XML, XmlUtilities.convertXML2ByteArray(xmlRootTag, StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column_integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -798,7 +800,7 @@ public class DbImportTest_PostgreSQL {
 					"-i", "UPSERT",
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -808,7 +810,7 @@ public class DbImportTest_PostgreSQL {
 							+ "6;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
@@ -834,7 +836,7 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -847,7 +849,7 @@ public class DbImportTest_PostgreSQL {
 					"-d", DuplicateMode.MAKE_UNIQUE_JOIN.toString(),
 					"-k", "column_integer",
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -857,7 +859,7 @@ public class DbImportTest_PostgreSQL {
 							+ "9;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -881,7 +883,7 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -894,7 +896,7 @@ public class DbImportTest_PostgreSQL {
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString(),
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13;\n"
@@ -907,7 +909,7 @@ public class DbImportTest_PostgreSQL {
 							+ "9;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13;\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 
@@ -931,7 +933,7 @@ public class DbImportTest_PostgreSQL {
 			FileUtilities.write(INPUTFILE_CSV, data.toString().getBytes(StandardCharsets.UTF_8));
 
 			final String mapping = "column_integer='column integer'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] {
+			assertEquals(0, DbImport._main(new String[] {
 					"postgresql",
 					HOSTNAME,
 					DBNAME,
@@ -945,7 +947,7 @@ public class DbImportTest_PostgreSQL {
 					"-k", "column_integer",
 					"-d", DuplicateMode.UPDATE_FIRST_JOIN.toString(),
 					PASSWORD }));
-			Assert.assertEquals(
+			assertEquals(
 					"id;column_blob;column_clob;column_date;column_double;column_integer;column_timestamp;column_varchar\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13; aBcDeF123_1\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13; aBcDeF123_3\n"
@@ -958,7 +960,7 @@ public class DbImportTest_PostgreSQL {
 							+ "9;; aBcDeF1235_2;2003-03-01;123.456;2;2003-02-01 11:12:13; aBcDeF123_2\n",
 							exportTestTable());
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 	}
 }

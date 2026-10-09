@@ -1,17 +1,19 @@
 package de.soderer.dbimport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.soderer.json.JsonArray;
 import de.soderer.json.JsonObject;
@@ -32,7 +34,7 @@ public class DbImportTest_Derby_BigInt {
 	public static File INPUTFILE_XML = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test_tbl.xml"));
 	public static File BLOB_DATA_FILE = new File(Utilities.replaceUsersHome("~" + File.separator + "temp" + File.separator + "test.blob"));
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupTestClass() throws Exception {
 		if (new File(DERBY_DB_PATH).exists()) {
 			Utilities.delete(new File(DERBY_DB_PATH));
@@ -43,7 +45,7 @@ public class DbImportTest_Derby_BigInt {
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
@@ -61,7 +63,7 @@ public class DbImportTest_Derby_BigInt {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		INPUTFILE_CSV.delete();
 		INPUTFILE_JSON.delete();
@@ -80,7 +82,7 @@ public class DbImportTest_Derby_BigInt {
 		}
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void tearDownTestClass() throws Exception {
 		try {
 			if (!DbUtilities.deleteDatabase(DbVendor.Derby, DERBY_DB_PATH)) {
@@ -227,8 +229,8 @@ public class DbImportTest_Derby_BigInt {
 			jsonWriter = null;
 
 			final String mapping = "column_bigint='column bigint'; column_double='column_double'; column_varchar='column_varchar'; column_clob='column_clob'; column_blob=; column_timestamp='column_timestamp'dd.MM.yyyy HH:mm:ss; column_date='column_date'dd.MM.yyyy HH:mm:ss";
-			Assert.assertEquals(0, DbImport._main(new String[] { "derby", DERBY_DB_PATH, "-table", "test_tbl", "-x", "JSON", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.json", "-m", mapping, "-i", "UPSERT", "-k", "column_bigint" }));
-			Assert.assertEquals(
+			assertEquals(0, DbImport._main(new String[] { "derby", DERBY_DB_PATH, "-table", "test_tbl", "-x", "JSON", "-import", "~" + File.separator + "temp" + File.separator + "test_tbl.json", "-m", mapping, "-i", "UPSERT", "-k", "column_bigint" }));
+			assertEquals(
 					"ID;COLUMN_BLOB;COLUMN_CLOB;COLUMN_DATE;COLUMN_DOUBLE;COLUMN_BIGINT;COLUMN_TIMESTAMP;COLUMN_VARCHAR\n"
 							+ "1;; aBcDeF1235_1;2003-03-01;123.456;1;2003-02-01 11:12:13.0;\n"
 							+ "2;; aBcDeF1235_3;2003-03-01;123.456;3;2003-02-01 11:12:13.0;\n"
@@ -238,7 +240,7 @@ public class DbImportTest_Derby_BigInt {
 							+ "6;; aBcDeF1234;2003-03-01;123.456;5;2003-02-01 11:12:13.0; aBcDeF123_5\n",
 							exportTestTable("id,column_blob,column_clob,column_date,column_double,column_bigint,column_timestamp,column_varchar"));
 		} catch (final Exception e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} finally {
 			Utilities.closeQuietly(jsonWriter);
 		}
