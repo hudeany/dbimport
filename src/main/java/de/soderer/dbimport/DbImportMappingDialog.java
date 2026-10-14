@@ -22,6 +22,8 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import de.soderer.swing.DropDown;
+import de.soderer.swing.ModalDialog;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Triple;
 import de.soderer.utilities.Tuple;
@@ -29,8 +31,6 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
 import de.soderer.utilities.db.data.DbSimpleDataType;
 import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
-import de.soderer.utilities.swing.DropDown;
-import de.soderer.utilities.swing.ModalDialog;
 
 /**
  * Dialog to edit the mapping of the database columns to the data properties and their format.

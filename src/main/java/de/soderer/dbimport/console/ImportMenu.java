@@ -9,6 +9,12 @@ import java.util.TimeZone;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.soderer.console.ConsoleMenu;
+import de.soderer.console.ConsoleUtilities;
+import de.soderer.console.ConsoleUtilities.TextColor;
+import de.soderer.console.FilepathConsoleInput;
+import de.soderer.console.PasswordConsoleInput;
+import de.soderer.console.SimpleConsoleInput;
 import de.soderer.dbimport.DbImport;
 import de.soderer.dbimport.DbImportDefinition;
 import de.soderer.dbimport.DbImportDefinition.DataType;
@@ -17,12 +23,6 @@ import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.NumberUtilities;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.console.ConsoleMenu;
-import de.soderer.utilities.console.ConsoleUtilities;
-import de.soderer.utilities.console.ConsoleUtilities.TextColor;
-import de.soderer.utilities.console.FilepathConsoleInput;
-import de.soderer.utilities.console.PasswordConsoleInput;
-import de.soderer.utilities.console.SimpleConsoleInput;
 import de.soderer.utilities.db.data.DbVendor;
 
 /**

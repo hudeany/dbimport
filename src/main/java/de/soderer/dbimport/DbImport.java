@@ -21,6 +21,13 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingUtilities;
 
+import de.soderer.applicationbase.ApplicationUpdateUtilities;
+import de.soderer.applicationbase.UpdateableConsoleApplication;
+import de.soderer.console.ConsoleMenu;
+import de.soderer.console.ConsoleType;
+import de.soderer.console.ConsoleUtilities;
+import de.soderer.console.ConsoleUtilities.TextColor;
+import de.soderer.console.PasswordConsoleInput;
 import de.soderer.dbimport.DbImportDefinition.DataType;
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
@@ -39,15 +46,8 @@ import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.NumberUtilities;
 import de.soderer.utilities.ParameterException;
-import de.soderer.utilities.UpdateableConsoleApplication;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
-import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
-import de.soderer.utilities.console.ConsoleMenu;
-import de.soderer.utilities.console.ConsoleType;
-import de.soderer.utilities.console.ConsoleUtilities;
-import de.soderer.utilities.console.ConsoleUtilities.TextColor;
-import de.soderer.utilities.console.PasswordConsoleInput;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.exception.DbNotExistsException;
@@ -837,7 +837,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				}
 			} else if (openGui) {
 				// open the preconfigured GUI
-				de.soderer.utilities.swing.SwingUtilities.setSystemLookAndFeel();
+				de.soderer.swing.SwingUtilities.setSystemLookAndFeel();
 
 				try {
 					final DbImportGui dbImportGui = new DbImportGui(dbImportDefinition);

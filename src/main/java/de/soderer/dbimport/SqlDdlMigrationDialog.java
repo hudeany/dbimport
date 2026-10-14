@@ -27,12 +27,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import de.soderer.swing.QuestionDialog;
+import de.soderer.swing.SwingColor;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.SqlDdlMergeGenerator;
 import de.soderer.utilities.db.SqlDdlMigrationGenerator;
-import de.soderer.utilities.swing.QuestionDialog;
-import de.soderer.utilities.swing.SwingColor;
 
 /**
  * Dialog to generate a SQL migration or merge script from two SQL DDL files, which describe the source
