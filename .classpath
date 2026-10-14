@@ -45,6 +45,5 @@
 	<classpathentry kind="lib" path="lib_db/postgresql-42.7.13.jar"/>
 	<classpathentry kind="lib" path="lib_db/sqlite-jdbc-3.53.2.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/6"/>
-	<classpathentry kind="lib" path="lib_test/hamcrest-3.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
