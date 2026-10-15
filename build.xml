@@ -187,6 +187,7 @@
 				<attribute name="Main-Class" value="de.soderer.DbImport" />
 				<attribute name="Class-Path" value="." />
 				<attribute name="Rsrc-Main-Class" value="de.soderer.dbimport.DbImport" />
+			    <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
 			</manifest>
 
 			<fileset dir="${buildPath}/bin" />
