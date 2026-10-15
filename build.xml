@@ -40,7 +40,7 @@
 
 	<!-- The jar is signed first (only if codeSigning.properties is available), then copied to the versioned file name,
 	     so both jars are identical and signed with a single timestamp request -->
-	<target name="build_jar" depends="build_setup, cleanup_before, create_jar, sign_jar, copy_versioned_jar, cleanup_after" />
+	<target name="build_jar" depends="build_setup, cleanup_before, create_jar, sign_jar, cleanup_after" />
 
 	<target name="probe-proxy">
 		<condition property="proxy.enabled">
@@ -184,7 +184,7 @@
 	</target>
 
 	<target name="create_jar" depends="compile, create_versionfile">
-		<jar destfile="${buildPath}/DbImport.jar">
+		<jar destfile="${buildPath}/DbImport-${build.version}.jar">
 			<manifest>
 				<attribute name="Main-Class" value="de.soderer.DbImport" />
 				<attribute name="Class-Path" value="." />
@@ -208,14 +208,9 @@
 		<echo message="TsaUrl: ${TsaUrl}" />
 		<signjar destDir="${buildPath}" alias="${CodeSigningKeyAlias}" keystore="${CodeSigningKeyStore}" storepass="${CodeSigningKeyStorePassword}" keypass="${CodeSigningKeyPassword}" preservelastmodified="true" tsaurl="${TsaUrl}">
 			<path>
-				<fileset dir="${buildPath}" includes="DbImport.jar" />
+				<fileset dir="${buildPath}" includes="DbImport-${build.version}.jar" />
 			</path>
 		</signjar>
-	</target>
-
-	<!-- Runs after sign_jar, so the versioned jar is a copy of the signed jar (or of the unsigned one, if signing was skipped) -->
-	<target name="copy_versioned_jar" depends="sign_jar">
-		<copy file="${buildPath}/DbImport.jar" tofile="${buildPath}/DbImport-${build.version}.jar" overwrite="true" />
 	</target>
 
 	<target name="cleanup_after">
