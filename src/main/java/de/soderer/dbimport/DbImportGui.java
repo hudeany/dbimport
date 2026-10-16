@@ -252,7 +252,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					ApplicationUpdateUtilities.executeUpdate(this, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, appParameters, true, false);
 				}
 			} catch (final Exception e) {
-				new QuestionDialog(this, DbImport.APPLICATION_NAME + " " + LangResources.get("updateCheck") + " ERROR", LangResources.get("error.cannotCheckForUpdate") + "\n" + "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+				new QuestionDialog(this, DbImport.APPLICATION_NAME + " " + LangResources.get("updateCheck") + " ERROR", LangResources.get("error.cannotCheckForUpdate") + "\n" + "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 			}
 		}
 
@@ -301,9 +301,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
 				try (Connection connection = DbUtilities.createConnection(getConfigurationAsDefinition(), false)) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").setBackgroundColor(SwingColor.Green).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").withBackgroundColor(SwingColor.Green).open();
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -424,7 +424,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						checkButtonStatus();
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -446,15 +446,15 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 					if (Utilities.isNotBlank((trustStoreFilePathField.getText()))) {
 						if (new File(trustStoreFilePathField.getText()).exists()) {
-							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File already exists: '" + trustStoreFilePathField.getText() + "'").setBackgroundColor(SwingColor.LightRed).open();
+							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File already exists: '" + trustStoreFilePathField.getText() + "'").withBackgroundColor(SwingColor.LightRed).open();
 						} else {
 							TrustManagerUtilities.createTrustStoreFile(hostField.getText(), DbVendor.getDbVendorByName(getRequiredSelectedItem(dbTypeCombo, "dbtype")).getDefaultPort(), new File(trustStoreFilePathField.getText()), trustStorePasswordField.getPassword(), null);
-							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").setBackgroundColor(SwingColor.Green).open();
+							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").withBackgroundColor(SwingColor.Green).open();
 							checkButtonStatus();
 						}
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -539,7 +539,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						inlineDataBox.setSelected(false);
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -617,7 +617,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						structureFilePathField.setText(structureFile.getAbsolutePath());
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -639,7 +639,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 					if (Utilities.isNotBlank((structureFilePathField.getText()))) {
 						if (!new File(structureFilePathField.getText()).exists()) {
-							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File does not exist: '" + structureFilePathField.getText() + "'").setBackgroundColor(SwingColor.LightRed).open();
+							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File does not exist: '" + structureFilePathField.getText() + "'").withBackgroundColor(SwingColor.LightRed).open();
 						} else {
 							// The worker opens its own connection, an additional one is not needed (and kept e.g. Derby busy)
 							try (FileInputStream jsonStructureDataInputStream = new FileInputStream(structureFilePathField.getText())) {
@@ -652,23 +652,23 @@ public class DbImportGui extends UpdateableGuiApplication {
 								final Result result = progressDialog.open();
 
 								if (result == Result.CANCELED) {
-									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).setBackgroundColor(SwingColor.Yellow).open();
+									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
 								} else if (result == Result.ERROR) {
 									final Exception e = worker.getError();
 									if (e instanceof DbImportException) {
-										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 									} else {
 										final String stacktrace = ExceptionUtilities.getStackTrace(e);
-										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).setBackgroundColor(SwingColor.LightRed).open();
+										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
 									}
 								} else {
-									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "Structure creation result:\n\t" + worker.getCreatedTables() + " created tables\n\t" + worker.getCreatedColumns() + " added columns").setBackgroundColor(SwingColor.Green).open();
+									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "Structure creation result:\n\t" + worker.getCreatedTables() + " created tables\n\t" + worker.getCreatedColumns() + " added columns").withBackgroundColor(SwingColor.Green).open();
 								}
 							}
 						}
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -696,7 +696,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						schemaFilePathField.setText(schemaFile.getAbsolutePath());
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -1032,7 +1032,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 				try {
 					importData(getConfigurationAsDefinition(), dbImportGui);
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -1048,7 +1048,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 				try {
 					createMapping(getConfigurationAsDefinition(), dbImportGui);
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -1089,7 +1089,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					temporaryPreferencesPassword = credentialsDialog.getPassword();
 				} catch (final Exception e) {
 					temporaryPreferencesPassword = null;
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -1121,7 +1121,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						applicationConfiguration.save();
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			}
 		});
@@ -1206,14 +1206,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 			final Result result = progressDialog.open();
 
 			if (result == Result.CANCELED) {
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).setBackgroundColor(SwingColor.Yellow).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
 			} else if (result == Result.ERROR) {
 				final Exception e = worker.getError();
 				if (e instanceof DbImportException) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				} else {
 					final String stacktrace = ExceptionUtilities.getStackTrace(e);
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			} else {
 				final List<String> dataColumns = worker.getDataPropertyNames();
@@ -1856,7 +1856,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 				throw new DbImportException("Cannot aquire database driver for database vendor: " + dbImportDefinition.getDbVendor());
 			}
 		} catch (final Exception e) {
-			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 
@@ -1903,14 +1903,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 			final Result result = progressDialog.open();
 
 			if (result == Result.CANCELED) {
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).setBackgroundColor(SwingColor.Yellow).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
 			} else if (result == Result.ERROR) {
 				final Exception e = worker.getError();
 				if (e instanceof DbImportException) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				} else {
 					final String stacktrace = ExceptionUtilities.getStackTrace(e);
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			} else {
 				final LocalDateTime start = worker.getStartTime();
@@ -1926,10 +1926,10 @@ public class DbImportGui extends UpdateableGuiApplication {
 				if (worker.getNotImportedItems().size() > 0) {
 					backgroundColor = SwingColor.LightRed;
 				}
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + resultText).setBackgroundColor(backgroundColor).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + resultText).withBackgroundColor(backgroundColor).open();
 			}
 		} catch (final Exception e) {
-			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 		}
 	}
 
@@ -1940,24 +1940,24 @@ public class DbImportGui extends UpdateableGuiApplication {
 			final Result result = progressDialog.open();
 
 			if (result == Result.CANCELED) {
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).setBackgroundColor(SwingColor.Yellow).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
 			} else if (result == Result.ERROR) {
 				final Exception e = worker.getError();
 				if (e instanceof DbImportException) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 				} else {
 					final String stacktrace = ExceptionUtilities.getStackTrace(e);
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).setBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
 				}
 			} else {
 				Color backgroundColor = null;
 				if (worker.wasErroneous()) {
 					backgroundColor = SwingColor.LightRed;
 				}
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + worker.getResult()).setBackgroundColor(backgroundColor).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + worker.getResult()).withBackgroundColor(backgroundColor).open();
 			}
 		} catch (final Exception e) {
-			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 		}
 	}
 

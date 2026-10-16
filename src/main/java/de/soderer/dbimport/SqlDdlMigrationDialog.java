@@ -319,19 +319,19 @@ public class SqlDdlMigrationDialog extends JDialog {
 		if (!sourceFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nSource file does not exist:\n" + sourceFile.getAbsolutePath())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (!destinationFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nDestination file does not exist:\n" + destinationFile.getAbsolutePath())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (outputFile.getParentFile() != null && !outputFile.getParentFile().exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nOutput directory does not exist:\n" + outputFile.getParent())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 
@@ -346,14 +346,14 @@ public class SqlDdlMigrationDialog extends JDialog {
 
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " OK",
 					"Migration script successfully written to:\n" + outputFile.getAbsolutePath())
-							.setBackgroundColor(SwingColor.Green).open();
+							.withBackgroundColor(SwingColor.Green).open();
 
 			dispose();
 
 		} catch (final Exception e) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 		}
 	}
 
@@ -365,19 +365,19 @@ public class SqlDdlMigrationDialog extends JDialog {
 		if (!sourceFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nSource file does not exist:\n" + sourceFile.getAbsolutePath())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (!destinationFile.exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nDestination file does not exist:\n" + destinationFile.getAbsolutePath())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 		if (outputFile.getParentFile() != null && !outputFile.getParentFile().exists()) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\nOutput directory does not exist:\n" + outputFile.getParent())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 			return;
 		}
 
@@ -392,14 +392,14 @@ public class SqlDdlMigrationDialog extends JDialog {
 
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " OK",
 					"Merge DDL successfully written to:\n" + outputFile.getAbsolutePath())
-							.setBackgroundColor(SwingColor.Green).open();
+							.withBackgroundColor(SwingColor.Green).open();
 
 			dispose();
 
 		} catch (final Exception e) {
 			new QuestionDialog(dialog, DbImport.APPLICATION_NAME + " ERROR",
 					"ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage())
-							.setBackgroundColor(SwingColor.LightRed).open();
+							.withBackgroundColor(SwingColor.LightRed).open();
 		}
 	}
 
