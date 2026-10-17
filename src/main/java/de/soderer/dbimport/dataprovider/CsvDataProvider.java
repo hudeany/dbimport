@@ -21,9 +21,9 @@ import de.soderer.utilities.csv.CsvFormat;
 import de.soderer.utilities.csv.CsvReader;
 import de.soderer.utilities.csv.CsvWriter;
 import de.soderer.utilities.db.data.DbColumnType;
-import de.soderer.utilities.zip.TarGzUtilities;
-import de.soderer.utilities.zip.Zip4jUtilities;
-import de.soderer.utilities.zip.ZipUtilities;
+import de.soderer.zip.TarGzUtilities;
+import de.soderer.zip.Zip4jUtilities;
+import de.soderer.zip.ZipUtilities;
 
 /**
  * Data provider for CSV data.

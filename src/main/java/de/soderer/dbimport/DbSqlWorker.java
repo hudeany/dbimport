@@ -33,9 +33,9 @@ import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.worker.WorkerParentSimple;
-import de.soderer.utilities.zip.TarGzUtilities;
-import de.soderer.utilities.zip.Zip4jUtilities;
-import de.soderer.utilities.zip.ZipUtilities;
+import de.soderer.zip.TarGzUtilities;
+import de.soderer.zip.Zip4jUtilities;
+import de.soderer.zip.ZipUtilities;
 
 /**
  * Worker that executes the statements of a SQL script (optionally compressed) one after another.

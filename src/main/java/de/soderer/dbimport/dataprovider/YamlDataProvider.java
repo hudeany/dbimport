@@ -20,14 +20,14 @@ import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
 import de.soderer.utilities.db.data.DbSimpleDataType;
-import de.soderer.utilities.zip.TarGzUtilities;
-import de.soderer.utilities.zip.Zip4jUtilities;
-import de.soderer.utilities.zip.ZipUtilities;
 import de.soderer.yaml.YamlReader;
 import de.soderer.yaml.YamlWriter;
 import de.soderer.yaml.data.YamlMapping;
 import de.soderer.yaml.data.YamlNode;
 import de.soderer.yaml.data.YamlScalar;
+import de.soderer.zip.TarGzUtilities;
+import de.soderer.zip.Zip4jUtilities;
+import de.soderer.zip.ZipUtilities;
 
 /**
  * Data provider for YAML data. The data items are the objects of a YAML list.

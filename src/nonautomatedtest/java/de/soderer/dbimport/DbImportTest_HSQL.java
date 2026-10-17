@@ -27,11 +27,11 @@ import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.xml.XmlUtilities;
-import de.soderer.utilities.zip.TarGzUtilities;
 import de.soderer.yaml.YamlWriter;
 import de.soderer.yaml.data.YamlDocument;
 import de.soderer.yaml.data.YamlMapping;
 import de.soderer.yaml.data.YamlSequence;
+import de.soderer.zip.TarGzUtilities;
 
 public class DbImportTest_HSQL {
 	public static final String HSQL_DB_FILE = System.getProperty("user.home") + File.separator + "temp" + File.separator + "DbImportTest" + File.separator + "test.hsql";

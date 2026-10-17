@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingUtilities;
 
+import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
 import de.soderer.applicationbase.UpdateableConsoleApplication;
 import de.soderer.console.ConsoleMenu;
@@ -39,7 +40,6 @@ import de.soderer.dbimport.console.ImportMenu;
 import de.soderer.dbimport.console.PreferencesMenu;
 import de.soderer.dbimport.console.UpdateMenu;
 import de.soderer.network.trustmanager.TrustManagerUtilities;
-import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
@@ -186,9 +186,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			return 1;
 		}
 
-		ConfigurationProperties applicationConfiguration;
+		ApplicationConfigurationProperties applicationConfiguration;
 		try {
-			applicationConfiguration = new ConfigurationProperties(DbImport.APPLICATION_NAME, true);
+			applicationConfiguration = new ApplicationConfigurationProperties(DbImport.APPLICATION_NAME, true);
 			DbImportGui.setupDefaultConfig(applicationConfiguration);
 		} catch (@SuppressWarnings("unused") final Exception e) {
 			System.err.println("Invalid application configuration");

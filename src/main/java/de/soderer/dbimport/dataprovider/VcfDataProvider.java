@@ -23,9 +23,9 @@ import de.soderer.utilities.vcf.VcfAttributedAddress;
 import de.soderer.utilities.vcf.VcfCard;
 import de.soderer.utilities.vcf.VcfReader;
 import de.soderer.utilities.vcf.VcfWriter;
-import de.soderer.utilities.zip.TarGzUtilities;
-import de.soderer.utilities.zip.Zip4jUtilities;
-import de.soderer.utilities.zip.ZipUtilities;
+import de.soderer.zip.TarGzUtilities;
+import de.soderer.zip.Zip4jUtilities;
+import de.soderer.zip.ZipUtilities;
 
 /**
  * Data provider for vCard data (VCF format). The data items are the contained vCards.
