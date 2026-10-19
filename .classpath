@@ -24,7 +24,7 @@
 	<classpathentry kind="lib" path="lib/xmlbeans-5.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/zip4j-2.11.6.jar"/>
 	<classpathentry kind="lib" path="lib/dbutilities-26.1.7.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.28.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.29.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-console-26.0.9.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-swing-26.0.13.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.118.jar"/>
