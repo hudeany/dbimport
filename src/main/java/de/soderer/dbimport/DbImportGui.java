@@ -1854,7 +1854,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		try {
 			dbImportDefinition.checkParameters();
 			if (!new DbDriverSupplier(this, dbImportDefinition.getDbVendor()).supplyDriver(DbImport.APPLICATION_NAME, DbImport.CONFIGURATION_FILE)) {
-				throw new DbImportException("Cannot aquire database driver for database vendor: " + dbImportDefinition.getDbVendor());
+				throw new DbImportException("Cannot acquire database driver for database vendor: " + dbImportDefinition.getDbVendor());
 			}
 		} catch (final Exception e) {
 			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
