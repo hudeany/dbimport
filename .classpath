@@ -9,8 +9,8 @@
 	<classpathentry kind="lib" path="lib/commons-compress-1.28.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.22.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-math3-3.6.1.jar"/>
-	<classpathentry kind="lib" path="lib/csv-26.1.12.jar"/>
-	<classpathentry kind="lib" path="lib/json-26.2.12.jar"/>
+	<classpathentry kind="lib" path="lib/csv-26.1.13.jar"/>
+	<classpathentry kind="lib" path="lib/json-26.2.13.jar"/>
 	<classpathentry kind="lib" path="lib/kdbx-26.1.9.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.26.1.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-api-2.26.1.jar"/>
@@ -24,12 +24,12 @@
 	<classpathentry kind="lib" path="lib/xmlbeans-5.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/zip4j-2.11.6.jar"/>
 	<classpathentry kind="lib" path="lib/dbutilities-26.1.7.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.35.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-console-26.0.10.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-swing-26.0.23.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.121.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.36.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-console-26.0.11.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-swing-26.0.24.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.123.jar"/>
 	<classpathentry kind="lib" path="lib/jna-5.19.1.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-zip-26.0.6.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-zip-26.0.7.jar"/>
 	<classpathentry kind="lib" path="lib_db/mysql-connector-j-26.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.21.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
