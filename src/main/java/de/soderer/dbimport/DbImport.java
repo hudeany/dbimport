@@ -1428,6 +1428,10 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 		if (Utilities.endsWithIgnoreCase(tableNameToImport, ".csv")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".dsv")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
+		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tsv")) {
+			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
 		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".del")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
 		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".xls")) {

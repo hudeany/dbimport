@@ -19,6 +19,8 @@ import de.soderer.dbimport.dataprovider.VcfDataProvider;
 import de.soderer.dbimport.dataprovider.XmlDataProvider;
 import de.soderer.dbimport.dataprovider.YamlDataProvider;
 import de.soderer.utilities.DateUtilities;
+import de.soderer.utilities.FileDataType;
+import de.soderer.utilities.FileType;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
@@ -1091,74 +1093,24 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			throw new DbImportException("ImportFilePath or data is missing");
 		} else if (!isInlineData) {
 			if (getDataType() == null) {
-				if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".csv.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".del.gz")) {
+				final FileType fileType = FileUtilities.getFileTypeByExtension(getImportFilePathOrData());
+				if (fileType.getFileDataType() == FileDataType.CSV) {
 					setDataType(DataType.CSV);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".json.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.JSON) {
 					setDataType(DataType.JSON);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yaml.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".yml.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.YAML) {
 					setDataType(DataType.YAML);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xls.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xlsx")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xlsx.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xlsx.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xlsx.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xlsx.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.EXCEL) {
 					setDataType(DataType.EXCEL);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".ods")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".ods.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".ods.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".ods.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".ods.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.ODS) {
 					setDataType(DataType.ODS);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xml")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xml.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xml.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xml.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".xml.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.XML) {
 					setDataType(DataType.XML);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".sql")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".sql.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".sql.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".sql.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".sql.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.SQL) {
 					setDataType(DataType.SQL);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".vcf")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".vcf.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".vcf.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".vcf.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".vcf.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.VCF) {
 					setDataType(DataType.VCF);
-				} else if (Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".kdbx")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".kdbx.zip")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".kdbx.tar.gz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".kdbx.tgz")
-						|| Utilities.endsWithIgnoreCase(getImportFilePathOrData(), ".kdbx.gz")) {
+				} else if (fileType.getFileDataType() == FileDataType.KDBX) {
 					setDataType(DataType.KDBX);
 				} else {
 					setDataType(DataType.CSV);
