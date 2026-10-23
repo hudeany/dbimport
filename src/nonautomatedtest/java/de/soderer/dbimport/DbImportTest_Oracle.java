@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.utilities.FileUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbUtilities;
@@ -159,7 +160,7 @@ public class DbImportTest_Oracle {
 		try (Connection connection = DbUtilities.createConnection(new DbConnectionDefinition(DbVendor.Oracle, HOSTNAME, DBNAME, USERNAME, PASSWORD.toCharArray()), false)) {
 			final CaseInsensitiveSet columnNames = DbUtilities.getColumnNames(connection, "test_tbl");
 			columnNames.remove(orderColumn);
-			return TestDbUtilities.readout(connection, "SELECT " + orderColumn + ", " + Utilities.join(Utilities.asSortedList(columnNames), ", ").toLowerCase() + " FROM test_tbl ORDER BY " + orderColumn, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
+			return TestDbUtilities.readout(connection, "SELECT " + orderColumn + ", " + StringUtilities.join(Utilities.asSortedList(columnNames), ", ").toLowerCase() + " FROM test_tbl ORDER BY " + orderColumn, ';', '\"').replace(TextUtilities.GERMAN_TEST_STRING.replace("\"", "\"\""), "<test_text>");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			throw e;

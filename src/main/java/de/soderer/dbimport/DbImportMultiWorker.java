@@ -87,7 +87,7 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 				}
 
 				if (notFoundTables.size() > 0) {
-					throw new DbImportException("Import tables not available in database: " + Utilities.join(notFoundTables, ", "));
+					throw new DbImportException("Import tables not available in database: " + StringUtilities.join(notFoundTables, ", "));
 				}
 			}
 

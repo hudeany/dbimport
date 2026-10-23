@@ -22,6 +22,7 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.NumberUtilities;
+import de.soderer.utilities.StringSplitter;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbVendor;
@@ -327,7 +328,7 @@ public class ImportMenu extends ConsoleMenu {
 				System.out.println("  " + Utilities.rightPad("u)", bulletSize) + " " + Utilities.rightPad("Don't update with null values:", nameSize) + !dbImportDefinition.isUpdateNullData());
 				autoCompletionStrings.add("u");
 
-				System.out.println("  " + Utilities.rightPad("k)", bulletSize) + " " + Utilities.rightPad("Keycolumns:", nameSize) + (dbImportDefinition.getKeycolumns() == null || dbImportDefinition.getKeycolumns().isEmpty() ? "<empty>" : Utilities.join(dbImportDefinition.getKeycolumns(), ", ")));
+				System.out.println("  " + Utilities.rightPad("k)", bulletSize) + " " + Utilities.rightPad("Keycolumns:", nameSize) + (dbImportDefinition.getKeycolumns() == null || dbImportDefinition.getKeycolumns().isEmpty() ? "<empty>" : StringUtilities.join(dbImportDefinition.getKeycolumns(), ", ")));
 				autoCompletionStrings.add("k");
 				System.out.println("  " + Utilities.rightPad("insvalues)", bulletSize) + " " + Utilities.rightPad("Additional insert values:", nameSize) + (StringUtilities.isBlank(dbImportDefinition.getAdditionalInsertValues()) ? "<empty>" : dbImportDefinition.getAdditionalInsertValues()));
 				autoCompletionStrings.add("insvalues");
@@ -557,7 +558,7 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println();
 					System.out.println("Please enter keycolumns list comma separated");
 					final String keycolumns = new SimpleConsoleInput().withPrompt(" > ").readInput();
-					dbImportDefinition.setKeycolumns(Utilities.splitAndTrimList(keycolumns));
+					dbImportDefinition.setKeycolumns(StringSplitter.splitAndTrimList(keycolumns));
 				} else if ("insvalues".equalsIgnoreCase(choice)) {
 					System.out.println();
 					System.out.println("Please enter additional insert values");

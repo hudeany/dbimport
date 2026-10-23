@@ -25,6 +25,7 @@ import javax.swing.JScrollPane;
 import de.soderer.swing.DropDown;
 import de.soderer.swing.ModalDialog;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringSplitter;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Triple;
 import de.soderer.utilities.Tuple;
@@ -414,7 +415,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	 */
 	public static Map<String, Tuple<String, String>> parseMappingString(final String mappingString) throws IOException, Exception {
 		final Map<String, Tuple<String, String>> mapping = new HashMap<>();
-		final List<String> mappingLines = Utilities.splitAndTrimList(mappingString, ';', '\n', '\r');
+		final List<String> mappingLines = StringSplitter.splitAndTrimList(mappingString, ';', '\n', '\r');
 		for (final String mappingLine : mappingLines) {
 			final int dbColumnEnd = mappingLine.indexOf("=");
 			if (dbColumnEnd <= 0) {

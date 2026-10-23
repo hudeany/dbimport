@@ -60,6 +60,7 @@ import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
+import de.soderer.utilities.StringSplitter;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.VersionInfo;
@@ -1191,7 +1192,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 				final List<String> keyColumns = new ArrayList<>(DbUtilities.getPrimaryKeyColumns(connection, configurationAsDefinition.getTableName()));
 				Collections.sort(keyColumns);
 				if (StringUtilities.isBlank(keyColumnsField.getText())) {
-					keyColumnsField.setText(Utilities.join(keyColumns, ", "));
+					keyColumnsField.setText(StringUtilities.join(keyColumns, ", "));
 				}
 			} else if (!configurationAsDefinition.isCreateTable()) {
 				throw new DbImportException("Destination table does not exist: " + configurationAsDefinition.getTableName());
@@ -1281,7 +1282,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setImportMode(ImportMode.getFromString(getRequiredSelectedItem(importModeCombo, "importMode")));
 		dbImportDefinition.setDuplicateMode(DuplicateMode.getFromString(getRequiredSelectedItem(duplicateModeCombo, "duplicateMode")));
 		dbImportDefinition.setUpdateNullData(updateWithNullDataBox.isSelected());
-		dbImportDefinition.setKeycolumns(Utilities.splitAndTrimList(keyColumnsField.getText()));
+		dbImportDefinition.setKeycolumns(StringSplitter.splitAndTrimList(keyColumnsField.getText()));
 		dbImportDefinition.setCreateTable(createTableBox.isSelected());
 		dbImportDefinition.setStructureFilePath(structureFilePathField.getText());
 		// The data path field was never read, so a data path (XPath, JSON path, sheet name) entered in the GUI was ignored
@@ -1404,7 +1405,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		updateWithNullDataBox.setSelected(dbImportDefinition.isUpdateNullData());
 
-		keyColumnsField.setText(Utilities.join(dbImportDefinition.getKeycolumns(), ", "));
+		keyColumnsField.setText(StringUtilities.join(dbImportDefinition.getKeycolumns(), ", "));
 
 		createTableBox.setSelected(dbImportDefinition.isCreateTable());
 

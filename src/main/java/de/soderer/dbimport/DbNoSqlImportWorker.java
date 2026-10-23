@@ -19,6 +19,7 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringSplitter;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
@@ -120,12 +121,12 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 				}
 				for (final String column : tableKeys) {
 					if (!keyColumns.contains(column)) {
-						throw new DbImportException("Key columns of import (" + Utilities.join(keyColumns, ", ") + ") and table (" + Utilities.join(tableKeys, ", ") + ") do not match");
+						throw new DbImportException("Key columns of import (" + StringUtilities.join(keyColumns, ", ") + ") and table (" + StringUtilities.join(tableKeys, ", ") + ") do not match");
 					}
 				}
 				for (final String column : keyColumns) {
 					if (!tableKeys.contains(column)) {
-						throw new DbImportException("Key columns of import (" + Utilities.join(keyColumns, ", ") + ") and table (" + Utilities.join(tableKeys, ", ") + ") do not match");
+						throw new DbImportException("Key columns of import (" + StringUtilities.join(keyColumns, ", ") + ") and table (" + StringUtilities.join(tableKeys, ", ") + ") do not match");
 					}
 				}
 
@@ -258,7 +259,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 		String additionalInsertValuesSqlColumns = "";
 		String additionalInsertValuesSqlValues = "";
 		if (StringUtilities.isNotBlank(additionalInsertValuesToUse)) {
-			for (final String line : Utilities.splitAndTrimListQuoted(additionalInsertValuesToUse, '\n', '\r', ';')) {
+			for (final String line : StringSplitter.splitAndTrimListQuoted(additionalInsertValuesToUse, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
 				additionalInsertValuesSqlColumns += columnName + ", ";
@@ -369,7 +370,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 
 		String additionalUpdateValuesSqlPart = "";
 		if (StringUtilities.isNotBlank(additionalUpdateValues)) {
-			for (final String line : Utilities.splitAndTrimListQuoted(additionalUpdateValues, '\n', '\r', ';')) {
+			for (final String line : StringSplitter.splitAndTrimListQuoted(additionalUpdateValues, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
 				additionalUpdateValuesSqlPart += columnName + " = " + columnvalue + ", ";
@@ -391,7 +392,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 		String additionalInsertValuesSqlColumns = "";
 		String additionalInsertValuesSqlValues = "";
 		if (StringUtilities.isNotBlank(additionalInsertValues)) {
-			for (final String line : Utilities.splitAndTrimListQuoted(additionalInsertValues, '\n', '\r', ';')) {
+			for (final String line : StringSplitter.splitAndTrimListQuoted(additionalInsertValues, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
 				additionalInsertValuesSqlColumns += columnName + ", ";

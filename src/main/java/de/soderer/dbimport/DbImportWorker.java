@@ -52,6 +52,7 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.InputStreamWithOtherItemsToClose;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringSplitter;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Tuple;
@@ -740,7 +741,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 							try {
 								newIndexName = DbUtilities.createIndex(connection, tableName, keyColumns);
 							} catch (final Exception e) {
-								System.err.println("Cannot create index for table '" + tableName + "' on columns '" + Utilities.join(keyColumns, ", ") + "': " + e.getMessage());
+								System.err.println("Cannot create index for table '" + tableName + "' on columns '" + StringUtilities.join(keyColumns, ", ") + "': " + e.getMessage());
 							}
 						}
 					}
@@ -983,7 +984,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				+ "Table name: " + tableName + "\n"
 				+ "Import mode: " + importMode + "\n"
 				+ "Duplicate mode: " + duplicateMode + "\n"
-				+ "Key columns: " + Utilities.join(keyColumns, ", ") + "\n"
+				+ "Key columns: " + StringUtilities.join(keyColumns, ", ") + "\n"
 				+ (createTableIfNotExists ? "Create table if not exists: " + createTableIfNotExists + "\n" : "")
 				+ (structureFilePath != null ? "Structure file: " + structureFilePath + "\n" : "")
 				+ "Mapping: \n" + TextUtilities.addLeadingTab(convertMappingToString(getMapping())) + "\n"
@@ -1201,7 +1202,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			if (invalidItems.size() > 10) {
 				errorList.add("...");
 			}
-			statistics.append("Indices of invalid items: \n" + Utilities.join(errorList, " \n") + "\n");
+			statistics.append("Indices of invalid items: \n" + StringUtilities.join(errorList, " \n") + "\n");
 			if (erroneousDataFile != null) {
 				statistics.append("Erroneous data logged in file: " + erroneousDataFile + "\n");
 			}
@@ -1248,7 +1249,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		String additionalInsertValuesSqlColumns = "";
 		String additionalInsertValuesSqlValues = "";
 		if (StringUtilities.isNotBlank(additionalInsertValuesToUse)) {
-			for (final String line : Utilities.splitAndTrimListQuoted(additionalInsertValuesToUse, '\n', '\r', ';')) {
+			for (final String line : StringSplitter.splitAndTrimListQuoted(additionalInsertValuesToUse, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
 				additionalInsertValuesSqlColumns += columnName + ", ";

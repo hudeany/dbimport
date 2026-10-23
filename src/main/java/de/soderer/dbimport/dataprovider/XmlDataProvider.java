@@ -348,7 +348,7 @@ public class XmlDataProvider extends DataProvider {
 				final Stack<String> currentPath = new Stack<>();
 				xmlReader.nextTag();
 				currentPath.push(xmlReader.getLocalName());
-				while (currentPath.size() > 0 && !Utilities.join(currentPath, "/").equals(dataPath)) {
+				while (currentPath.size() > 0 && !StringUtilities.join(currentPath, "/").equals(dataPath)) {
 					if (XMLStreamConstants.START_ELEMENT == xmlReader.nextTag()) {
 						currentPath.push(xmlReader.getLocalName());
 					} else {

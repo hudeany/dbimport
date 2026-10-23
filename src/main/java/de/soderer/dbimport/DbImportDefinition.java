@@ -1504,7 +1504,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			for (final String keyColumn : getKeycolumns()) {
 				escapedKeyColumns.add(keyColumn.replace("'", "\\'"));
 			}
-			params += " " + "-k '" + Utilities.join(escapedKeyColumns, ", ") + "'";
+			params += " " + "-k '" + StringUtilities.join(escapedKeyColumns, ", ") + "'";
 		}
 		if (getMapping() != null && getMapping().length() > 0) {
 			params += " " + "-m '" + getMapping().replace("'", "\\'") + "'";

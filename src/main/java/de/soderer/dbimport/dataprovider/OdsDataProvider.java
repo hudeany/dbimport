@@ -20,7 +20,6 @@ import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
-import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
 
 /**
@@ -357,7 +356,7 @@ public class OdsDataProvider extends DataProvider {
 			String currentSheetname = null;
 			xmlReader.next();
 			currentPath.push(xmlReader.getLocalName());
-			while (currentPath.size() > 0 && !(Utilities.join(currentPath, "/").equals(dataPath) && (sheetname == null || sheetname.equals(currentSheetname)))) {
+			while (currentPath.size() > 0 && !(StringUtilities.join(currentPath, "/").equals(dataPath) && (sheetname == null || sheetname.equals(currentSheetname)))) {
 				xmlReader.next();
 				if (xmlReader.isStartElement()) {
 					currentPath.push(xmlReader.getLocalName());

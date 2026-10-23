@@ -46,6 +46,7 @@ import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.NumberUtilities;
 import de.soderer.utilities.ParameterException;
+import de.soderer.utilities.StringSplitter;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
@@ -404,7 +405,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter keycolumnslist");
 						} else {
-							dbImportDefinition.setKeycolumns(Utilities.splitAndTrimList(arguments[i]));
+							dbImportDefinition.setKeycolumns(StringSplitter.splitAndTrimList(arguments[i]));
 						}
 						wasAllowedParam = true;
 					} else if ("-insvalues".equalsIgnoreCase(arguments[i])) {
@@ -1021,7 +1022,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					if (worker.getNotImportedItems().size() > 10) {
 						errorList.add("...");
 					}
-					errorText += "Not imported items indices: \n" + Utilities.join(errorList, " \n") + "\n";
+					errorText += "Not imported items indices: \n" + StringUtilities.join(errorList, " \n") + "\n";
 				}
 				System.err.println(errorText);
 			}

@@ -603,7 +603,7 @@ public class ExcelDataProvider extends DataProvider {
 				return null;
 			case STRING:
 			default:
-				return trimData ? Utilities.trim(cell.getStringCellValue()) : cell.getStringCellValue();
+				return trimData ? StringUtilities.trim(cell.getStringCellValue()) : cell.getStringCellValue();
 		}
 	}
 
