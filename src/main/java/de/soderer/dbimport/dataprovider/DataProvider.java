@@ -18,8 +18,8 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.InputStreamWithOtherItemsToClose;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.NumberUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
-import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
 import de.soderer.utilities.db.data.DbSimpleDataType;
 import de.soderer.zip.TarGzUtilities;
@@ -125,7 +125,7 @@ public abstract class DataProvider implements Closeable {
 		if (mapping != null) {
 			for (final Tuple<String, String> mappingValue : mapping.values()) {
 				if (mappingValue.getFirst().equals(propertyKey)) {
-					if (Utilities.isNotBlank(mappingValue.getSecond())) {
+					if (StringUtilities.isNotBlank(mappingValue.getSecond())) {
 						formatInfo = mappingValue.getSecond();
 						break;
 					}
@@ -135,13 +135,13 @@ public abstract class DataProvider implements Closeable {
 
 		final DbSimpleDataType currentType = dataTypes.get(propertyKey) == null ? null : dataTypes.get(propertyKey).getSimpleDataType();
 		if (currentType != DbSimpleDataType.Blob) {
-			if (Utilities.isEmpty(currentValue)) {
+			if (StringUtilities.isEmpty(currentValue)) {
 				if (!dataTypes.containsKey(propertyKey)) {
 					dataTypes.put(propertyKey, null);
 				}
 			} else if ("file".equalsIgnoreCase(formatInfo) || currentValue.length() > 4000) {
 				dataTypes.put(propertyKey, new DbColumnType("BLOB", -1, -1, -1, true, false, null));
-			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && Utilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && !"lc".equalsIgnoreCase(formatInfo) && !"uc".equalsIgnoreCase(formatInfo)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && StringUtilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && !"lc".equalsIgnoreCase(formatInfo) && !"uc".equalsIgnoreCase(formatInfo)) {
 				try {
 					DateUtilities.parseLocalDateTime(formatInfo, currentValue.trim());
 					if (formatInfo != null && (formatInfo.toLowerCase().contains("h") || formatInfo.contains("m") || formatInfo.toLowerCase().contains("s"))) {
@@ -160,7 +160,7 @@ public abstract class DataProvider implements Closeable {
 						dataTypes.put(propertyKey, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyKey) == null ? 0 : dataTypes.get(propertyKey).getCharacterByteSize(), currentValue.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
 					}
 				}
-			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && currentType != DbSimpleDataType.Date && Utilities.isBlank(formatInfo)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && currentType != DbSimpleDataType.Date && StringUtilities.isBlank(formatInfo)) {
 				try {
 					DateUtilities.parseLocalDateTime(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()), currentValue.trim());
 					dataTypes.put(propertyKey, new DbColumnType("TIMESTAMP", -1, -1, -1, true, false, null));
@@ -180,7 +180,7 @@ public abstract class DataProvider implements Closeable {
 						}
 					}
 				}
-			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && currentType != DbSimpleDataType.DateTime && Utilities.isBlank(formatInfo)) {
+			} else if (currentType != DbSimpleDataType.String && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Blob && currentType != DbSimpleDataType.Clob && currentType != DbSimpleDataType.DateTime && StringUtilities.isBlank(formatInfo)) {
 				try {
 					DateUtilities.parseLocalDate(DateUtilities.getDateFormatPattern(Locale.getDefault()), currentValue.trim());
 					dataTypes.put(propertyKey, new DbColumnType("DATE", -1, -1, -1, true, false, null));
@@ -218,7 +218,7 @@ public abstract class DataProvider implements Closeable {
 	 */
 	protected InputStream getInputStream() throws Exception {
 		if (isInlineData) {
-			if (Utilities.isBlank(importInlineData)) {
+			if (StringUtilities.isBlank(importInlineData)) {
 				throw new DbImportException("Import inline data is empty");
 			} else {
 				return new ByteArrayInputStream(importInlineData.getBytes(StandardCharsets.UTF_8));
@@ -232,7 +232,7 @@ public abstract class DataProvider implements Closeable {
 				throw new DbImportException("Import file is empty: " + importFile.getAbsolutePath());
 			} else {
 				try {
-					if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".zip")) {
+					if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".zip")) {
 						if (zipPassword != null) {
 							if (Zip4jUtilities.getZipFileEntries(importFile, zipPassword).size() != 1) {
 								throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
@@ -246,19 +246,19 @@ public abstract class DataProvider implements Closeable {
 								inputStream = new CountingInputStream(ZipUtilities.openZipFile(importFile.getAbsolutePath()));
 							}
 						}
-					} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tar.gz")) {
+					} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tar.gz")) {
 						if (TarGzUtilities.getFilesCount(importFile) != 1) {
 							throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(importFile));
 						}
-					} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tgz")) {
+					} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tgz")) {
 						if (TarGzUtilities.getFilesCount(importFile) != 1) {
 							throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFile.getAbsolutePath());
 						} else {
 							inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(importFile));
 						}
-					} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
+					} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
 						inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(importFile)));
 					} else {
 						final InputStreamWithOtherItemsToClose inputStreamWithOtherItemsToClose = new InputStreamWithOtherItemsToClose(new FileInputStream(importFile), importFile.getAbsolutePath());
@@ -289,16 +289,16 @@ public abstract class DataProvider implements Closeable {
 			return "Inline data: true\n";
 		} else {
 			String configurationLogString = "File: " + importFile.getAbsolutePath() + "\n";
-			if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".zip")) {
+			if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".zip")) {
 				configurationLogString += "Compression: zip\n";
 				if (zipPassword != null) {
 					configurationLogString += "ZipPassword: true\n";
 				}
-			} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tar.gz")) {
 				configurationLogString += "Compression: targz\n";
-			} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tgz")) {
 				configurationLogString += "Compression: tgz\n";
-			} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
 				configurationLogString += "Compression: gz\n";
 			}
 			return configurationLogString;
@@ -356,17 +356,17 @@ public abstract class DataProvider implements Closeable {
 		if (isInlineData) {
 			return importInlineData.getBytes(StandardCharsets.UTF_8).length;
 		} else {
-			if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".zip")) {
+			if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".zip")) {
 				if (zipPassword != null) {
 					return Zip4jUtilities.getUncompressedSize(importFile, zipPassword);
 				} else {
 					return ZipUtilities.getDataSizeUncompressed(importFile);
 				}
-			} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tar.gz")) {
 				return TarGzUtilities.getUncompressedSize(importFile);
-			} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".tgz")) {
 				return TarGzUtilities.getUncompressedSize(importFile);
-			} else if (Utilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFile.getAbsolutePath(), ".gz")) {
 				try (InputStream gzStream = new GZIPInputStream(new FileInputStream(importFile))) {
 					return IoUtilities.getStreamSize(gzStream);
 				}

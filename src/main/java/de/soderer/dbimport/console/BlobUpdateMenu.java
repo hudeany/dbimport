@@ -14,6 +14,7 @@ import de.soderer.console.SimpleConsoleInput;
 import de.soderer.dbimport.BlobImportDefinition;
 import de.soderer.dbimport.DbImport;
 import de.soderer.utilities.FileUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
@@ -89,12 +90,12 @@ public class BlobUpdateMenu extends ConsoleMenu {
 					}
 				}
 
-				if (Utilities.isBlank(blobImportDefinition.getHostnameAndPort()) && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.HSQL && blobImportDefinition.getDbVendor() != DbVendor.Derby) {
+				if (StringUtilities.isBlank(blobImportDefinition.getHostnameAndPort()) && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.HSQL && blobImportDefinition.getDbVendor() != DbVendor.Derby) {
 					System.out.println();
 					System.out.println("Please enter database hostname and optional port separated by ':' (No port uses database vendors default port, Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					} else {
@@ -103,12 +104,12 @@ public class BlobUpdateMenu extends ConsoleMenu {
 				}
 
 				if (blobImportDefinition.getDbVendor() == DbVendor.SQLite || blobImportDefinition.getDbVendor() == DbVendor.Derby) {
-					while (Utilities.isBlank(blobImportDefinition.getDbName())) {
+					while (StringUtilities.isBlank(blobImportDefinition.getDbName())) {
 						System.out.println();
 						System.out.println("Please enter database filepath (Blank => Cancel)");
 						String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						choice = choice == null ? "" : choice.trim();
-						if (Utilities.isBlank(choice)) {
+						if (StringUtilities.isBlank(choice)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else if (!FileUtilities.isValidFilePath(choice)) {
@@ -120,12 +121,12 @@ public class BlobUpdateMenu extends ConsoleMenu {
 						}
 					}
 				} else {
-					while (Utilities.isBlank(blobImportDefinition.getDbName())) {
+					while (StringUtilities.isBlank(blobImportDefinition.getDbName())) {
 						System.out.println();
 						System.out.println("Please enter database name (Blank => Cancel)");
 						String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						choice = choice == null ? "" : choice.trim();
-						if (Utilities.isBlank(choice)) {
+						if (StringUtilities.isBlank(choice)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
@@ -134,12 +135,12 @@ public class BlobUpdateMenu extends ConsoleMenu {
 					}
 				}
 
-				if (Utilities.isBlank(blobImportDefinition.getUsername()) && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.Derby) {
+				if (StringUtilities.isBlank(blobImportDefinition.getUsername()) && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.Derby) {
 					System.out.println();
 					System.out.println("Please enter database username (Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						if (blobImportDefinition.getDbVendor() == DbVendor.Cassandra) {
 							blobImportDefinition.setUsername(null);
 						} else {
@@ -151,23 +152,23 @@ public class BlobUpdateMenu extends ConsoleMenu {
 					}
 				}
 
-				if (Utilities.isBlank(blobImportDefinition.getPassword()) && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.HSQL && blobImportDefinition.getDbVendor() != DbVendor.Derby && (blobImportDefinition.getDbVendor() != DbVendor.Cassandra || blobImportDefinition.getUsername() != null)) {
+				if (StringUtilities.isBlank(blobImportDefinition.getPassword()) && blobImportDefinition.getDbVendor() != DbVendor.SQLite && blobImportDefinition.getDbVendor() != DbVendor.HSQL && blobImportDefinition.getDbVendor() != DbVendor.Derby && (blobImportDefinition.getDbVendor() != DbVendor.Cassandra || blobImportDefinition.getUsername() != null)) {
 					System.out.println();
 					System.out.println("Please enter database password (Blank => Cancel)");
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(" > ").readInput();
-					if (Utilities.isBlank(passwordArray)) {
+					if (StringUtilities.isBlank(passwordArray)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					}
 					blobImportDefinition.setPassword(passwordArray);
 				}
 
-				while (Utilities.isBlank(blobImportDefinition.getBlobImportStatement())) {
+				while (StringUtilities.isBlank(blobImportDefinition.getBlobImportStatement())) {
 					System.out.println();
 					System.out.println("Please enter blob import statement (Placeholder for filedata is '?' like in prepared statements, Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					} else {
@@ -175,12 +176,12 @@ public class BlobUpdateMenu extends ConsoleMenu {
 					}
 				}
 
-				while (Utilities.isBlank(blobImportDefinition.getImportFilePath())) {
+				while (StringUtilities.isBlank(blobImportDefinition.getImportFilePath())) {
 					System.out.println();
 					System.out.println("Please enter blob data file path (Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					} else {
@@ -256,7 +257,7 @@ public class BlobUpdateMenu extends ConsoleMenu {
 
 				String choice = new SimpleConsoleInput().withAutoCompletionStrings(autoCompletionStrings).withPrompt(" > ").readInput();
 				choice = choice == null ? "" : choice.trim();
-				if (Utilities.isBlank(choice)) {
+				if (StringUtilities.isBlank(choice)) {
 					if (dbDefinitionCache != null) {
 						dbDefinitionCache.importParameters(blobImportDefinition);
 					}
@@ -282,7 +283,7 @@ public class BlobUpdateMenu extends ConsoleMenu {
 					System.out.println("Please enter database TrustStore filepath (Blank => None)");
 					String choiceTruststore = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choiceTruststore = choiceTruststore == null ? "" : choiceTruststore.trim();
-					if (Utilities.isBlank(choiceTruststore)) {
+					if (StringUtilities.isBlank(choiceTruststore)) {
 						blobImportDefinition.setTrustStoreFile(null);
 					} else if (!FileUtilities.isValidFilePath(choiceTruststore)) {
 						getErrors().add("Not a valid filepath");
@@ -295,7 +296,7 @@ public class BlobUpdateMenu extends ConsoleMenu {
 					System.out.println();
 					System.out.println("Please enter TrustStore password (Blank => Empty)");
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(" > ").readInput();
-					blobImportDefinition.setTrustStorePassword(Utilities.isNotEmpty(passwordArray) ? passwordArray : null);
+					blobImportDefinition.setTrustStorePassword(StringUtilities.isNotEmpty(passwordArray) ? passwordArray : null);
 				} else if ("params".equalsIgnoreCase(choice)) {
 					getParentMenu().getMessages().add("Parameters: " + blobImportDefinition.toParamsString());
 					return 0;

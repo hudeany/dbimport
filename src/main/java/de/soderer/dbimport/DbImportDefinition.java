@@ -22,6 +22,7 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileDataType;
 import de.soderer.utilities.FileType;
 import de.soderer.utilities.FileUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
@@ -1156,11 +1157,11 @@ public class DbImportDefinition extends DbConnectionDefinition {
 
 		// Without explicit data type (detection by file extension) the data type is not known yet, so the check is skipped.
 		// Before, every data path was rejected in this case (e.g. GUI default "by file extension").
-		if (Utilities.isNotEmpty(dataPath) && dataType != null && dataType != DataType.XML && dataType != DataType.JSON && dataType != DataType.YAML && dataType != DataType.EXCEL && dataType != DataType.ODS) {
+		if (StringUtilities.isNotEmpty(dataPath) && dataType != null && dataType != DataType.XML && dataType != DataType.JSON && dataType != DataType.YAML && dataType != DataType.EXCEL && dataType != DataType.ODS) {
 			throw new DbImportException("DataPath is not supported for data format " + dataType);
 		}
 
-		if (Utilities.isNotEmpty(schemaFilePath) && dataType != null && dataType != DataType.XML && dataType != DataType.JSON) {
+		if (StringUtilities.isNotEmpty(schemaFilePath) && dataType != null && dataType != DataType.XML && dataType != DataType.JSON) {
 			throw new DbImportException("SchemaFilePath is not supported for data format " + dataType);
 		}
 
@@ -1394,7 +1395,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 		if (getDbVendor() == DbVendor.HSQL) {
 			// HSQL: hostname only for a server database. A file database path is marked by a path separator, so it is
 			// not taken as hostname when the parameters are read again (see DbImport.isHsqlFileDatabasePath()).
-			if (Utilities.isNotBlank(getHostnameAndPort())) {
+			if (StringUtilities.isNotBlank(getHostnameAndPort())) {
 				params += " " + getHostnameAndPort();
 				params += " " + getDbName();
 			} else {
@@ -1526,10 +1527,10 @@ public class DbImportDefinition extends DbConnectionDefinition {
 		if (!TimeZone.getDefault().getID().equals(getImportDataTimeZone())) {
 			params += " " + "-idtz " + getImportDataTimeZone() + "";
 		}
-		if (Utilities.isNotBlank(getDateFormat())) {
+		if (StringUtilities.isNotBlank(getDateFormat())) {
 			params += " " + "-dateFormat" + " " + getDateFormat();
 		}
-		if (Utilities.isNotBlank(getDateTimeFormat())) {
+		if (StringUtilities.isNotBlank(getDateTimeFormat())) {
 			params += " " + "-dateTimeFormat" + " " + getDateTimeFormat();
 		}
 		if (batchBlockSize != 1000) {

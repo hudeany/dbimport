@@ -26,6 +26,7 @@ import de.soderer.utilities.CountingInputStream;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.SqlScriptReader;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.csv.CsvDataException;
@@ -76,13 +77,13 @@ public class DbSqlWorker extends DbImportWorker {
 			dataPart = "Data: " + importFilePathOrData + "\n";
 		} else {
 			dataPart = "File: " + importFilePathOrData + "\n";
-			if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".zip")) {
+			if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".zip")) {
 				dataPart += "Compressed: zip\n";
-			} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".tar.gz")) {
 				dataPart += "Compressed: targz\n";
-			} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".tgz")) {
 				dataPart += "Compressed: tgz\n";
-			} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".gz")) {
 				dataPart += "Compressed: gz\n";
 			}
 		}
@@ -173,7 +174,7 @@ public class DbSqlWorker extends DbImportWorker {
 					String nextStatement;
 					while ((nextStatement = sqlScriptReader.readNextStatement()) != null) {
 						if (dbDefinition.getDbVendor() == DbVendor.PostgreSQL) {
-							if (Utilities.startsWithCaseinsensitive(nextStatement, "CREATE TABLE ") && nextStatement.contains(" COMMENT ")) {
+							if (StringUtilities.startsWithIgnoreCase(nextStatement, "CREATE TABLE ") && nextStatement.contains(" COMMENT ")) {
 								nextStatement = nextStatement.replaceAll("(?s)[ \\t]+COMMENT[ \\t]*'[^']*(''[^']*)*'", "");
 								logToFile(logOutputStream, "Ignored COMMENT in sql statement for PostgreSQL");
 							}
@@ -259,7 +260,7 @@ public class DbSqlWorker extends DbImportWorker {
 
 			InputStream inputStream = null;
 			try {
-				if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".zip") || ZipUtilities.isZipArchiveFile(new File(importFilePathOrData))) {
+				if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".zip") || ZipUtilities.isZipArchiveFile(new File(importFilePathOrData))) {
 					if (zipPassword != null) {
 						inputStream = Zip4jUtilities.openPasswordSecuredZipFile(importFilePathOrData, zipPassword);
 					} else {
@@ -278,19 +279,19 @@ public class DbSqlWorker extends DbImportWorker {
 							throw new DbImportException("Zipped import file is empty: " + importFilePathOrData + ": " + zipEntry.getName());
 						}
 					}
-				} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".tar.gz")) {
+				} else if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".tar.gz")) {
 					if (TarGzUtilities.getFilesCount(new File(importFilePathOrData)) != 1) {
 						throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFilePathOrData);
 					} else {
 						inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(importFilePathOrData)));
 					}
-				} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".tgz")) {
+				} else if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".tgz")) {
 					if (TarGzUtilities.getFilesCount(new File(importFilePathOrData)) != 1) {
 						throw new DbImportException("Compressed import file does not contain a single compressed file: " + importFilePathOrData);
 					} else {
 						inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(importFilePathOrData)));
 					}
-				} else if (Utilities.endsWithIgnoreCase(importFilePathOrData, ".gz")) {
+				} else if (StringUtilities.endsWithIgnoreCase(importFilePathOrData, ".gz")) {
 					inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(importFilePathOrData)));
 				} else {
 					inputStream = new FileInputStream(new File(importFilePathOrData));

@@ -19,6 +19,7 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbUtilities;
@@ -256,7 +257,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 
 		String additionalInsertValuesSqlColumns = "";
 		String additionalInsertValuesSqlValues = "";
-		if (Utilities.isNotBlank(additionalInsertValuesToUse)) {
+		if (StringUtilities.isNotBlank(additionalInsertValuesToUse)) {
 			for (final String line : Utilities.splitAndTrimListQuoted(additionalInsertValuesToUse, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
@@ -265,7 +266,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 			}
 		}
 
-		final String statementString = "INSERT INTO " + tableName + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbColumnsListToInsert) + ") VALUES (" + additionalInsertValuesSqlValues + Utilities.repeat("?", dbColumnsListToInsert.size(), ", ") + ")";
+		final String statementString = "INSERT INTO " + tableName + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbColumnsListToInsert) + ") VALUES (" + additionalInsertValuesSqlValues + StringUtilities.repeat("?", dbColumnsListToInsert.size(), ", ") + ")";
 
 		try (PreparedStatement preparedInsertStatement = connection.prepareStatement(statementString)) {
 
@@ -367,7 +368,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 		final String detectStatementString = "SELECT COUNT(*) FROM " + tableName + " WHERE " + keyColumnsWherePart;
 
 		String additionalUpdateValuesSqlPart = "";
-		if (Utilities.isNotBlank(additionalUpdateValues)) {
+		if (StringUtilities.isNotBlank(additionalUpdateValues)) {
 			for (final String line : Utilities.splitAndTrimListQuoted(additionalUpdateValues, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
@@ -389,7 +390,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 
 		String additionalInsertValuesSqlColumns = "";
 		String additionalInsertValuesSqlValues = "";
-		if (Utilities.isNotBlank(additionalInsertValues)) {
+		if (StringUtilities.isNotBlank(additionalInsertValues)) {
 			for (final String line : Utilities.splitAndTrimListQuoted(additionalInsertValues, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
@@ -398,7 +399,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 			}
 		}
 
-		final String insertStatementString = "INSERT INTO " + tableName + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbColumnsListToUpdateAndInsert) + ") VALUES (" + additionalInsertValuesSqlValues + Utilities.repeat("?", dbColumnsListToUpdateAndInsert.size(), ", ") + ")";
+		final String insertStatementString = "INSERT INTO " + tableName + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbColumnsListToUpdateAndInsert) + ") VALUES (" + additionalInsertValuesSqlValues + StringUtilities.repeat("?", dbColumnsListToUpdateAndInsert.size(), ", ") + ")";
 
 		try (PreparedStatement preparedDetectStatement = connection.prepareStatement(detectStatementString);
 				PreparedStatement preparedUpdateStatement = connection.prepareStatement(updateStatementString);

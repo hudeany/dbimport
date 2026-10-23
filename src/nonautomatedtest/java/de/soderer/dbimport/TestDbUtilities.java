@@ -21,6 +21,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import de.soderer.utilities.IoUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.csv.CsvFormat;
 import de.soderer.utilities.csv.CsvWriter;
@@ -53,7 +54,7 @@ public class TestDbUtilities {
 	public static String readoutTable(final Connection connection, final String tableName, final char separator, final Character stringQuote) throws Exception {
 		if (connection == null) {
 			throw new Exception("Invalid empty connection for getColumnNames");
-		} else if (Utilities.isBlank(tableName)) {
+		} else if (StringUtilities.isBlank(tableName)) {
 			throw new Exception("Invalid empty tableName for getColumnNames");
 		} else {
 			final DbVendor dbVendor = DbUtilities.getDbVendor(connection);

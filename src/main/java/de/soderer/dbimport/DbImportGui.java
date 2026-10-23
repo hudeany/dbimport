@@ -60,6 +60,7 @@ import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.VersionInfo;
 import de.soderer.utilities.db.DbUtilities;
@@ -438,14 +439,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
 				try {
-					if (Utilities.isBlank((trustStoreFilePathField.getText()))) {
+					if (StringUtilities.isBlank((trustStoreFilePathField.getText()))) {
 						final File trustStoreFile = selectFile(trustStoreFilePathField.getText(), LangResources.get("trustStoreFile"));
 						if (trustStoreFile != null) {
 							trustStoreFilePathField.setText(trustStoreFile.getAbsolutePath());
 						}
 					}
 
-					if (Utilities.isNotBlank((trustStoreFilePathField.getText()))) {
+					if (StringUtilities.isNotBlank((trustStoreFilePathField.getText()))) {
 						if (new File(trustStoreFilePathField.getText()).exists()) {
 							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File already exists: '" + trustStoreFilePathField.getText() + "'").withBackgroundColor(SwingColor.LightRed).open();
 						} else {
@@ -631,14 +632,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
 				try {
-					if (Utilities.isBlank((structureFilePathField.getText()))) {
+					if (StringUtilities.isBlank((structureFilePathField.getText()))) {
 						final File structureFile = selectFile(structureFilePathField.getText(), LangResources.get("createCompleteStructure"));
 						if (structureFile != null) {
 							structureFilePathField.setText(structureFile.getAbsolutePath());
 						}
 					}
 
-					if (Utilities.isNotBlank((structureFilePathField.getText()))) {
+					if (StringUtilities.isNotBlank((structureFilePathField.getText()))) {
 						if (!new File(structureFilePathField.getText()).exists()) {
 							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File does not exist: '" + structureFilePathField.getText() + "'").withBackgroundColor(SwingColor.LightRed).open();
 						} else {
@@ -1177,9 +1178,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 	 * @throws Exception if the import file or table name is missing, or the data or table cannot be read
 	 */
 	protected void createMapping(final DbImportDefinition configurationAsDefinition, final DbImportGui dbImportGui) throws Exception {
-		if (Utilities.isBlank(importFilePathOrDataField.getText())) {
+		if (StringUtilities.isBlank(importFilePathOrDataField.getText())) {
 			throw new DbImportException("ImportFilePath is needed for mapping");
-		} else if (Utilities.isBlank(tableNameField.getText())) {
+		} else if (StringUtilities.isBlank(tableNameField.getText())) {
 			throw new DbImportException("TableName is needed for mapping");
 		}
 
@@ -1189,7 +1190,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 				columnTypes = DbUtilities.getColumnDataTypes(connection, configurationAsDefinition.getTableName());
 				final List<String> keyColumns = new ArrayList<>(DbUtilities.getPrimaryKeyColumns(connection, configurationAsDefinition.getTableName()));
 				Collections.sort(keyColumns);
-				if (Utilities.isBlank(keyColumnsField.getText())) {
+				if (StringUtilities.isBlank(keyColumnsField.getText())) {
 					keyColumnsField.setText(Utilities.join(keyColumns, ", "));
 				}
 			} else if (!configurationAsDefinition.isCreateTable()) {
@@ -1253,7 +1254,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setUsername(userField.isEnabled() ? userField.getText() : null);
 		dbImportDefinition.setPassword(passwordField.isEnabled() ? passwordField.getPassword() : null);
 		dbImportDefinition.setSecureConnection(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
-		dbImportDefinition.setTrustStoreFile(trustStoreFilePathField.isEnabled() && Utilities.isNotBlank(trustStoreFilePathField.getText()) ? new File(trustStoreFilePathField.getText()) : null);
+		dbImportDefinition.setTrustStoreFile(trustStoreFilePathField.isEnabled() && StringUtilities.isNotBlank(trustStoreFilePathField.getText()) ? new File(trustStoreFilePathField.getText()) : null);
 		// Was missing, so a password protected TrustStore could not be used from the GUI
 		dbImportDefinition.setTrustStorePassword(trustStorePasswordField.isEnabled() && trustStorePasswordField.getPassword().length > 0 ? trustStorePasswordField.getPassword() : null);
 		dbImportDefinition.setTableName(tableNameField.getText());
@@ -1266,7 +1267,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setLog(fileLogBox.isSelected());
 		dbImportDefinition.setEncoding(Charset.forName(encodingCombo.getText()));
 		dbImportDefinition.setSeparator(separatorCombo.getText().charAt(0));
-		dbImportDefinition.setStringQuote(Utilities.isNotEmpty(stringQuoteCombo.getText()) ? stringQuoteCombo.getText().charAt(0) : null);
+		dbImportDefinition.setStringQuote(StringUtilities.isNotEmpty(stringQuoteCombo.getText()) ? stringQuoteCombo.getText().charAt(0) : null);
 		dbImportDefinition.setEscapeStringQuote(escapeStringQuoteCombo.getText().charAt(0));
 		dbImportDefinition.setInterpretEscapeSequences(interpretEscapeSequencesBox.isSelected());
 		dbImportDefinition.setNoHeaders(noHeadersBox.isSelected());
@@ -1284,8 +1285,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setCreateTable(createTableBox.isSelected());
 		dbImportDefinition.setStructureFilePath(structureFilePathField.getText());
 		// The data path field was never read, so a data path (XPath, JSON path, sheet name) entered in the GUI was ignored
-		dbImportDefinition.setDataPath(dataPathField.isEnabled() && Utilities.isNotBlank(dataPathField.getText()) ? dataPathField.getText().trim() : null);
-		if (schemaFilePathField.isEnabled() && Utilities.isNotBlank(schemaFilePathField.getText())) {
+		dbImportDefinition.setDataPath(dataPathField.isEnabled() && StringUtilities.isNotBlank(dataPathField.getText()) ? dataPathField.getText().trim() : null);
+		if (schemaFilePathField.isEnabled() && StringUtilities.isNotBlank(schemaFilePathField.getText())) {
 			dbImportDefinition.setSchemaFilePath(schemaFilePathField.getText());
 		}
 		dbImportDefinition.setMapping(mappingField.getText());
@@ -1294,20 +1295,20 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbImportDefinition.setTrimData(trimDataBox.isSelected());
 		dbImportDefinition.setLogErroneousData(logErroneousDataBox.isSelected());
 		// null stands for no usage of zip password, but GUI field text is always not null, so use empty field as deactivation of zip password
-		dbImportDefinition.setZipPassword(Utilities.isEmpty(zipPasswordField.getPassword()) ? null : zipPasswordField.getPassword());
+		dbImportDefinition.setZipPassword(StringUtilities.isEmpty(zipPasswordField.getPassword()) ? null : zipPasswordField.getPassword());
 		dbImportDefinition.setKdbxPassword(kdbxPasswordField.getPassword());
 		dbImportDefinition.setDatabaseTimeZone(getRequiredSelectedItem(databaseTimezoneCombo, "databaseTimezone"));
 		dbImportDefinition.setImportDataTimeZone(getRequiredSelectedItem(importDataTimezoneCombo, "importDataTimezone"));
 
-		if (Utilities.isNotBlank(importDateFormatField.getText()) && importDateFormatField.isEnabled()) {
+		if (StringUtilities.isNotBlank(importDateFormatField.getText()) && importDateFormatField.isEnabled()) {
 			dbImportDefinition.setDateFormat(importDateFormatField.getText());
 		}
 
-		if (Utilities.isNotBlank(importDateTimeFormatField.getText()) && importDateTimeFormatField.isEnabled()) {
+		if (StringUtilities.isNotBlank(importDateTimeFormatField.getText()) && importDateTimeFormatField.isEnabled()) {
 			dbImportDefinition.setDateTimeFormat(importDateTimeFormatField.getText());
 		}
 
-		if (Utilities.isNotBlank(batchBlockSizeField.getText()) && batchBlockSizeField.isEnabled()) {
+		if (StringUtilities.isNotBlank(batchBlockSizeField.getText()) && batchBlockSizeField.isEnabled()) {
 			try {
 				dbImportDefinition.setBatchBlockSize(Integer.parseInt(batchBlockSizeField.getText()));
 			} catch (@SuppressWarnings("unused") final NumberFormatException e) {
@@ -1508,7 +1509,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 			createTrustStoreFileButton.setEnabled(false);
 			trustStorePasswordField.setEnabled(false);
 
-			connectionCheckButton.setEnabled(Utilities.isNotBlank(dbNameField.getText()));
+			connectionCheckButton.setEnabled(StringUtilities.isNotBlank(dbNameField.getText()));
 		} else {
 			hostField.setEnabled(true);
 			userField.setEnabled(true);
@@ -1521,14 +1522,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 			trustStoreFilePathField.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
 			trustStoreFileButton.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected());
 			createTrustStoreFileButton.setEnabled(DbVendor.Oracle.toString().equalsIgnoreCase(selectedDbType)
-					&& secureConnectionBox.isEnabled() && secureConnectionBox.isSelected() && Utilities.isNotBlank(hostField.getText()));
-			trustStorePasswordField.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected() && Utilities.isNotBlank(trustStoreFilePathField.getText()));
+					&& secureConnectionBox.isEnabled() && secureConnectionBox.isSelected() && StringUtilities.isNotBlank(hostField.getText()));
+			trustStorePasswordField.setEnabled(secureConnectionBox.isEnabled() && secureConnectionBox.isSelected() && StringUtilities.isNotBlank(trustStoreFilePathField.getText()));
 
 			connectionCheckButton.setEnabled(
-					Utilities.isNotBlank(dbNameField.getText())
-					&& Utilities.isNotBlank(hostField.getText())
-					&& Utilities.isNotBlank(userField.getText()) || DbVendor.Cassandra.toString().equalsIgnoreCase(selectedDbType)
-					&& Utilities.isNotBlank(passwordField.getPassword()));
+					StringUtilities.isNotBlank(dbNameField.getText())
+					&& StringUtilities.isNotBlank(hostField.getText())
+					&& StringUtilities.isNotBlank(userField.getText()) || DbVendor.Cassandra.toString().equalsIgnoreCase(selectedDbType)
+					&& StringUtilities.isNotBlank(passwordField.getPassword()));
 		}
 
 		DataType dataType;
@@ -1838,7 +1839,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		}
 		additionalUpdateValuesField.setBackground(additionalUpdateValuesField.isEnabled() ? Color.WHITE : Color.LIGHT_GRAY);
 
-		createCompleteStructureFileButton.setEnabled(Utilities.isNotBlank(structureFilePathField.getText()));
+		createCompleteStructureFileButton.setEnabled(StringUtilities.isNotBlank(structureFilePathField.getText()));
 	}
 
 	/**
@@ -1963,7 +1964,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	}
 
 	private File selectFile(String basePath, final String text) {
-		if (Utilities.isBlank(basePath)) {
+		if (StringUtilities.isBlank(basePath)) {
 			basePath = System.getProperty("user.home");
 		} else if (basePath.contains(File.separator)) {
 			basePath = basePath.substring(0, basePath.lastIndexOf(File.separator));

@@ -22,6 +22,7 @@ import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.NumberUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbVendor;
 
@@ -93,12 +94,12 @@ public class ImportMenu extends ConsoleMenu {
 					}
 				}
 
-				if (Utilities.isBlank(dbImportDefinition.getHostnameAndPort()) && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.HSQL && dbImportDefinition.getDbVendor() != DbVendor.Derby) {
+				if (StringUtilities.isBlank(dbImportDefinition.getHostnameAndPort()) && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.HSQL && dbImportDefinition.getDbVendor() != DbVendor.Derby) {
 					System.out.println();
 					System.out.println("Please enter database hostname and optional port separated by ':' (No port uses database vendors default port, Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					} else {
@@ -107,12 +108,12 @@ public class ImportMenu extends ConsoleMenu {
 				}
 
 				if (dbImportDefinition.getDbVendor() == DbVendor.SQLite || dbImportDefinition.getDbVendor() == DbVendor.Derby) {
-					while (Utilities.isBlank(dbImportDefinition.getDbName())) {
+					while (StringUtilities.isBlank(dbImportDefinition.getDbName())) {
 						System.out.println();
 						System.out.println("Please enter database filepath (Blank => Cancel)");
 						String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						choice = choice == null ? "" : choice.trim();
-						if (Utilities.isBlank(choice)) {
+						if (StringUtilities.isBlank(choice)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else if (!FileUtilities.isValidFilePath(choice)) {
@@ -124,12 +125,12 @@ public class ImportMenu extends ConsoleMenu {
 						}
 					}
 				} else {
-					while (Utilities.isBlank(dbImportDefinition.getDbName())) {
+					while (StringUtilities.isBlank(dbImportDefinition.getDbName())) {
 						System.out.println();
 						System.out.println("Please enter database name (Blank => Cancel)");
 						String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						choice = choice == null ? "" : choice.trim();
-						if (Utilities.isBlank(choice)) {
+						if (StringUtilities.isBlank(choice)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
@@ -138,12 +139,12 @@ public class ImportMenu extends ConsoleMenu {
 					}
 				}
 
-				if (Utilities.isBlank(dbImportDefinition.getUsername()) && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.Derby) {
+				if (StringUtilities.isBlank(dbImportDefinition.getUsername()) && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.Derby) {
 					System.out.println();
 					System.out.println("Please enter database username (Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						if (dbImportDefinition.getDbVendor() == DbVendor.Cassandra) {
 							dbImportDefinition.setUsername(null);
 						} else {
@@ -155,12 +156,12 @@ public class ImportMenu extends ConsoleMenu {
 					}
 				}
 
-				while (Utilities.isBlank(dbImportDefinition.getTableName())) {
+				while (StringUtilities.isBlank(dbImportDefinition.getTableName())) {
 					System.out.println();
 					System.out.println("Please enter import destination table (Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					} else {
@@ -168,23 +169,23 @@ public class ImportMenu extends ConsoleMenu {
 					}
 				}
 
-				if (Utilities.isBlank(dbImportDefinition.getPassword()) && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.HSQL && dbImportDefinition.getDbVendor() != DbVendor.Derby && (dbImportDefinition.getDbVendor() != DbVendor.Cassandra || dbImportDefinition.getUsername() != null)) {
+				if (StringUtilities.isBlank(dbImportDefinition.getPassword()) && dbImportDefinition.getDbVendor() != DbVendor.SQLite && dbImportDefinition.getDbVendor() != DbVendor.HSQL && dbImportDefinition.getDbVendor() != DbVendor.Derby && (dbImportDefinition.getDbVendor() != DbVendor.Cassandra || dbImportDefinition.getUsername() != null)) {
 					System.out.println();
 					System.out.println("Please enter database password (Blank => Cancel)");
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(" > ").readInput();
-					if (Utilities.isBlank(passwordArray)) {
+					if (StringUtilities.isBlank(passwordArray)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					}
 					dbImportDefinition.setPassword(passwordArray);
 				}
 
-				while (Utilities.isBlank(dbImportDefinition.getTableName())) {
+				while (StringUtilities.isBlank(dbImportDefinition.getTableName())) {
 					System.out.println();
 					System.out.println("Please enter import destination table (Blank => Cancel)");
 					String choiceTable = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choiceTable = choiceTable == null ? "" : choiceTable.trim();
-					if (Utilities.isBlank(choiceTable)) {
+					if (StringUtilities.isBlank(choiceTable)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					} else {
@@ -192,12 +193,12 @@ public class ImportMenu extends ConsoleMenu {
 					}
 				}
 
-				while (Utilities.isBlank(dbImportDefinition.getImportFilePathOrData())) {
+				while (StringUtilities.isBlank(dbImportDefinition.getImportFilePathOrData())) {
 					System.out.println();
 					System.out.println("Please enter import filepath or data (Blank => Cancel)");
 					String choice = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choice = choice == null ? "" : choice.trim();
-					if (Utilities.isBlank(choice)) {
+					if (StringUtilities.isBlank(choice)) {
 						getParentMenu().getMessages().add("Canceled by user");
 						return 0;
 					} else {
@@ -328,9 +329,9 @@ public class ImportMenu extends ConsoleMenu {
 
 				System.out.println("  " + Utilities.rightPad("k)", bulletSize) + " " + Utilities.rightPad("Keycolumns:", nameSize) + (dbImportDefinition.getKeycolumns() == null || dbImportDefinition.getKeycolumns().isEmpty() ? "<empty>" : Utilities.join(dbImportDefinition.getKeycolumns(), ", ")));
 				autoCompletionStrings.add("k");
-				System.out.println("  " + Utilities.rightPad("insvalues)", bulletSize) + " " + Utilities.rightPad("Additional insert values:", nameSize) + (Utilities.isBlank(dbImportDefinition.getAdditionalInsertValues()) ? "<empty>" : dbImportDefinition.getAdditionalInsertValues()));
+				System.out.println("  " + Utilities.rightPad("insvalues)", bulletSize) + " " + Utilities.rightPad("Additional insert values:", nameSize) + (StringUtilities.isBlank(dbImportDefinition.getAdditionalInsertValues()) ? "<empty>" : dbImportDefinition.getAdditionalInsertValues()));
 				autoCompletionStrings.add("insvalues");
-				System.out.println("  " + Utilities.rightPad("updvalues)", bulletSize) + " " + Utilities.rightPad("Additional update values:", nameSize) + (Utilities.isBlank(dbImportDefinition.getAdditionalUpdateValues()) ? "<empty>" : dbImportDefinition.getAdditionalUpdateValues()));
+				System.out.println("  " + Utilities.rightPad("updvalues)", bulletSize) + " " + Utilities.rightPad("Additional update values:", nameSize) + (StringUtilities.isBlank(dbImportDefinition.getAdditionalUpdateValues()) ? "<empty>" : dbImportDefinition.getAdditionalUpdateValues()));
 				autoCompletionStrings.add("updvalues");
 
 				System.out.println("  " + Utilities.rightPad("create)", bulletSize) + " " + Utilities.rightPad("Scan data and create suitable table:", nameSize) + dbImportDefinition.isCreateTable());
@@ -339,7 +340,7 @@ public class ImportMenu extends ConsoleMenu {
 				autoCompletionStrings.add("structure");
 				System.out.println("  " + Utilities.rightPad("logerrors)", bulletSize) + " " + Utilities.rightPad("Log error data items in file:", nameSize) + dbImportDefinition.isLogErroneousData());
 				autoCompletionStrings.add("logerrors");
-				if (Utilities.endsWithIgnoreCase(dbImportDefinition.getImportFilePathOrData(), ".zip")) {
+				if (StringUtilities.endsWithIgnoreCase(dbImportDefinition.getImportFilePathOrData(), ".zip")) {
 					System.out.println("  " + Utilities.rightPad("zippassword)", bulletSize) + " " + Utilities.rightPad("Zip file password:", nameSize) + (dbImportDefinition.getZipPassword() == null ? "<empty>" : "***"));
 					autoCompletionStrings.add("zippassword");
 				}
@@ -367,7 +368,7 @@ public class ImportMenu extends ConsoleMenu {
 
 				String choice = new SimpleConsoleInput().withAutoCompletionStrings(autoCompletionStrings).withPresetContent("start").withPrompt(" > ").readInput();
 				choice = choice == null ? "" : choice.trim();
-				if (Utilities.isBlank(choice)) {
+				if (StringUtilities.isBlank(choice)) {
 					getParentMenu().getMessages().add("Canceled by user");
 					return 0;
 				} else if ("reset".equalsIgnoreCase(choice)) {
@@ -388,7 +389,7 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println("Please enter database TrustStore filepath (Blank => None)");
 					String choiceTruststore = new SimpleConsoleInput().withPrompt(" > ").readInput();
 					choiceTruststore = choiceTruststore == null ? "" : choiceTruststore.trim();
-					if (Utilities.isBlank(choiceTruststore)) {
+					if (StringUtilities.isBlank(choiceTruststore)) {
 						dbImportDefinition.setTrustStoreFile(null);
 					} else if (!FileUtilities.isValidFilePath(choiceTruststore)) {
 						getErrors().add("Not a valid filepath");
@@ -401,7 +402,7 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println();
 					System.out.println("Please enter TrustStore password (Blank => Empty)");
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(" > ").readInput();
-					dbImportDefinition.setTrustStorePassword(Utilities.isNotEmpty(passwordArray) ? passwordArray : null);
+					dbImportDefinition.setTrustStorePassword(StringUtilities.isNotEmpty(passwordArray) ? passwordArray : null);
 				} else if ("data".equalsIgnoreCase(choice)) {
 					dbImportDefinition.setInlineData(!dbImportDefinition.isInlineData());
 				} else if ("x".equalsIgnoreCase(choice)) {
@@ -427,24 +428,24 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println();
 					System.out.println("Please enter schema file path");
 					final String schemaFilePath = new FilepathConsoleInput().withPrompt(" > ").readInput();
-					dbImportDefinition.setSchemaFilePath(Utilities.isBlank(schemaFilePath) ? null : schemaFilePath);
+					dbImportDefinition.setSchemaFilePath(StringUtilities.isBlank(schemaFilePath) ? null : schemaFilePath);
 				} else if ("m".equalsIgnoreCase(choice)) {
 					System.out.println();
 					System.out.println("Please enter column mappings");
 					final String mappings = new SimpleConsoleInput().withPrompt(" > ").readInput();
-					dbImportDefinition.setMapping(Utilities.isBlank(mappings) ? null : mappings);
+					dbImportDefinition.setMapping(StringUtilities.isBlank(mappings) ? null : mappings);
 				} else if ("mf".equalsIgnoreCase(choice)) {
 					System.out.println();
 					System.out.println("Please enter mapping file path");
 					final String mappingFilePath = new FilepathConsoleInput().withPrompt(" > ").readInput();
-					if (Utilities.isNotBlank(mappingFilePath)) {
+					if (StringUtilities.isNotBlank(mappingFilePath)) {
 						// Reported as error message, an exception would end the whole program (see catch block below)
 						if (!new File(mappingFilePath).exists()) {
 							getErrors().add("Mapping file does not exist");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getMapping())) {
+						} else if (StringUtilities.isNotBlank(dbImportDefinition.getMapping())) {
 							getErrors().add("Mapping is already defined");
 						} else {
-							dbImportDefinition.setMapping(new String(Utilities.readFileToByteArray(new File(mappingFilePath)), StandardCharsets.UTF_8));
+							dbImportDefinition.setMapping(new String(FileUtilities.readFileToByteArray(new File(mappingFilePath)), StandardCharsets.UTF_8));
 						}
 					}
 				} else if ("n".equalsIgnoreCase(choice)) {
@@ -462,7 +463,7 @@ public class ImportMenu extends ConsoleMenu {
 						System.out.println("Please enter output encoding");
 						String encodingString = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						encodingString = encodingString == null ? "" : encodingString.trim();
-						if (Utilities.isBlank(encodingString)) {
+						if (StringUtilities.isBlank(encodingString)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
@@ -573,7 +574,7 @@ public class ImportMenu extends ConsoleMenu {
 					System.out.println();
 					System.out.println("Please enter structure file path");
 					final String structureFilePath = new FilepathConsoleInput().withPrompt(" > ").readInput();
-					dbImportDefinition.setStructureFilePath(Utilities.isBlank(structureFilePath) ? null : structureFilePath);
+					dbImportDefinition.setStructureFilePath(StringUtilities.isBlank(structureFilePath) ? null : structureFilePath);
 				} else if ("logerrors".equalsIgnoreCase(choice)) {
 					dbImportDefinition.setLogErroneousData(!dbImportDefinition.isLogErroneousData());
 				} else if ("zippassword".equalsIgnoreCase(choice)) {
@@ -592,7 +593,7 @@ public class ImportMenu extends ConsoleMenu {
 						System.out.println("Please enter database timezone");
 						String dbtzString = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						dbtzString = dbtzString == null ? "" : dbtzString.trim();
-						if (Utilities.isBlank(dbtzString)) {
+						if (StringUtilities.isBlank(dbtzString)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
@@ -611,7 +612,7 @@ public class ImportMenu extends ConsoleMenu {
 						System.out.println("Please enter import data timezone");
 						String idtzString = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						idtzString = idtzString == null ? "" : idtzString.trim();
-						if (Utilities.isBlank(idtzString)) {
+						if (StringUtilities.isBlank(idtzString)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {
@@ -630,7 +631,7 @@ public class ImportMenu extends ConsoleMenu {
 						System.out.println("Please enter Batchblocksize");
 						String batchblocksizeString = new SimpleConsoleInput().withPrompt(" > ").readInput();
 						batchblocksizeString = batchblocksizeString == null ? "" : batchblocksizeString.trim();
-						if (Utilities.isBlank(batchblocksizeString)) {
+						if (StringUtilities.isBlank(batchblocksizeString)) {
 							getParentMenu().getMessages().add("Canceled by user");
 							return 0;
 						} else {

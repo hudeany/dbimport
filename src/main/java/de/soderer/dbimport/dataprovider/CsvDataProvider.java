@@ -14,6 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import de.soderer.dbimport.DbImportException;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.csv.CsvDataException;
@@ -255,19 +256,19 @@ public class CsvDataProvider extends DataProvider {
 			openReader();
 
 			File filteredDataFile;
-			if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".zip")) {
+			if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".zip")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".csv.zip");
 				outputStream = ZipUtilities.openNewZipOutputStream(filteredDataFile, null);
 				((ZipOutputStream) outputStream).putNextEntry(new ZipEntry(new File(getImportFilePath() + "." + fileSuffix + ".csv").getName()));
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".csv.tar.gz");
 				tempFile = File.createTempFile(new File(getImportFilePath()).getName(), fileSuffix);
 				outputStream = new FileOutputStream(tempFile);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".csv.tgz");
 				tempFile = File.createTempFile(new File(getImportFilePath()).getName(), fileSuffix);
 				outputStream = new FileOutputStream(tempFile);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".gz")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".csv.gz");
 				outputStream = new GZIPOutputStream(new FileOutputStream(filteredDataFile));
 			} else {
@@ -288,11 +289,11 @@ public class CsvDataProvider extends DataProvider {
 				}
 			}
 
-			if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".zip") && zipPassword != null) {
+			if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".zip") && zipPassword != null) {
 				Zip4jUtilities.createPasswordSecuredZipFile(filteredDataFile.getAbsolutePath(), zipPassword, false);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
 				TarGzUtilities.compress(filteredDataFile, tempFile, new File(getImportFilePath()).getName() + "." + fileSuffix);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
 				TarGzUtilities.compress(filteredDataFile, tempFile, new File(getImportFilePath()).getName() + "." + fileSuffix);
 			}
 

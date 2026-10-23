@@ -13,6 +13,7 @@ import de.soderer.json.JsonNode;
 import de.soderer.json.JsonObject;
 import de.soderer.json.JsonReader;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
@@ -75,7 +76,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 		Connection connection = null;
 		boolean previousAutoCommit = false;
 		try (JsonReader jsonReader = new JsonReader(jsonStructureDataInputStream)) {
-			if (dbDefinition.getDbVendor() == DbVendor.Derby || (dbDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(dbDefinition.getHostnameAndPort())) || dbDefinition.getDbVendor() == DbVendor.SQLite) {
+			if (dbDefinition.getDbVendor() == DbVendor.Derby || (dbDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(dbDefinition.getHostnameAndPort())) || dbDefinition.getDbVendor() == DbVendor.SQLite) {
 				try {
 					connection = DbUtilities.createConnection(dbDefinition, true);
 				} catch (@SuppressWarnings("unused") final DbNotExistsException e) {

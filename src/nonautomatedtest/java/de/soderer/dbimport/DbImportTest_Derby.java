@@ -41,7 +41,7 @@ public class DbImportTest_Derby {
 	@BeforeAll
 	public static void setupTestClass() throws Exception {
 		if (new File(DERBY_DB_PATH).exists()) {
-			Utilities.delete(new File(DERBY_DB_PATH));
+			FileUtilities.delete(new File(DERBY_DB_PATH));
 		}
 
 		try (Connection connection = DbUtilities.createNewDatabase(DbVendor.Derby, DERBY_DB_PATH)) {

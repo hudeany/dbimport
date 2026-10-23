@@ -46,6 +46,7 @@ import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.NumberUtilities;
 import de.soderer.utilities.ParameterException;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
 import de.soderer.utilities.db.DbUtilities;
@@ -273,7 +274,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter for import format");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for import format");
 						} else {
 							dbImportDefinition.setDataType(DataType.getFromString(arguments[i]));
@@ -291,9 +292,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter for mapping");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for mapping");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getMapping())) {
+						} else if (StringUtilities.isNotBlank(dbImportDefinition.getMapping())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Mapping is already defined");
 						} else {
 							dbImportDefinition.setMapping(arguments[i]);
@@ -303,14 +304,14 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter for mapping file");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for mapping file");
 						} else if (!new File(arguments[i]).exists()) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Mapping file does not exist");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getMapping())) {
+						} else if (StringUtilities.isNotBlank(dbImportDefinition.getMapping())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Mapping is already defined");
 						} else {
-							dbImportDefinition.setMapping(new String(Utilities.readFileToByteArray(new File(arguments[i])), StandardCharsets.UTF_8));
+							dbImportDefinition.setMapping(new String(FileUtilities.readFileToByteArray(new File(arguments[i])), StandardCharsets.UTF_8));
 						}
 						wasAllowedParam = true;
 					} else if ("-l".equalsIgnoreCase(arguments[i])) {
@@ -323,7 +324,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter encoding");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter encoding");
 						} else {
 							dbImportDefinition.setEncoding(Charset.forName(arguments[i]));
@@ -333,7 +334,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter separator character");
-						} else if (Utilities.isBlank(arguments[i]) || arguments[i].length() != 1) {
+						} else if (StringUtilities.isBlank(arguments[i]) || arguments[i].length() != 1) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter separator character");
 						} else {
 							dbImportDefinition.setSeparator(arguments[i].charAt(0));
@@ -345,7 +346,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 							throw new ParameterException(arguments[i - 1], "Missing parameter stringquote character");
 						} else if ("null".equalsIgnoreCase(arguments[i]) || "none".equalsIgnoreCase(arguments[i])) {
 							dbImportDefinition.setStringQuote(null);
-						} else if (Utilities.isBlank(arguments[i]) || arguments[i].length() != 1) {
+						} else if (StringUtilities.isBlank(arguments[i]) || arguments[i].length() != 1) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter stringquote character (use 'null' or 'none' for empty)");
 						} else {
 							dbImportDefinition.setStringQuote(arguments[i].charAt(0));
@@ -355,7 +356,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter stringquote escape character");
-						} else if (Utilities.isBlank(arguments[i]) || arguments[i].length() != 1) {
+						} else if (StringUtilities.isBlank(arguments[i]) || arguments[i].length() != 1) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter stringquote escape character");
 						} else {
 							dbImportDefinition.setEscapeStringQuote(arguments[i].charAt(0));
@@ -377,7 +378,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter importmode");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter importmode");
 						} else {
 							dbImportDefinition.setImportMode(ImportMode.getFromString(arguments[i]));
@@ -387,7 +388,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter duplicatemode");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter duplicatemode");
 						} else {
 							dbImportDefinition.setDuplicateMode(DuplicateMode.getFromString(arguments[i]));
@@ -400,7 +401,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter keycolumnslist");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter keycolumnslist");
 						} else {
 							dbImportDefinition.setKeycolumns(Utilities.splitAndTrimList(arguments[i]));
@@ -410,7 +411,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter valueslist");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter valueslist");
 						} else {
 							dbImportDefinition.setAdditionalInsertValues(arguments[i]);
@@ -420,7 +421,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter valueslist");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter valueslist");
 						} else {
 							dbImportDefinition.setAdditionalUpdateValues(arguments[i]);
@@ -433,11 +434,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter for structure file path");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for structure file path");
 						} else if (!new File(arguments[i]).exists()) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Structure file file does not exist");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getStructureFilePath())) {
+						} else if (StringUtilities.isNotBlank(dbImportDefinition.getStructureFilePath())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Structure file path is already defined");
 						} else {
 							dbImportDefinition.setStructureFilePath(arguments[i]);
@@ -468,9 +469,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter for data path");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for data path");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getDataPath())) {
+						} else if (StringUtilities.isNotBlank(dbImportDefinition.getDataPath())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Data path is already defined");
 						} else {
 							dbImportDefinition.setDataPath(arguments[i]);
@@ -480,11 +481,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter for schema file path");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for schema file path");
 						} else if (!new File(arguments[i]).exists()) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Schema file file does not exist");
-						} else if (Utilities.isNotBlank(dbImportDefinition.getSchemaFilePath())) {
+						} else if (StringUtilities.isNotBlank(dbImportDefinition.getSchemaFilePath())) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Schema file path is already defined");
 						} else {
 							dbImportDefinition.setSchemaFilePath(arguments[i]);
@@ -535,7 +536,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter dateFormat");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter dateFormat");
 						} else {
 							dbImportDefinition.setDateFormat(arguments[i]);
@@ -545,7 +546,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter dateTimeFormat");
-						} else if (Utilities.isBlank(arguments[i])) {
+						} else if (StringUtilities.isBlank(arguments[i])) {
 							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter dateTimeFormat");
 						} else {
 							dbImportDefinition.setDateTimeFormat(arguments[i]);
@@ -583,7 +584,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing value for parameter truststorepassword");
 						} else {
-							dbImportDefinition.setTrustStorePassword(Utilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
+							dbImportDefinition.setTrustStorePassword(StringUtilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
 						}
 						wasAllowedParam = true;
 					} else if ("-batchblocksize".equalsIgnoreCase(arguments[i])) {
@@ -665,7 +666,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing value for parameter truststorepassword");
 						} else {
-							blobImportDefinition.setTrustStorePassword(Utilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
+							blobImportDefinition.setTrustStorePassword(StringUtilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
 						}
 						wasAllowedParam = true;
 					} else if (!(openMenu && isConnectionTestFlag)) {
@@ -737,7 +738,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing value for parameter truststorepassword");
 						} else {
-							connectionTestDefinition.setTrustStorePassword(Utilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
+							connectionTestDefinition.setTrustStorePassword(StringUtilities.isNotEmpty(arguments[i]) ? arguments[i].toCharArray() : null);
 						}
 						wasAllowedParam = true;
 					} else {
@@ -772,7 +773,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				if (arguments.length < 2 || arguments.length > 3) {
 					throw new ParameterException("createtruststore", "Expected parameters: hostname[:port] truststorefilePath [truststorepassword]");
 				}
-				final char[] trustStorePassword = arguments.length > 2 && Utilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null;
+				final char[] trustStorePassword = arguments.length > 2 && StringUtilities.isNotEmpty(arguments[2]) ? arguments[2].toCharArray() : null;
 				TrustManagerUtilities.createTrustStoreFile(arguments[0], 443, new File(arguments[1]), trustStorePassword, null);
 				System.out.println();
 				System.out.println("Created TrustStore in file '" + arguments[1] + "'");
@@ -857,11 +858,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 				// If started without GUI we may enter the missing password via the terminal
 				// Not for a HSQL file database, which needs no password (see help)
-				if (Utilities.isNotBlank(blobImportDefinition.getUsername()) && blobImportDefinition.getPassword() == null
+				if (StringUtilities.isNotBlank(blobImportDefinition.getUsername()) && blobImportDefinition.getPassword() == null
 						&& blobImportDefinition.getDbVendor() != DbVendor.SQLite
 						&& blobImportDefinition.getDbVendor() != DbVendor.Derby
 						&& blobImportDefinition.getDbVendor() != DbVendor.Cassandra
-						&& !(blobImportDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(blobImportDefinition.getHostnameAndPort()))) {
+						&& !(blobImportDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(blobImportDefinition.getHostnameAndPort()))) {
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					blobImportDefinition.setPassword(passwordArray);
 				}
@@ -873,11 +874,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 				// If started without GUI we may enter the missing password via the terminal
 				// Not for a HSQL file database, which needs no password (see help)
-				if (Utilities.isNotBlank(connectionTestDefinition.getUsername()) && connectionTestDefinition.getPassword() == null
+				if (StringUtilities.isNotBlank(connectionTestDefinition.getUsername()) && connectionTestDefinition.getPassword() == null
 						&& connectionTestDefinition.getDbVendor() != DbVendor.SQLite
 						&& connectionTestDefinition.getDbVendor() != DbVendor.Derby
 						&& connectionTestDefinition.getDbVendor() != DbVendor.Cassandra
-						&& !(connectionTestDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(connectionTestDefinition.getHostnameAndPort()))) {
+						&& !(connectionTestDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(connectionTestDefinition.getHostnameAndPort()))) {
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					connectionTestDefinition.setPassword(passwordArray);
 				}
@@ -888,11 +889,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 				// If started without GUI we may enter the missing password via the terminal
 				// Not for a HSQL file database, which needs no password (see help)
-				if (Utilities.isNotBlank(dbImportDefinition.getUsername()) && dbImportDefinition.getPassword() == null
+				if (StringUtilities.isNotBlank(dbImportDefinition.getUsername()) && dbImportDefinition.getPassword() == null
 						&& dbImportDefinition.getDbVendor() != DbVendor.SQLite
 						&& dbImportDefinition.getDbVendor() != DbVendor.Derby
 						&& dbImportDefinition.getDbVendor() != DbVendor.Cassandra
-						&& !(dbImportDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(dbImportDefinition.getHostnameAndPort()))) {
+						&& !(dbImportDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(dbImportDefinition.getHostnameAndPort()))) {
 					final char[] passwordArray = new PasswordConsoleInput().withPrompt(LangResources.get("enterDbPassword") + ": ").readInput();
 					dbImportDefinition.setPassword(passwordArray);
 				}
@@ -1090,7 +1091,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			Connection testConnection = null;
 			try {
 				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Creating database connection");
-				if (connectionTestDefinition.getDbVendor() == DbVendor.Derby || (connectionTestDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(connectionTestDefinition.getHostnameAndPort())) || connectionTestDefinition.getDbVendor() == DbVendor.SQLite) {
+				if (connectionTestDefinition.getDbVendor() == DbVendor.Derby || (connectionTestDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(connectionTestDefinition.getHostnameAndPort())) || connectionTestDefinition.getDbVendor() == DbVendor.SQLite) {
 					try {
 						testConnection = DbUtilities.createConnection(connectionTestDefinition, false);
 					} catch (@SuppressWarnings("unused") final DbNotExistsException e) {
@@ -1102,7 +1103,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 
 				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Successfully created database connection");
 
-				if (Utilities.isNotBlank(connectionTestDefinition.getCheckStatement())) {
+				if (StringUtilities.isNotBlank(connectionTestDefinition.getCheckStatement())) {
 					try (Statement statement = testConnection.createStatement()) {
 						String statementString = connectionTestDefinition.getCheckStatement();
 						// help.txt and the console menu document the keyword "vendor", "check" is kept for compatibility
@@ -1218,7 +1219,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				}
 			}
 
-			if (Utilities.isNotBlank(resultText)) {
+			if (StringUtilities.isNotBlank(resultText)) {
 				System.out.println("Result: \n" + resultText);
 			}
 
@@ -1361,7 +1362,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			ConsoleUtilities.saveCurrentCursorPosition();
 
 			if (currentTerminalWidth < previousTerminalWidth) {
-				System.out.print("\r" + Utilities.repeat(" ", currentTerminalWidth));
+				System.out.print("\r" + StringUtilities.repeat(" ", currentTerminalWidth));
 			}
 			previousTerminalWidth = currentTerminalWidth;
 
@@ -1399,7 +1400,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				System.out.println("End (" + NumberFormat.getNumberInstance(Locale.ENGLISH).format(subItemsDone) + " data items done in " + DateUtilities.getHumanReadableTimespanEnglish(Duration.between(itemStart, itemEnd), true) + ")");
 			}
 
-			if (Utilities.isNotBlank(resultText)) {
+			if (StringUtilities.isNotBlank(resultText)) {
 				System.out.println("Result: \n" + resultText);
 			}
 
@@ -1416,45 +1417,45 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 	 */
 	public static String getImportTablenameFromFilename(final String filename) {
 		String tableNameToImport = filename.toLowerCase(Locale.ROOT);
-		if (Utilities.endsWithIgnoreCase(tableNameToImport, ".zip")) {
+		if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".zip")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tar.gz")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".tar.gz")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 7);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tgz")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".tgz")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".gz")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".gz")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 3);
 		}
 
-		if (Utilities.endsWithIgnoreCase(tableNameToImport, ".csv")) {
+		if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".csv")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".dsv")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".dsv")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".tsv")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".tsv")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".del")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".del")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".xls")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".xls")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".xlsx")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".xlsx")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 5);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".json")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".json")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 5);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".jsn")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".jsn")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".kdbx")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".kdbx")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 5);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".ods")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".ods")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".sql")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".sql")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".vcf")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".vcf")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".xml")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".xml")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".yaml")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".yaml")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 5);
-		} else if (Utilities.endsWithIgnoreCase(tableNameToImport, ".yml")) {
+		} else if (StringUtilities.endsWithIgnoreCase(tableNameToImport, ".yml")) {
 			tableNameToImport = tableNameToImport.substring(0, tableNameToImport.length() - 4);
 		}
 

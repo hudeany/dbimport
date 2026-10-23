@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import de.soderer.json.JsonArray;
 import de.soderer.json.JsonObject;
 import de.soderer.json.JsonWriter;
+import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbUtilities;
@@ -37,7 +38,7 @@ public class DbImportTest_Derby_BigInt {
 	@BeforeAll
 	public static void setupTestClass() throws Exception {
 		if (new File(DERBY_DB_PATH).exists()) {
-			Utilities.delete(new File(DERBY_DB_PATH));
+			FileUtilities.delete(new File(DERBY_DB_PATH));
 		}
 
 		try (Connection connection = DbUtilities.createNewDatabase(DbVendor.Derby, DERBY_DB_PATH)) {

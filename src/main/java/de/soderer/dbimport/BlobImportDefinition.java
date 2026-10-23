@@ -2,6 +2,7 @@ package de.soderer.dbimport;
 
 import java.io.File;
 
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
@@ -84,7 +85,7 @@ public class BlobImportDefinition extends DbConnectionDefinition {
 
 		super.checkParameters();
 
-		if (Utilities.isBlank(blobImportStatement)) {
+		if (StringUtilities.isBlank(blobImportStatement)) {
 			throw new DbImportException("BlobImportStatement is missing");
 		} else if (!blobImportStatement.contains("?")) {
 			throw new DbImportException("BlobImportStatement does not contain mandatory '?' placeholder");
@@ -110,7 +111,7 @@ public class BlobImportDefinition extends DbConnectionDefinition {
 		if (getDbVendor() == DbVendor.HSQL) {
 			// HSQL: hostname only for a server database. A file database path is marked by a path separator, so it is
 			// not taken as hostname when the parameters are read again (see DbImport.isHsqlFileDatabasePath()).
-			if (Utilities.isNotBlank(getHostnameAndPort())) {
+			if (StringUtilities.isNotBlank(getHostnameAndPort())) {
 				params += " " + getHostnameAndPort();
 				params += " " + getDbName();
 			} else {

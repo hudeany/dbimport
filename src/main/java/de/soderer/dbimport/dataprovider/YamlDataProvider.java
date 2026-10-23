@@ -16,6 +16,7 @@ import java.util.zip.ZipOutputStream;
 
 import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.DateUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
@@ -84,7 +85,7 @@ public class YamlDataProvider extends DataProvider {
 					if (mapping != null) {
 						for (final Tuple<String, String> mappingValue : mapping.values()) {
 							if (mappingValue.getFirst().equals(propertyName)) {
-								if (Utilities.isNotBlank(mappingValue.getSecond())) {
+								if (StringUtilities.isNotBlank(mappingValue.getSecond())) {
 									formatInfo = mappingValue.getSecond();
 									break;
 								}
@@ -100,7 +101,7 @@ public class YamlDataProvider extends DataProvider {
 							}
 						} else if ("file".equalsIgnoreCase(formatInfo) || (propertyValue instanceof String && ((String) propertyValue).length() > 4000)) {
 							dataTypes.put(propertyName, new DbColumnType("BLOB", -1, -1, -1, true, false, null));
-						} else if (currentType != DbSimpleDataType.String && Utilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && propertyValue instanceof String) {
+						} else if (currentType != DbSimpleDataType.String && StringUtilities.isNotBlank(formatInfo) && !".".equals(formatInfo) && !",".equals(formatInfo) && !"file".equalsIgnoreCase(formatInfo) && propertyValue instanceof String) {
 							final String value = ((String) propertyValue).trim();
 							try {
 								DateUtilities.parseLocalDateTime(formatInfo, value);
@@ -113,7 +114,7 @@ public class YamlDataProvider extends DataProvider {
 									dataTypes.put(propertyName, new DbColumnType("VARCHAR", Math.max(dataTypes.get(propertyName) == null ? 0 : dataTypes.get(propertyName).getCharacterByteSize(), value.getBytes(StandardCharsets.UTF_8).length), -1, -1, true, false, null));
 								}
 							}
-						} else if (currentType != DbSimpleDataType.String && Utilities.isBlank(formatInfo) && propertyValue instanceof String) {
+						} else if (currentType != DbSimpleDataType.String && StringUtilities.isBlank(formatInfo) && propertyValue instanceof String) {
 							final String value = ((String) propertyValue).trim();
 							try {
 								DateUtilities.parseLocalDateTime(DateUtilities.ISO_8601_DATETIME_FORMAT, value);
@@ -249,19 +250,19 @@ public class YamlDataProvider extends DataProvider {
 				yamlFileExtension = ".yml";
 			}
 
-			if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".zip")) {
+			if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".zip")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + yamlFileExtension +".zip");
 				outputStream = ZipUtilities.openNewZipOutputStream(filteredDataFile, null);
 				((ZipOutputStream) outputStream).putNextEntry(new ZipEntry(new File(getImportFilePath() + "." + fileSuffix + yamlFileExtension +"").getName()));
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + yamlFileExtension +".tar.gz");
 				tempFile = File.createTempFile(new File(getImportFilePath()).getName(), fileSuffix);
 				outputStream = new FileOutputStream(tempFile);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + yamlFileExtension +".tgz");
 				tempFile = File.createTempFile(new File(getImportFilePath()).getName(), fileSuffix);
 				outputStream = new FileOutputStream(tempFile);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".gz")) {
 				filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + yamlFileExtension +".gz");
 				outputStream = new GZIPOutputStream(new FileOutputStream(filteredDataFile));
 			} else {
@@ -281,11 +282,11 @@ public class YamlDataProvider extends DataProvider {
 				}
 			}
 
-			if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".zip") && zipPassword != null) {
+			if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".zip") && zipPassword != null) {
 				Zip4jUtilities.createPasswordSecuredZipFile(filteredDataFile.getAbsolutePath(), zipPassword, false);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
 				TarGzUtilities.compress(filteredDataFile, tempFile, new File(getImportFilePath()).getName() + "." + fileSuffix);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
 				TarGzUtilities.compress(filteredDataFile, tempFile, new File(getImportFilePath()).getName() + "." + fileSuffix);
 			}
 
@@ -307,7 +308,7 @@ public class YamlDataProvider extends DataProvider {
 
 		try {
 			yamlReader = new YamlReader(getInputStream(), encoding);
-			if (Utilities.isNotEmpty(dataPath)) {
+			if (StringUtilities.isNotEmpty(dataPath)) {
 				// Read JSON path
 				yamlReader.readUpToPath(dataPath);
 			} else {

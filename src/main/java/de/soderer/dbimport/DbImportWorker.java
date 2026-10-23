@@ -52,6 +52,7 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.InputStreamWithOtherItemsToClose;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.TextUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
@@ -359,7 +360,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	 * @throws Exception if a mapping line is invalid
 	 */
 	public void setMapping(final String mappingString) throws IOException, Exception {
-		if (Utilities.isNotBlank(mappingString)) {
+		if (StringUtilities.isNotBlank(mappingString)) {
 			mapping = DbImportMappingDialog.parseMappingString(mappingString);
 			dbTableColumnsListToInsert = new ArrayList<>();
 			for (final String dbColumn : mapping.keySet()) {
@@ -414,7 +415,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 			final Set<String> mappedDbColumns = new CaseInsensitiveSet();
 			for (final Entry<String, Tuple<String, String>> mappingEntry : mapping.entrySet()) {
-				if (Utilities.isNotBlank(mappingEntry.getKey()) && !mappedDbColumns.add(mappingEntry.getKey())) {
+				if (StringUtilities.isNotBlank(mappingEntry.getKey()) && !mappedDbColumns.add(mappingEntry.getKey())) {
 					throw new DbImportException("Mapping contains database column multiple times: " + mappingEntry.getKey());
 				} else if (!dataPropertyNames.contains(mappingEntry.getValue().getFirst())) {
 					throw new DbImportException("Data does not contain mapped property: " + mappingEntry.getValue().getFirst());
@@ -483,7 +484,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			// Remove the optional functions from keycolumns
 			for (String keyColumn : keyColumnList) {
 				keyColumn = keyColumn.trim();
-				if (Utilities.isNotEmpty(keyColumn)) {
+				if (StringUtilities.isNotEmpty(keyColumn)) {
 					String function = null;
 					if (keyColumn.contains("(") && keyColumn.endsWith(")")) {
 						function = keyColumn.substring(0, keyColumn.indexOf("(")).trim().toUpperCase();
@@ -636,7 +637,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			boolean constraintsWereDeactivated = false;
 			boolean triggersWereDeactivated = false;
 			try {
-				if (dbDefinition.getDbVendor() == DbVendor.Derby || (dbDefinition.getDbVendor() == DbVendor.HSQL && Utilities.isBlank(dbDefinition.getHostnameAndPort())) || dbDefinition.getDbVendor() == DbVendor.SQLite) {
+				if (dbDefinition.getDbVendor() == DbVendor.Derby || (dbDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(dbDefinition.getHostnameAndPort())) || dbDefinition.getDbVendor() == DbVendor.SQLite) {
 					try {
 						connection = DbUtilities.createConnection(dbDefinition, true);
 					} catch (@SuppressWarnings("unused") final DbNotExistsException e) {
@@ -986,10 +987,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				+ (createTableIfNotExists ? "Create table if not exists: " + createTableIfNotExists + "\n" : "")
 				+ (structureFilePath != null ? "Structure file: " + structureFilePath + "\n" : "")
 				+ "Mapping: \n" + TextUtilities.addLeadingTab(convertMappingToString(getMapping())) + "\n"
-				+ (Utilities.isNotBlank(additionalInsertValues) ? "Additional insert values: " + additionalInsertValues + "\n" : "")
-				+ (Utilities.isNotBlank(additionalUpdateValues) ? "Additional update values: " + additionalUpdateValues + "\n" : "")
-				+ (Utilities.isNotBlank(dateFormatPattern) ? "DateFormatPattern: " + dateFormatPattern + "\n" : "")
-				+ (Utilities.isNotBlank(dateTimeFormatPattern) ? "DateTimeFormatPattern: " + dateTimeFormatPattern + "\n" : "")
+				+ (StringUtilities.isNotBlank(additionalInsertValues) ? "Additional insert values: " + additionalInsertValues + "\n" : "")
+				+ (StringUtilities.isNotBlank(additionalUpdateValues) ? "Additional update values: " + additionalUpdateValues + "\n" : "")
+				+ (StringUtilities.isNotBlank(dateFormatPattern) ? "DateFormatPattern: " + dateFormatPattern + "\n" : "")
+				+ (StringUtilities.isNotBlank(dateTimeFormatPattern) ? "DateTimeFormatPattern: " + dateTimeFormatPattern + "\n" : "")
 				+ (databaseZoneId != null && !databaseZoneId.equals(importDataZoneId) ? "DatabaseZoneId: " + databaseZoneId + "\nImportDataZoneId: " + importDataZoneId + "\n" : "")
 				+ "Update with null values: " + updateWithNullValues + "\n"
 				+ "BatchBlockSize: " + batchBlockSize + "\n"
@@ -1011,7 +1012,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 	protected boolean createTableIfNeeded(final Connection connection, final String tableNameToUse, final List<String> keyColumnsToUse) throws Exception, DbImportException, SQLException {
 		if (!DbUtilities.checkTableExist(connection, tableNameToUse)) {
 			if (createTableIfNotExists) {
-				if (structureFilePath != null && Utilities.isNotBlank(structureFilePath)) {
+				if (structureFilePath != null && StringUtilities.isNotBlank(structureFilePath)) {
 					try {
 						final boolean tableWasCreated = createTableFromStructureFile(connection, tableNameToUse, structureFilePath);
 						return tableWasCreated;
@@ -1246,7 +1247,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 		String additionalInsertValuesSqlColumns = "";
 		String additionalInsertValuesSqlValues = "";
-		if (Utilities.isNotBlank(additionalInsertValuesToUse)) {
+		if (StringUtilities.isNotBlank(additionalInsertValuesToUse)) {
 			for (final String line : Utilities.splitAndTrimListQuoted(additionalInsertValuesToUse, '\n', '\r', ';')) {
 				final String columnName = line.substring(0, line.indexOf("=")).trim();
 				final String columnvalue = line.substring(line.indexOf("=") + 1).trim();
@@ -1256,10 +1257,10 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 
 		String statementString;
-		if (Utilities.isBlank(itemIndexColumn)) {
-			statementString = "INSERT INTO " + tableNameToUse + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbTableColumnsListToInsert) + ") VALUES (" + additionalInsertValuesSqlValues + Utilities.repeat("?", dbTableColumnsListToInsert.size(), ", ") + ")";
+		if (StringUtilities.isBlank(itemIndexColumn)) {
+			statementString = "INSERT INTO " + tableNameToUse + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbTableColumnsListToInsert) + ") VALUES (" + additionalInsertValuesSqlValues + StringUtilities.repeat("?", dbTableColumnsListToInsert.size(), ", ") + ")";
 		} else {
-			statementString = "INSERT INTO " + tableNameToUse + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbTableColumnsListToInsert) + ", " + itemIndexColumn + ") VALUES (" + additionalInsertValuesSqlValues + Utilities.repeat("?", dbTableColumnsListToInsert.size(), ", ") + ", ?)";
+			statementString = "INSERT INTO " + tableNameToUse + " (" + additionalInsertValuesSqlColumns + DbUtilities.joinColumnVendorEscaped(dbDefinition.getDbVendor(), dbTableColumnsListToInsert) + ", " + itemIndexColumn + ") VALUES (" + additionalInsertValuesSqlValues + StringUtilities.repeat("?", dbTableColumnsListToInsert.size(), ", ") + ", ?)";
 		}
 
 		PreparedStatement preparedStatement = null;
@@ -1297,7 +1298,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 					}
 
-					if (Utilities.isNotBlank(itemIndexColumn)) {
+					if (StringUtilities.isNotBlank(itemIndexColumn)) {
 						// Add additional integer value to identify data item index
 						final long dataValue = dataItemsDone + 1;
 						preparedStatement.setLong(i++, dataValue);
@@ -1465,7 +1466,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 				batchValueItem.add(null);
 			}
 		} else if (dataValue instanceof String) {
-			if (Utilities.isNotBlank(formatInfo)) {
+			if (StringUtilities.isNotBlank(formatInfo)) {
 				String valueString = (String) dataValue;
 
 				if (".".equals(formatInfo)) {
@@ -1545,7 +1546,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						}
 					} else if (simpleDataType == DbSimpleDataType.Blob) {
 						InputStream inputStream;
-						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
+						if (StringUtilities.endsWithIgnoreCase(valueString, ".zip")) {
 							if (dataProvider.getZipPassword() != null) {
 								if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
 									throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + new File(valueString).getAbsolutePath());
@@ -1559,19 +1560,19 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 									inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
 								}
 							}
-						} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
+						} else if (StringUtilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
 								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
-						} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
+						} else if (StringUtilities.endsWithIgnoreCase(valueString, ".tgz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
 								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
-						} else if (Utilities.endsWithIgnoreCase(valueString, ".gz")) {
+						} else if (StringUtilities.endsWithIgnoreCase(valueString, ".gz")) {
 							inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(new File(valueString))));
 						} else {
 							inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(new File(valueString)), valueString));
@@ -1590,7 +1591,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						importedDataAmount += new File(valueString).length();
 					} else {
 						InputStream inputStream;
-						if (Utilities.endsWithIgnoreCase(valueString, ".zip")) {
+						if (StringUtilities.endsWithIgnoreCase(valueString, ".zip")) {
 							if (dataProvider.getZipPassword() != null) {
 								if (Zip4jUtilities.getZipFileEntries(new File(valueString), dataProvider.getZipPassword()).size() != 1) {
 									throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + new File(valueString).getAbsolutePath());
@@ -1604,19 +1605,19 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 									inputStream = new CountingInputStream(ZipUtilities.openZipFile(new File(valueString).getAbsolutePath()));
 								}
 							}
-						} else if (Utilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
+						} else if (StringUtilities.endsWithIgnoreCase(valueString, ".tar.gz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
 								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
-						} else if (Utilities.endsWithIgnoreCase(valueString, ".tgz")) {
+						} else if (StringUtilities.endsWithIgnoreCase(valueString, ".tgz")) {
 							if (TarGzUtilities.getFilesCount(new File(valueString)) != 1) {
 								throw new DbImportException("Compressed import file does not contain a single compressed file for column '" + columnName + "': " + valueString);
 							} else {
 								inputStream = new CountingInputStream(TarGzUtilities.openCompressedFile(new File(valueString)));
 							}
-						} else if (Utilities.endsWithIgnoreCase(valueString, ".gz")) {
+						} else if (StringUtilities.endsWithIgnoreCase(valueString, ".gz")) {
 							inputStream = new CountingInputStream(new GZIPInputStream(new FileInputStream(new File(valueString))));
 						} else {
 							inputStream = new CountingInputStream(new InputStreamWithOtherItemsToClose(new FileInputStream(new File(valueString)), valueString));
@@ -1698,7 +1699,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} else if (simpleDataType == DbSimpleDataType.DateTime) {
 				final String valueString = ((String) dataValue).trim();
 				LocalDateTime localDateTimeValueForDb;
-				if (Utilities.isBlank(valueString)) {
+				if (StringUtilities.isBlank(valueString)) {
 					if (!isNullable) {
 						throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
 					} else {
@@ -1706,7 +1707,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						batchValueItem.add(null);
 					}
 				} else {
-					if (Utilities.isNotBlank(dateTimeFormatPattern)) {
+					if (StringUtilities.isNotBlank(dateTimeFormatPattern)) {
 						final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
 						localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
 					} else {
@@ -1742,7 +1743,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			} else if (simpleDataType == DbSimpleDataType.Date) {
 				final String valueString = ((String) dataValue).trim();
 				LocalDateTime localDateTimeValueForDb;
-				if (Utilities.isBlank(valueString)) {
+				if (StringUtilities.isBlank(valueString)) {
 					if (!isNullable) {
 						throw new DbImportException("Column '" + columnName + "' is not nullable but receives null value");
 					} else {
@@ -1750,7 +1751,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						batchValueItem.add(null);
 					}
 				} else {
-					if (Utilities.isNotBlank(dateFormatPattern)) {
+					if (StringUtilities.isNotBlank(dateFormatPattern)) {
 						try {
 							LocalDate parsedLocalDate;
 							try {
@@ -1766,7 +1767,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 							localDateTimeValueForDb = parsedLocalDate.atStartOfDay();
 						} catch (final DateTimeParseException e) {
 							// Try fallback to DateTime format if set, because some databases export dates with time even for DATE datatype (e.g. Oracle)
-							if (Utilities.isNotBlank(dateTimeFormatPattern)) {
+							if (StringUtilities.isNotBlank(dateTimeFormatPattern)) {
 								try {
 									final LocalDateTime localDateTimeValueFromData = LocalDateTime.parse(valueString.trim(), getConfiguredDateTimeFormatter());
 									localDateTimeValueForDb = localDateTimeValueFromData.atZone(importDataZoneId).withZoneSameInstant(databaseZoneId).toLocalDateTime();
@@ -2153,7 +2154,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			final List<Entry<String,Tuple<String,String>>> sortedListOfMappingEntries = mapping.entrySet().stream().sorted(Map.Entry.<String, Tuple<String, String>>comparingByKey()).collect(Collectors.toList());
 			for (final Entry<String, Tuple<String, String>> entry : sortedListOfMappingEntries) {
 				returnValue.append(entry.getKey() + "=\"" + entry.getValue().getFirst() + "\"");
-				if (Utilities.isNotBlank(entry.getValue().getSecond())) {
+				if (StringUtilities.isNotBlank(entry.getValue().getSecond())) {
 					returnValue.append(" " + entry.getValue().getSecond());
 				}
 				returnValue.append("\n");

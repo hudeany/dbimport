@@ -34,6 +34,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.DateUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
@@ -192,7 +193,7 @@ public class ExcelDataProvider extends DataProvider {
 					if (hssfSheet != null) {
 						for (int i = hssfSheet.getRow(hssfSheet.getFirstRowNum()).getFirstCellNum(); i < hssfSheet.getRow(hssfSheet.getFirstRowNum()).getLastCellNum(); i++) {
 							final String cellValue = getCellValueAsString(hssfSheet.getRow(hssfSheet.getFirstRowNum()).getCell(i));
-							if (Utilities.isNotBlank(cellValue)) {
+							if (StringUtilities.isNotBlank(cellValue)) {
 								columnNames.add(cellValue);
 							} else {
 								columnNames.add(null);
@@ -202,12 +203,12 @@ public class ExcelDataProvider extends DataProvider {
 						// Check for data in columns without Header
 						if (!ignoreDataWithoutHeader) {
 							for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
-								if (Utilities.isBlank(columnNames.get(columnIndex))) {
+								if (StringUtilities.isBlank(columnNames.get(columnIndex))) {
 									for (int rowIndex = hssfSheet.getFirstRowNum(); rowIndex <= maxRowNumber; rowIndex++) {
 										final int maxRowColumn = hssfSheet.getRow(rowIndex) == null ? 0 : hssfSheet.getRow(rowIndex).getLastCellNum() - hssfSheet.getRow(rowIndex).getFirstCellNum();
 										if (columnIndex < maxRowColumn) {
 											final String cellValue = getCellValueAsString(hssfSheet.getRow(rowIndex).getCell(columnIndex));
-											if (Utilities.isNotBlank(cellValue)) {
+											if (StringUtilities.isNotBlank(cellValue)) {
 												throw new DbImportException("Found data in a column without header: " + columnIndexToLetters(columnIndex));
 											}
 										}
@@ -218,7 +219,7 @@ public class ExcelDataProvider extends DataProvider {
 					} else {
 						for (int i = xssfSheet.getRow(xssfSheet.getFirstRowNum()).getFirstCellNum(); i < xssfSheet.getRow(xssfSheet.getFirstRowNum()).getLastCellNum(); i++) {
 							final String cellValue = getCellValueAsString(xssfSheet.getRow(xssfSheet.getFirstRowNum()).getCell(i));
-							if (Utilities.isNotBlank(cellValue)) {
+							if (StringUtilities.isNotBlank(cellValue)) {
 								columnNames.add(cellValue);
 							} else {
 								columnNames.add(null);
@@ -228,12 +229,12 @@ public class ExcelDataProvider extends DataProvider {
 						// Check for data in columns without Header
 						if (!ignoreDataWithoutHeader) {
 							for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
-								if (Utilities.isBlank(columnNames.get(columnIndex))) {
+								if (StringUtilities.isBlank(columnNames.get(columnIndex))) {
 									for (int rowIndex = xssfSheet.getFirstRowNum(); rowIndex <= maxRowNumber; rowIndex++) {
 										final int maxRowColumn = xssfSheet.getRow(rowIndex) == null ? 0 : xssfSheet.getRow(rowIndex).getLastCellNum() - xssfSheet.getRow(rowIndex).getFirstCellNum();
 										if (columnIndex < maxRowColumn) {
 											final String cellValue = getCellValueAsString(xssfSheet.getRow(rowIndex).getCell(columnIndex));
-											if (Utilities.isNotBlank(cellValue)) {
+											if (StringUtilities.isNotBlank(cellValue)) {
 												throw new DbImportException("Found data in a column without header: " + columnIndexToLetters(columnIndex));
 											}
 										}
@@ -335,7 +336,7 @@ public class ExcelDataProvider extends DataProvider {
 			openReader();
 
 			File filteredDataFile;
-			if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".zip")) {
+			if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".zip")) {
 				if (hssfSheet != null) {
 					filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".xls.zip");
 					outputStream = ZipUtilities.openNewZipOutputStream(filteredDataFile, null);
@@ -345,7 +346,7 @@ public class ExcelDataProvider extends DataProvider {
 					outputStream = ZipUtilities.openNewZipOutputStream(filteredDataFile, null);
 					((ZipOutputStream) outputStream).putNextEntry(new ZipEntry(new File(getImportFilePath() + "." + fileSuffix + ".xlsx").getName()));
 				}
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
 				if (hssfSheet != null) {
 					filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".xls.tar.gz");
 				} else {
@@ -353,7 +354,7 @@ public class ExcelDataProvider extends DataProvider {
 				}
 				tempFile = File.createTempFile(new File(getImportFilePath()).getName(), fileSuffix);
 				outputStream = new FileOutputStream(tempFile);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
 				if (hssfSheet != null) {
 					filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".xls.tgz");
 				} else {
@@ -361,7 +362,7 @@ public class ExcelDataProvider extends DataProvider {
 				}
 				tempFile = File.createTempFile(new File(getImportFilePath()).getName(), fileSuffix);
 				outputStream = new FileOutputStream(tempFile);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".gz")) {
 				if (hssfSheet != null) {
 					filteredDataFile = new File(getImportFilePath() + "." + fileSuffix + ".xls.gz");
 				} else {
@@ -447,11 +448,11 @@ public class ExcelDataProvider extends DataProvider {
 				}
 			}
 
-			if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".zip") && zipPassword != null) {
+			if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".zip") && zipPassword != null) {
 				Zip4jUtilities.createPasswordSecuredZipFile(filteredDataFile.getAbsolutePath(), zipPassword, false);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tar.gz")) {
 				TarGzUtilities.compress(filteredDataFile, tempFile, new File(getImportFilePath()).getName() + "." + fileSuffix);
-			} else if (Utilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
+			} else if (StringUtilities.endsWithIgnoreCase(getImportFilePath(), ".tgz")) {
 				TarGzUtilities.compress(filteredDataFile, tempFile, new File(getImportFilePath()).getName() + "." + fileSuffix);
 			}
 
@@ -489,7 +490,7 @@ public class ExcelDataProvider extends DataProvider {
 
 				if (isXlsFormatFile) {
 					hssfWorkbook = new HSSFWorkbook(excelInputStream);
-					if (Utilities.isNotBlank(dataPath)) {
+					if (StringUtilities.isNotBlank(dataPath)) {
 						hssfSheet = hssfWorkbook.getSheet(dataPath);
 					} else {
 						hssfSheet = hssfWorkbook.getSheetAt(0);
@@ -521,7 +522,7 @@ public class ExcelDataProvider extends DataProvider {
 					}
 				} else {
 					xssfWorkbook = new XSSFWorkbook(excelInputStream);
-					if (Utilities.isNotBlank(dataPath)) {
+					if (StringUtilities.isNotBlank(dataPath)) {
 						xssfSheet = xssfWorkbook.getSheet(dataPath);
 					} else {
 						xssfSheet = xssfWorkbook.getSheetAt(0);

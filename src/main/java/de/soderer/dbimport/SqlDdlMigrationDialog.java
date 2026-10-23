@@ -30,7 +30,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import de.soderer.swing.QuestionDialog;
 import de.soderer.swing.SwingColor;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.db.SqlDdlMergeGenerator;
 import de.soderer.utilities.db.SqlDdlMigrationGenerator;
 
@@ -265,7 +265,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 	private void checkButtonStatus() {
 		final boolean sourceOk = isExistingFile(sourceFileField.getText());
 		final boolean destinationOk = isExistingFile(destinationFileField.getText());
-		final boolean outputOk = Utilities.isNotBlank(outputFileField.getText())
+		final boolean outputOk = StringUtilities.isNotBlank(outputFileField.getText())
 				&& isValidPath(outputFileField.getText())
 				&& !isSameFile(outputFileField.getText(), sourceFileField.getText())
 				&& !isSameFile(outputFileField.getText(), destinationFileField.getText());
@@ -278,7 +278,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 	}
 
 	private static boolean isExistingFile(final String path) {
-		if (Utilities.isBlank(path)) {
+		if (StringUtilities.isBlank(path)) {
 			return false;
 		}
 		final File f = new File(path.trim());
@@ -289,7 +289,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 	 * Compares two file paths after trimming and normalization (the files are opened with trimmed paths).
 	 */
 	private static boolean isSameFile(final String path1, final String path2) {
-		if (Utilities.isBlank(path1) || Utilities.isBlank(path2)) {
+		if (StringUtilities.isBlank(path1) || StringUtilities.isBlank(path2)) {
 			return false;
 		}
 		try {
@@ -425,7 +425,7 @@ public class SqlDdlMigrationDialog extends JDialog {
 
 	private JFileChooser buildChooser(final String currentPath, final String title) {
 		String basePath = System.getProperty("user.home");
-		if (Utilities.isNotBlank(currentPath)) {
+		if (StringUtilities.isNotBlank(currentPath)) {
 			final File current = new File(currentPath.trim());
 			if (current.getParentFile() != null && current.getParentFile().exists()) {
 				basePath = current.getParent();

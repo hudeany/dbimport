@@ -25,6 +25,7 @@ import javax.swing.JScrollPane;
 import de.soderer.swing.DropDown;
 import de.soderer.swing.ModalDialog;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Triple;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
@@ -224,7 +225,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 
 	private void fillMappingEntries(final CaseInsensitiveMap<DbColumnType> columnTypesToUse, final List<String> dataColumnsToUse) throws IOException, Exception {
 		Map<String, Tuple<String, String>> mapping;
-		if (Utilities.isNotBlank(mappingString)) {
+		if (StringUtilities.isNotBlank(mappingString)) {
 			mapping = parseMappingString(mappingString);
 		} else {
 			// Create default mapping
@@ -244,7 +245,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				if (entry.getKey().equalsIgnoreCase(mappingEntry.getFirst().getText())) {
 					// Unknown values are ignored for fixed lists, as the former combo box did
 					selectItem(mappingEntry.getSecond(), entry.getValue().getFirst());
-					if (mappingEntry.getThird() != null && Utilities.isNotBlank(entry.getValue().getSecond())) {
+					if (mappingEntry.getThird() != null && StringUtilities.isNotBlank(entry.getValue().getSecond())) {
 						if ("lc".equalsIgnoreCase(entry.getValue().getSecond())) {
 							selectItem(mappingEntry.getThird(), "LowerCase");
 						} else if ("uc".equalsIgnoreCase(entry.getValue().getSecond())) {
@@ -264,10 +265,10 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 
 		for (final Triple<Label, DropDown, DropDown> mappingEntry : mappingEntries) {
 			final String dataColumn = getValue(mappingEntry.getSecond());
-			if (Utilities.isNotBlank(dataColumn)) {
+			if (StringUtilities.isNotBlank(dataColumn)) {
 				mappingString += mappingEntry.getFirst().getText() + "=\"" + dataColumn + "\"";
 				final String formatValue = mappingEntry.getThird() == null ? null : getValue(mappingEntry.getThird());
-				if (Utilities.isNotBlank(formatValue)) {
+				if (StringUtilities.isNotBlank(formatValue)) {
 					if ("lowercase".equalsIgnoreCase(formatValue)) {
 						mappingString += " lc";
 					} else if ("uppercase".equalsIgnoreCase(formatValue)) {
@@ -424,7 +425,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				throw new DbImportException("Invalid mapping line with duplicate database column: " + mappingLine);
 			}
 			String rest = mappingLine.substring(dbColumnEnd + 1).trim();
-			if (Utilities.isNotBlank(rest)) {
+			if (StringUtilities.isNotBlank(rest)) {
 				if (rest.length() < 2 || (!rest.startsWith("\"") && !rest.startsWith("'"))) {
 					throw new DbImportException("Invalid mapping line: " + mappingLine);
 				}

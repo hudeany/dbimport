@@ -18,6 +18,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import de.soderer.dbimport.DbImportException;
 import de.soderer.utilities.DateUtilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.data.DbColumnType;
@@ -68,7 +69,7 @@ public class OdsDataProvider extends DataProvider {
 				+ "AllowUnderfilledLines: " + allowUnderfilledLines + "\n"
 				+ "NoHeaders: " + noHeaders + "\n"
 				+ "TrimData: " + trimData + "\n"
-				+ (Utilities.isNotBlank(sheetname) ? "Sheetname: " + sheetname + "\n" : "")
+				+ (StringUtilities.isNotBlank(sheetname) ? "Sheetname: " + sheetname + "\n" : "")
 				+ "Null value text: " + (nullValueText == null ? "none" : "\"" + nullValueText + "\"") + "\n";
 	}
 
@@ -86,7 +87,7 @@ public class OdsDataProvider extends DataProvider {
 					columnNames = readNextRow().stream().map(x -> x.toString()).collect(Collectors.toList());
 
 					// Remove empty trailing headernames
-					while (columnNames.size() > 0 && Utilities.isBlank(columnNames.get(columnNames.size() - 1))) {
+					while (columnNames.size() > 0 && StringUtilities.isBlank(columnNames.get(columnNames.size() - 1))) {
 						columnNames.remove(columnNames.get(columnNames.size() - 1));
 					}
 				}
@@ -150,7 +151,7 @@ public class OdsDataProvider extends DataProvider {
 					columnNames = readNextRow().stream().map(x -> x.toString()).collect(Collectors.toList());
 
 					// Remove empty trailing headernames
-					while (columnNames.size() > 0 && Utilities.isBlank(columnNames.get(columnNames.size() - 1))) {
+					while (columnNames.size() > 0 && StringUtilities.isBlank(columnNames.get(columnNames.size() - 1))) {
 						columnNames.remove(columnNames.get(columnNames.size() - 1));
 					}
 				}
@@ -377,7 +378,7 @@ public class OdsDataProvider extends DataProvider {
 				}
 			}
 			if (currentPath.size() == 0) {
-				if (Utilities.isNotBlank(sheetname)) {
+				if (StringUtilities.isNotBlank(sheetname)) {
 					throw new DbImportException("Sheet '" + sheetname + "' was not found in the ods data");
 				} else {
 					throw new DbImportException("Path '" + dataPath + "' is not part of the xml data");
