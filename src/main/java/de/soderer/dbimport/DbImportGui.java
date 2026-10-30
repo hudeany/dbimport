@@ -2,9 +2,15 @@ package de.soderer.dbimport;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -20,13 +26,17 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -38,21 +48,24 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
-import de.soderer.applicationbase.ApplicationConfigurationDialog;
 import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
-import de.soderer.applicationbase.SecurePreferencesDialog;
-import de.soderer.applicationbase.UpdateableGuiApplication;
+import de.soderer.applicationbase.modern.ApplicationConfigurationDialog;
+import de.soderer.applicationbase.modern.SecurePreferencesDialog;
+import de.soderer.applicationbase.modern.UpdateableGuiApplication;
 import de.soderer.dbimport.DbImportDefinition.DataType;
 import de.soderer.dbimport.DbImportDefinition.DuplicateMode;
 import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.network.NetworkUtilities;
 import de.soderer.network.trustmanager.TrustManagerUtilities;
-import de.soderer.swing.DropDown;
 import de.soderer.swing.DualProgressDialog;
-import de.soderer.swing.ProgressDialog;
-import de.soderer.swing.QuestionDialog;
-import de.soderer.swing.SwingColor;
+import de.soderer.swing.modern.ButtonStyle;
+import de.soderer.swing.modern.DialogStyle;
+import de.soderer.swing.modern.DropDown;
+import de.soderer.swing.modern.IconKind;
+import de.soderer.swing.modern.ModernUi;
+import de.soderer.swing.modern.ProgressDialog;
+import de.soderer.swing.modern.QuestionDialog;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.ExceptionUtilities;
@@ -75,6 +88,15 @@ import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
  * @serial exclude
  */
 public class DbImportGui extends UpdateableGuiApplication {
+	/** Width of the input components of the parameter form */
+	private static final int FIELD_WIDTH = 280;
+
+	/** Minimum height of multi-line input components */
+	private static final int MIN_TEXT_AREA_HEIGHT = 46;
+
+	/** Width and height of the small buttons next to input fields */
+	private static final int FIELD_BUTTON_SIZE = 30;
+
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 5969613637206441880L;
 
@@ -255,7 +277,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					ApplicationUpdateUtilities.executeUpdate(this, DbImport.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), DbImport.APPLICATION_NAME, DbImport.VERSION, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, appParameters, true, false);
 				}
 			} catch (final Exception e) {
-				new QuestionDialog(this, DbImport.APPLICATION_NAME + " " + LangResources.get("updateCheck") + " ERROR", LangResources.get("error.cannotCheckForUpdate") + "\n" + "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+				new QuestionDialog(this, DbImport.APPLICATION_NAME + " " + LangResources.get("updateCheck") + " ERROR", LangResources.get("error.cannotCheckForUpdate") + "\n" + "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 			}
 		}
 
@@ -269,7 +291,6 @@ public class DbImportGui extends UpdateableGuiApplication {
 		setLocationRelativeTo(null);
 
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
 
 		// Parameter Panel
 		final JPanel parameterPanel = new JPanel();
@@ -298,15 +319,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbTypeCombo.addActionListener(event -> checkButtonStatus());
 		dbTypePanel.add(dbTypeCombo, BorderLayout.EAST);
 
-		connectionCheckButton = new JButton(LangResources.get("connectionCheck"));
-		connectionCheckButton.setPreferredSize(new Dimension(150, dbTypeCombo.getPreferredSize().height));
+		connectionCheckButton = new ModernUi.Button(LangResources.get("connectionCheck"), IconKind.CHECK, ButtonStyle.SECONDARY);
 		connectionCheckButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
 				try (Connection connection = DbUtilities.createConnection(getConfigurationAsDefinition(), false)) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").withBackgroundColor(SwingColor.Green).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").withDialogStyle(DialogStyle.INFORMATION).withBackgroundColor(ModernUi.SUCCESS_LIGHT).open();
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -415,8 +435,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		});
 		trustStoreFilePathPanel.add(trustStoreFilePathField);
 
-		trustStoreFileButton = new JButton("...");
-		trustStoreFileButton.setPreferredSize(new Dimension(20, trustStoreFilePathField.getPreferredSize().height));
+		trustStoreFileButton = createFieldButton(IconKind.FOLDER, LangResources.get("browse"));
 		trustStoreFileButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -427,15 +446,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 						checkButtonStatus();
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
 		trustStoreFilePathPanel.add(trustStoreFileButton);
 
-		createTrustStoreFileButton = new JButton("+");
+		createTrustStoreFileButton = createFieldButton(IconKind.PLUS, null);
 		createTrustStoreFileButton.setToolTipText(LangResources.get("createTrustStoreFile_help"));
-		createTrustStoreFileButton.setPreferredSize(new Dimension(40, trustStoreFilePathField.getPreferredSize().height));
 		createTrustStoreFileButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -449,15 +467,15 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 					if (StringUtilities.isNotBlank((trustStoreFilePathField.getText()))) {
 						if (new File(trustStoreFilePathField.getText()).exists()) {
-							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File already exists: '" + trustStoreFilePathField.getText() + "'").withBackgroundColor(SwingColor.LightRed).open();
+							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File already exists: '" + trustStoreFilePathField.getText() + "'").withDialogStyle(DialogStyle.ERROR).open();
 						} else {
 							TrustManagerUtilities.createTrustStoreFile(hostField.getText(), DbVendor.getDbVendorByName(getRequiredSelectedItem(dbTypeCombo, "dbtype")).getDefaultPort(), new File(trustStoreFilePathField.getText()), trustStorePasswordField.getPassword(), null);
-							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").withBackgroundColor(SwingColor.Green).open();
+							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "OK").withDialogStyle(DialogStyle.INFORMATION).withBackgroundColor(ModernUi.SUCCESS_LIGHT).open();
 							checkButtonStatus();
 						}
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -530,8 +548,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		importFilePathPanel.add(importFilePathOrDataScrollpane);
 		mandatoryParameterPanel.add(importFilePathPanel);
 
-		final JButton browseButton = new JButton("...");
-		browseButton.setPreferredSize(new Dimension(20, 50));
+		final JButton browseButton = createFieldButton(IconKind.FOLDER, LangResources.get("browse"));
 		browseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -542,7 +559,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						inlineDataBox.setSelected(false);
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -609,8 +626,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		});
 		structureFilePathPanel.add(structureFilePathField);
 
-		structureFileButton = new JButton("...");
-		structureFileButton.setPreferredSize(new Dimension(20, structureFilePathField.getPreferredSize().height));
+		structureFileButton = createFieldButton(IconKind.FOLDER, LangResources.get("browse"));
 		structureFileButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -620,15 +636,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 						structureFilePathField.setText(structureFile.getAbsolutePath());
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
 		structureFilePathPanel.add(structureFileButton);
 
-		createCompleteStructureFileButton = new JButton("+");
+		createCompleteStructureFileButton = createFieldButton(IconKind.PLUS, null);
 		createCompleteStructureFileButton.setToolTipText(LangResources.get("createCompleteStructure_help"));
-		createCompleteStructureFileButton.setPreferredSize(new Dimension(40, structureFilePathField.getPreferredSize().height));
 		createCompleteStructureFileButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -642,7 +657,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 					if (StringUtilities.isNotBlank((structureFilePathField.getText()))) {
 						if (!new File(structureFilePathField.getText()).exists()) {
-							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File does not exist: '" + structureFilePathField.getText() + "'").withBackgroundColor(SwingColor.LightRed).open();
+							new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + "File does not exist: '" + structureFilePathField.getText() + "'").withDialogStyle(DialogStyle.ERROR).open();
 						} else {
 							// The worker opens its own connection, an additional one is not needed (and kept e.g. Derby busy)
 							try (FileInputStream jsonStructureDataInputStream = new FileInputStream(structureFilePathField.getText())) {
@@ -655,23 +670,23 @@ public class DbImportGui extends UpdateableGuiApplication {
 								final Result result = progressDialog.open();
 
 								if (result == Result.CANCELED) {
-									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
+									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withDialogStyle(DialogStyle.WARNING).open();
 								} else if (result == Result.ERROR) {
 									final Exception e = worker.getError();
 									if (e instanceof DbImportException) {
-										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 									} else {
 										final String stacktrace = ExceptionUtilities.getStackTrace(e);
-										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
+										new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withDialogStyle(DialogStyle.ERROR).open();
 									}
 								} else {
-									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "Structure creation result:\n\t" + worker.getCreatedTables() + " created tables\n\t" + worker.getCreatedColumns() + " added columns").withBackgroundColor(SwingColor.Green).open();
+									new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " OK", "Structure creation result:\n\t" + worker.getCreatedTables() + " created tables\n\t" + worker.getCreatedColumns() + " added columns").withDialogStyle(DialogStyle.INFORMATION).withBackgroundColor(ModernUi.SUCCESS_LIGHT).open();
 								}
 							}
 						}
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -688,8 +703,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		schemaFilePathField.setPreferredSize(new Dimension(175, schemaFilePathField.getPreferredSize().height));
 		schemaFilePathPanel.add(schemaFilePathField);
 
-		schemaFileButton = new JButton("...");
-		schemaFileButton.setPreferredSize(new Dimension(20, schemaFilePathField.getPreferredSize().height));
+		schemaFileButton = createFieldButton(IconKind.FOLDER, LangResources.get("browse"));
 		schemaFileButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -699,7 +713,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						schemaFilePathField.setText(schemaFile.getAbsolutePath());
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -1028,14 +1042,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
 
 		// Start Button
-		final JButton startButton = new JButton(LangResources.get("import"));
+		final JButton startButton = new ModernUi.Button(LangResources.get("import"), IconKind.PLAY, ButtonStyle.PRIMARY);
 		startButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
 				try {
 					importData(getConfigurationAsDefinition(), dbImportGui);
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -1044,14 +1058,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Mapping Button
-		mappingButton = new JButton(LangResources.get("createMapping"));
+		mappingButton = new ModernUi.Button(LangResources.get("createMapping"), IconKind.EDIT, ButtonStyle.SECONDARY);
 		mappingButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
 				try {
 					createMapping(getConfigurationAsDefinition(), dbImportGui);
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -1060,7 +1074,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Migration Button
-		final JButton migrationButton = new JButton(LangResources.get("migration"));
+		final JButton migrationButton = new ModernUi.Button(LangResources.get("migration"), IconKind.FILE, ButtonStyle.SECONDARY);
 		migrationButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1072,7 +1086,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Preferences Button
-		final JButton preferencesButton = new JButton(LangResources.get("preferences"));
+		final JButton preferencesButton = createHeaderButton(IconKind.LOCK, LangResources.get("preferences"));
 		preferencesButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1092,7 +1106,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 					temporaryPreferencesPassword = credentialsDialog.getPassword();
 				} catch (final Exception e) {
 					temporaryPreferencesPassword = null;
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -1101,7 +1115,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Configuration Button
-		final JButton configurationButton = new JButton(LangResources.get("configuration"));
+		final JButton configurationButton = createHeaderButton(IconKind.GEAR, LangResources.get("configuration"));
 		configurationButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1124,7 +1138,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 						applicationConfiguration.save();
 					}
 				} catch (final Exception e) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			}
 		});
@@ -1133,7 +1147,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Close Button
-		final JButton closeButton = new JButton(LangResources.get("close"));
+		final JButton closeButton = new ModernUi.Button(LangResources.get("close"), null, ButtonStyle.SECONDARY);
 		closeButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1143,27 +1157,249 @@ public class DbImportGui extends UpdateableGuiApplication {
 		});
 		buttonPanel.add(closeButton);
 
-		final JScrollPane mandatoryParameterScrollPane = new JScrollPane(mandatoryParameterPanel);
-		mandatoryParameterScrollPane.setPreferredSize(new Dimension(500, 400));
-		mandatoryParameterScrollPane.getVerticalScrollBar().setUnitIncrement(8);
-		parameterPanel.add(mandatoryParameterScrollPane);
+		// Sections of the parameter form, each starting at the given row
+		final Map<JPanel, String> sectionStarts = new HashMap<>();
+		sectionStarts.put(dbTypePanel, LangResources.get("section_database"));
+		sectionStarts.put(tableNamePanel, LangResources.get("section_importData"));
+		sectionStarts.put(importModePanel, LangResources.get("section_importBehaviour"));
+		sectionStarts.put(databaseTimezonePanel, LangResources.get("section_formats"));
+		final JPanel formPanel = createFormPanel(mandatoryParameterPanel, sectionStarts);
 
-		optionalParametersPanel.setPreferredSize(new Dimension(300, 400));
-		parameterPanel.add(optionalParametersPanel);
-		add(parameterPanel);
-		add(Box.createRigidArea(new Dimension(0, 5)));
-		add(buttonPanel);
+		final JScrollPane formScrollPane = new JScrollPane(formPanel);
+		formScrollPane.setBorder(BorderFactory.createEmptyBorder());
+		formScrollPane.getViewport().setBackground(ModernUi.CARD);
+		ModernUi.styleScrollBars(formScrollPane, ModernUi.CARD);
+		formScrollPane.setPreferredSize(new Dimension(formPanel.getPreferredSize().width + 16, 470));
+		final ModernUi.Card formCard = new ModernUi.Card(null, null, 10);
+		formCard.setContent(formScrollPane);
+
+		optionalParametersPanel.setOpaque(false);
+		ModernUi.blendIntoCard(optionalParametersPanel);
+		final ModernUi.Card optionsCard = new ModernUi.Card(LangResources.get("section_options"), IconKind.CHECK, 10);
+		final JPanel optionsContent = new JPanel(new BorderLayout());
+		optionsContent.setOpaque(false);
+		optionsContent.add(optionalParametersPanel, BorderLayout.NORTH);
+		optionsCard.setContent(optionsContent);
+
+		final JPanel cardsPanel = new JPanel(new GridBagLayout());
+		cardsPanel.setOpaque(false);
+		final GridBagConstraints cardConstraints = new GridBagConstraints();
+		cardConstraints.fill = GridBagConstraints.BOTH;
+		cardConstraints.weighty = 1;
+		cardConstraints.weightx = 1;
+		cardsPanel.add(formCard, cardConstraints);
+		cardConstraints.weightx = 0;
+		cardsPanel.add(optionsCard, cardConstraints);
+
+		// Action bar: secondary tools on the left, close and the main action on the right
+		final JPanel leftActions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+		leftActions.setOpaque(false);
+		leftActions.add(mappingButton);
+		leftActions.add(migrationButton);
+		final JPanel rightActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+		rightActions.setOpaque(false);
+		rightActions.add(closeButton);
+		rightActions.add(startButton);
+		final JPanel actionContent = new JPanel(new BorderLayout());
+		actionContent.setOpaque(false);
+		actionContent.add(leftActions, BorderLayout.WEST);
+		actionContent.add(rightActions, BorderLayout.EAST);
+		final ModernUi.Card actionCard = new ModernUi.Card(null, null, 6);
+		actionCard.setContent(actionContent);
+
+		final JPanel mainPanel = new JPanel(new BorderLayout(0, 2));
+		mainPanel.setBackground(ModernUi.BACKGROUND);
+		mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 6, 8));
+		mainPanel.add(cardsPanel, BorderLayout.CENTER);
+		mainPanel.add(actionCard, BorderLayout.SOUTH);
+
+		final JPanel contentPane = new JPanel(new BorderLayout());
+		contentPane.setBackground(ModernUi.BACKGROUND);
+		contentPane.add(createHeader(preferencesButton, configurationButton), BorderLayout.NORTH);
+		contentPane.add(mainPanel, BorderLayout.CENTER);
+		setContentPane(contentPane);
 
 		setConfigurationByDefinition(dbImportDefinition);
 
 		checkButtonStatus();
 
-		add(Box.createRigidArea(new Dimension(0, 5)));
-
 		pack();
+		setMinimumSize(new Dimension(Math.min(getWidth(), 760), 480));
 
 		setLocationRelativeTo(null);
-		setResizable(false);
+	}
+
+	/**
+	 * Gradient header with logo, application name, version and the buttons for the preferences and the configuration.
+	 */
+	private JPanel createHeader(final JButton preferencesButton, final JButton configurationButton) {
+		final ModernUi.GradientHeader header = new ModernUi.GradientHeader();
+		final java.net.URL iconUrl = getClass().getClassLoader().getResource("DbImport_Icon.png");
+		header.add(ModernUi.createLogo(iconUrl == null ? null : new ImageIcon(iconUrl)), BorderLayout.WEST);
+
+		final JLabel applicationLabel = new JLabel(DbImport.APPLICATION_NAME);
+		applicationLabel.setForeground(Color.WHITE);
+		applicationLabel.setFont(ModernUi.baseFont().deriveFont(Font.BOLD, 21f));
+		final JLabel versionLabel = new JLabel("Version " + DbImport.VERSION);
+		versionLabel.setForeground(new Color(255, 255, 255, 190));
+		final JPanel titlePanel = new JPanel(new GridLayout(2, 1, 0, 0));
+		titlePanel.setOpaque(false);
+		titlePanel.add(applicationLabel);
+		titlePanel.add(versionLabel);
+		header.add(titlePanel, BorderLayout.CENTER);
+
+		final JPanel applicationButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+		applicationButtonPanel.setOpaque(false);
+		applicationButtonPanel.add(preferencesButton);
+		applicationButtonPanel.add(configurationButton);
+		// GridBagLayout centers the buttons vertically in the header
+		final JPanel eastPanel = new JPanel(new GridBagLayout());
+		eastPanel.setOpaque(false);
+		eastPanel.add(applicationButtonPanel);
+		header.add(eastPanel, BorderLayout.EAST);
+		return header;
+	}
+
+	/**
+	 * Transparent icon button for the gradient header; the text is shown as tooltip.
+	 */
+	private static JButton createHeaderButton(final IconKind iconKind, final String text) {
+		final JButton button = new ModernUi.Button(null, iconKind, ButtonStyle.HEADER);
+		button.setToolTipText(text);
+		button.getAccessibleContext().setAccessibleName(text);
+		return button;
+	}
+
+	/**
+	 * Small square button next to an input field, e.g. to browse for a file.
+	 */
+	private static JButton createFieldButton(final IconKind iconKind, final String toolTipText) {
+		final JButton button = new ModernUi.Button(null, iconKind, ButtonStyle.SECONDARY);
+		button.setPreferredSize(new Dimension(FIELD_BUTTON_SIZE, FIELD_BUTTON_SIZE));
+		if (toolTipText != null) {
+			button.setToolTipText(toolTipText);
+			button.getAccessibleContext().setAccessibleName(toolTipText);
+		}
+		return button;
+	}
+
+	/**
+	 * Rebuilds the parameter rows (each a panel with a label, an input component and optional buttons) as one
+	 * aligned form with a label column, an input column and a button column, divided into sections.
+	 *
+	 * @param rowContainer panel holding the row panels
+	 * @param sectionStarts section titles by the row panel that starts the section
+	 * @return the form panel
+	 */
+	private static JPanel createFormPanel(final JPanel rowContainer, final Map<JPanel, String> sectionStarts) {
+		final JPanel formPanel = new JPanel(new GridBagLayout());
+		formPanel.setBackground(ModernUi.CARD);
+		formPanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 8));
+
+		int row = 0;
+		for (final Component rowComponent : rowContainer.getComponents()) {
+			if (!(rowComponent instanceof final JPanel rowPanel)) {
+				continue;
+			}
+
+			final String sectionTitle = sectionStarts.get(rowPanel);
+			if (sectionTitle != null) {
+				final JLabel sectionLabel = ModernUi.createSectionTitle(sectionTitle);
+				if (row > 0) {
+					sectionLabel.setBorder(BorderFactory.createCompoundBorder(
+							BorderFactory.createMatteBorder(1, 0, 0, 0, ModernUi.INNER_BORDER),
+							BorderFactory.createEmptyBorder(10, 0, 2, 0)));
+				} else {
+					sectionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
+				}
+				final GridBagConstraints sectionConstraints = new GridBagConstraints();
+				sectionConstraints.gridx = 0;
+				sectionConstraints.gridy = row++;
+				sectionConstraints.gridwidth = 3;
+				sectionConstraints.fill = GridBagConstraints.HORIZONTAL;
+				sectionConstraints.insets = new Insets(row > 1 ? 8 : 0, 0, 4, 0);
+				formPanel.add(sectionLabel, sectionConstraints);
+			}
+
+			// Copy first: adding a component to the form removes it from the row panel
+			final Component[] parts = rowPanel.getComponents();
+			if (parts.length < 2) {
+				continue;
+			}
+			final Component field = parts[1];
+			final boolean multiLine = field instanceof JScrollPane;
+			styleFormField(field);
+
+			if (parts[0] instanceof final JLabel label) {
+				label.setForeground(ModernUi.MUTED);
+				final GridBagConstraints labelConstraints = new GridBagConstraints();
+				labelConstraints.gridx = 0;
+				labelConstraints.gridy = row;
+				labelConstraints.anchor = multiLine ? GridBagConstraints.NORTHWEST : GridBagConstraints.WEST;
+				labelConstraints.insets = new Insets(multiLine ? 9 : 3, 0, 3, 12);
+				formPanel.add(label, labelConstraints);
+			}
+
+			final boolean hasButtons = parts.length > 2;
+			final GridBagConstraints fieldConstraints = new GridBagConstraints();
+			fieldConstraints.gridx = 1;
+			fieldConstraints.gridy = row;
+			fieldConstraints.gridwidth = hasButtons ? 1 : 2;
+			fieldConstraints.weightx = 1;
+			fieldConstraints.fill = field instanceof JCheckBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
+			fieldConstraints.anchor = GridBagConstraints.WEST;
+			fieldConstraints.insets = new Insets(3, 0, 3, 0);
+			formPanel.add(field, fieldConstraints);
+
+			if (hasButtons) {
+				final JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+				buttonsPanel.setOpaque(false);
+				for (int i = 2; i < parts.length; i++) {
+					if (i > 2) {
+						buttonsPanel.add(Box.createRigidArea(new Dimension(4, 0)));
+					}
+					buttonsPanel.add(parts[i]);
+				}
+				final GridBagConstraints buttonConstraints = new GridBagConstraints();
+				buttonConstraints.gridx = 2;
+				buttonConstraints.gridy = row;
+				buttonConstraints.anchor = multiLine ? GridBagConstraints.NORTHWEST : GridBagConstraints.WEST;
+				buttonConstraints.insets = new Insets(3, 6, 3, 0);
+				formPanel.add(buttonsPanel, buttonConstraints);
+			}
+
+			row++;
+		}
+
+		// Keeps the rows at the top
+		final GridBagConstraints fillerConstraints = new GridBagConstraints();
+		fillerConstraints.gridy = row;
+		fillerConstraints.weighty = 1;
+		formPanel.add(Box.createGlue(), fillerConstraints);
+
+		return formPanel;
+	}
+
+	/**
+	 * Applies the modern style and the common width to an input component of the form.
+	 */
+	private static void styleFormField(final Component field) {
+		if (field instanceof final JScrollPane scrollPane && scrollPane.getViewport().getView() instanceof final JTextArea textArea) {
+			final int height = Math.max(MIN_TEXT_AREA_HEIGHT, scrollPane.getPreferredSize().height);
+			ModernUi.styleTextArea(textArea, scrollPane, false);
+			scrollPane.setPreferredSize(new Dimension(FIELD_WIDTH, height));
+			scrollPane.setMinimumSize(new Dimension(FIELD_WIDTH / 2, height));
+		} else if (field instanceof final JTextField textField) {
+			ModernUi.styleTextField(textField, false);
+			textField.setPreferredSize(null);
+			textField.setPreferredSize(new Dimension(FIELD_WIDTH, textField.getPreferredSize().height));
+			textField.setMinimumSize(new Dimension(FIELD_WIDTH / 2, textField.getPreferredSize().height));
+		} else if (field instanceof final DropDown dropDown) {
+			dropDown.setPreferredSize(null);
+			dropDown.setPreferredSize(new Dimension(FIELD_WIDTH, dropDown.getPreferredSize().height));
+		} else if (field instanceof final JCheckBox checkBox) {
+			checkBox.setOpaque(false);
+		}
 	}
 
 	private void showMigrationDialog() {
@@ -1209,14 +1445,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 			final Result result = progressDialog.open();
 
 			if (result == Result.CANCELED) {
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withDialogStyle(DialogStyle.WARNING).open();
 			} else if (result == Result.ERROR) {
 				final Exception e = worker.getError();
 				if (e instanceof DbImportException) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				} else {
 					final String stacktrace = ExceptionUtilities.getStackTrace(e);
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			} else {
 				final List<String> dataColumns = worker.getDataPropertyNames();
@@ -1859,7 +2095,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 				throw new DbImportException("Cannot acquire database driver for database vendor: " + dbImportDefinition.getDbVendor());
 			}
 		} catch (final Exception e) {
-			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 			return;
 		}
 
@@ -1906,14 +2142,14 @@ public class DbImportGui extends UpdateableGuiApplication {
 			final Result result = progressDialog.open();
 
 			if (result == Result.CANCELED) {
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withDialogStyle(DialogStyle.WARNING).open();
 			} else if (result == Result.ERROR) {
 				final Exception e = worker.getError();
 				if (e instanceof DbImportException) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				} else {
 					final String stacktrace = ExceptionUtilities.getStackTrace(e);
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			} else {
 				final LocalDateTime start = worker.getStartTime();
@@ -1927,12 +2163,12 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 				Color backgroundColor = null;
 				if (worker.getNotImportedItems().size() > 0) {
-					backgroundColor = SwingColor.LightRed;
+					backgroundColor = ModernUi.DANGER_LIGHT;
 				}
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + resultText).withBackgroundColor(backgroundColor).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + resultText).withDialogStyle(backgroundColor != null ? DialogStyle.ERROR : DialogStyle.INFORMATION).withBackgroundColor(backgroundColor != null ? ModernUi.DANGER_LIGHT : ModernUi.SUCCESS_LIGHT).open();
 			}
 		} catch (final Exception e) {
-			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 		}
 	}
 
@@ -1943,24 +2179,24 @@ public class DbImportGui extends UpdateableGuiApplication {
 			final Result result = progressDialog.open();
 
 			if (result == Result.CANCELED) {
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withBackgroundColor(SwingColor.Yellow).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("error.canceledbyuser")).withDialogStyle(DialogStyle.WARNING).open();
 			} else if (result == Result.ERROR) {
 				final Exception e = worker.getError();
 				if (e instanceof DbImportException) {
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 				} else {
 					final String stacktrace = ExceptionUtilities.getStackTrace(e);
-					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withBackgroundColor(SwingColor.LightRed).open();
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getClass().getSimpleName() + ":\n" + e.getMessage() + "\n\n" + stacktrace).withDialogStyle(DialogStyle.ERROR).open();
 				}
 			} else {
 				Color backgroundColor = null;
 				if (worker.wasErroneous()) {
-					backgroundColor = SwingColor.LightRed;
+					backgroundColor = ModernUi.DANGER_LIGHT;
 				}
-				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + worker.getResult()).withBackgroundColor(backgroundColor).open();
+				new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME, LangResources.get("result") + ":\n" + worker.getResult()).withDialogStyle(backgroundColor != null ? DialogStyle.ERROR : DialogStyle.INFORMATION).withBackgroundColor(backgroundColor != null ? ModernUi.DANGER_LIGHT : ModernUi.SUCCESS_LIGHT).open();
 			}
 		} catch (final Exception e) {
-			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
+			new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
 		}
 	}
 

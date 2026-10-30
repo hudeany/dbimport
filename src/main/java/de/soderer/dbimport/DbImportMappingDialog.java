@@ -1,11 +1,10 @@
 package de.soderer.dbimport;
 
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Label;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,14 +15,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import de.soderer.swing.DropDown;
-import de.soderer.swing.ModalDialog;
+import de.soderer.swing.modern.ButtonStyle;
+import de.soderer.swing.modern.DropDown;
+import de.soderer.swing.modern.IconKind;
+import de.soderer.swing.modern.ModalDialog;
+import de.soderer.swing.modern.ModernUi;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringSplitter;
 import de.soderer.utilities.StringUtilities;
@@ -42,11 +45,18 @@ import de.soderer.utilities.db.utilities.CaseInsensitiveMap;
 public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	private static final long serialVersionUID = 396542497082344683L;
 
+	/** Width of the database column names */
+	private static final int DB_COLUMN_WIDTH = 200;
+	/** Width of the data property selection */
+	private static final int DATA_COLUMN_WIDTH = 190;
+	/** Width of the format selection */
+	private static final int FORMAT_WIDTH = 150;
+
 	private final CaseInsensitiveMap<DbColumnType> columnTypes;
 	private final List<String> dataColumns;
 	private String mappingString;
 
-	private final List<Triple<Label, DropDown, DropDown>> mappingEntries = new ArrayList<>();
+	private final List<Triple<JLabel, DropDown, DropDown>> mappingEntries = new ArrayList<>();
 
 	/** Only enabled while all mapping entries are valid */
 	private final JButton okButton;
@@ -62,44 +72,23 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	 * @throws Exception if the dialog cannot be created
 	 */
 	public DbImportMappingDialog(final Window parent, final String title, final CaseInsensitiveMap<DbColumnType> columnTypes, final List<String> dataColumns, final List<String> keyColumns) throws Exception {
-		super(parent, title);
+		super(parent, title, IconKind.EDIT);
 
 		this.columnTypes = columnTypes;
 		this.dataColumns = dataColumns;
 
 		setResizable(false);
 
-		final JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+		// Grid with one row per database column: column name, data property and optional format
+		final JPanel mappingPanel = new JPanel(new GridBagLayout());
+		mappingPanel.setBackground(ModernUi.CARD);
+		mappingPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
 
-		add(panel);
-
-		panel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-		final JPanel mappingPanel = new JPanel();
-		mappingPanel.setLayout(new BoxLayout(mappingPanel, BoxLayout.PAGE_AXIS));
-
-		final JPanel mappingEntryPanelHeader = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-		mappingEntryPanelHeader.add(Box.createRigidArea(new Dimension(5, 0)));
-
-		final Label dbColumnLabelHeader1 = new Label("DB-Column");
-		dbColumnLabelHeader1.setPreferredSize(new Dimension(200, 18));
-		mappingEntryPanelHeader.add(dbColumnLabelHeader1);
-
-		mappingEntryPanelHeader.add(Box.createRigidArea(new Dimension(5, 0)));
-
-		final Label dbColumnLabelHeader2 = new Label("Data-Column");
-		dbColumnLabelHeader2.setPreferredSize(new Dimension(130, 18));
-		mappingEntryPanelHeader.add(dbColumnLabelHeader2);
-
-		mappingEntryPanelHeader.add(Box.createRigidArea(new Dimension(5, 0)));
-
-		final Label dbColumnLabelHeader3 = new Label("Formatinfo");
-		mappingEntryPanelHeader.add(dbColumnLabelHeader3);
-
-		mappingEntryPanelHeader.add(Box.createRigidArea(new Dimension(5, 0)));
-		mappingPanel.add(mappingEntryPanelHeader);
+		int row = 0;
+		addCell(mappingPanel, createHeaderLabel("DB-Column"), 0, row, false);
+		addCell(mappingPanel, createHeaderLabel("Data-Column"), 1, row, false);
+		addCell(mappingPanel, createHeaderLabel("Formatinfo"), 2, row, false);
+		row++;
 
 		final List<String> dbColumnNames = new ArrayList<>(columnTypes.keySet());
 		Collections.sort(dbColumnNames);
@@ -115,15 +104,14 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 		for (final String dbColumnName : dbColumnNames) {
 			final DbColumnType dbColumnType = columnTypes.get(dbColumnName);
 
-			final JPanel mappingEntryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-
-			final Label dbColumnLabel = new Label(dbColumnName);
-			dbColumnLabel.setPreferredSize(new Dimension(200, 18));
-			mappingEntryPanel.add(dbColumnLabel);
-
-			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+			final JLabel dbColumnLabel = new JLabel(dbColumnName);
+			dbColumnLabel.setForeground(ModernUi.TEXT);
+			dbColumnLabel.setPreferredSize(new Dimension(DB_COLUMN_WIDTH, dbColumnLabel.getPreferredSize().height));
+			if (keyColumns != null && keyColumns.contains(dbColumnName)) {
+				// Key columns are listed first and marked by a bold name
+				dbColumnLabel.setFont(dbColumnLabel.getFont().deriveFont(java.awt.Font.BOLD));
+			}
+			addCell(mappingPanel, dbColumnLabel, 0, row, false);
 
 			// Fixed list: no custom values (like the former non-editable combo box), empty entry means "not mapped"
 			final DropDown dataFieldCombo = createFixedDropDown();
@@ -133,9 +121,8 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			}
 			// The former combo box preselected the first item automatically, DropDown does not
 			dataFieldCombo.setText("");
-			mappingEntryPanel.add(dataFieldCombo);
-
-			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+			dataFieldCombo.setPreferredSize(new Dimension(DATA_COLUMN_WIDTH, dataFieldCombo.getPreferredSize().height));
+			addCell(mappingPanel, dataFieldCombo, 1, row, true);
 
 			DropDown optionalComboBox = null;
 			if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Float
@@ -145,83 +132,83 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 				optionalComboBox.addItem(".");
 				optionalComboBox.addItem(",");
 				optionalComboBox.setText(".");
-				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.DateTime) {
 				optionalComboBox = createDateFormatDropDown();
-				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Date) {
 				optionalComboBox = createDateFormatDropDown();
-				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Blob || dbColumnType.getSimpleDataType() == DbSimpleDataType.Clob) {
 				optionalComboBox = createFixedDropDown();
 				optionalComboBox.addItem("");
 				optionalComboBox.addItem("file");
 				optionalComboBox.setText("");
-				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.String) {
 				optionalComboBox = createFixedDropDown();
 				optionalComboBox.addItem("");
 				optionalComboBox.addItem("LowerCase");
 				optionalComboBox.addItem("UpperCase");
 				optionalComboBox.setText("email".equalsIgnoreCase(dbColumnName) ? "LowerCase" : "");
-				mappingEntryPanel.add(optionalComboBox);
 			} else if (dbColumnType.getSimpleDataType() == DbSimpleDataType.Boolean) {
 				optionalComboBox = createFixedDropDown();
 				optionalComboBox.addItem("");
 				optionalComboBox.setText("");
-				mappingEntryPanel.add(optionalComboBox);
 			}
-
-			mappingPanel.add(mappingEntryPanel);
-
-			mappingEntryPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+			if (optionalComboBox != null) {
+				optionalComboBox.setPreferredSize(new Dimension(FORMAT_WIDTH, optionalComboBox.getPreferredSize().height));
+				addCell(mappingPanel, optionalComboBox, 2, row, true);
+			}
 
 			mappingEntries.add(new Triple<>(dbColumnLabel, dataFieldCombo, optionalComboBox));
+			row++;
 		}
 
+		// Keeps the rows at the top
+		final GridBagConstraints fillerConstraints = new GridBagConstraints();
+		fillerConstraints.gridy = row;
+		fillerConstraints.weighty = 1;
+		mappingPanel.add(Box.createGlue(), fillerConstraints);
+
 		final JScrollPane mappingScrollpane = new JScrollPane(mappingPanel);
-		mappingScrollpane.setPreferredSize(new Dimension(533, Utilities.limitValue(100, mappingPanel.getPreferredSize().height, 500)));
+		mappingScrollpane.setBorder(BorderFactory.createEmptyBorder());
+		mappingScrollpane.getViewport().setBackground(ModernUi.CARD);
+		ModernUi.styleScrollBars(mappingScrollpane, ModernUi.CARD);
+		mappingScrollpane.setPreferredSize(new Dimension(mappingPanel.getPreferredSize().width + 16, Utilities.limitValue(100, mappingPanel.getPreferredSize().height, 500)));
+		getContentArea().add(mappingScrollpane);
 
-		panel.add(mappingScrollpane);
-
-		panel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-		final JPanel buttonPanel = new JPanel();
-		panel.add(buttonPanel);
-
-		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-
-		okButton = new JButton(LangResources.get("ok"));
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				createMappingString();
-				dispose();
-			}
+		okButton = addButton(LangResources.get("ok"), null, ButtonStyle.PRIMARY, event -> {
+			createMappingString();
+			dispose();
 		});
-		buttonPanel.add(okButton);
 		updateOkButtonStatus();
-
-		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-
-		final JButton cancelButton = new JButton(LangResources.get("cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				dispose();
-			}
-		});
-		buttonPanel.add(cancelButton);
-
-		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-
-		panel.add(Box.createRigidArea(new Dimension(0, 5)));
+		addButton(LangResources.get("cancel"), null, ButtonStyle.SECONDARY, event -> dispose());
+		getRootPane().setDefaultButton(okButton);
 
 		pack();
 
 		setLocationRelativeTo(parent);
 
 		returnValue = true;
+	}
+
+	/**
+	 * Grey bold column title of the mapping grid.
+	 */
+	private static JLabel createHeaderLabel(final String text) {
+		final JLabel label = ModernUi.createSectionTitle(text);
+		label.setForeground(ModernUi.MUTED);
+		return label;
+	}
+
+	/**
+	 * Adds a component to the mapping grid.
+	 */
+	private static void addCell(final JPanel mappingPanel, final java.awt.Component component, final int column, final int row, final boolean fill) {
+		final GridBagConstraints constraints = new GridBagConstraints();
+		constraints.gridx = column;
+		constraints.gridy = row;
+		constraints.anchor = GridBagConstraints.WEST;
+		constraints.fill = fill ? GridBagConstraints.HORIZONTAL : GridBagConstraints.NONE;
+		constraints.insets = new Insets(row == 0 ? 0 : 3, 0, row == 0 ? 6 : 3, column < 2 ? 10 : 0);
+		mappingPanel.add(component, constraints);
 	}
 
 	private void fillMappingEntries(final CaseInsensitiveMap<DbColumnType> columnTypesToUse, final List<String> dataColumnsToUse) throws IOException, Exception {
@@ -241,7 +228,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			}
 		}
 
-		for (final Triple<Label, DropDown, DropDown> mappingEntry : mappingEntries) {
+		for (final Triple<JLabel, DropDown, DropDown> mappingEntry : mappingEntries) {
 			for (final Entry<String, Tuple<String, String>> entry : mapping.entrySet()) {
 				if (entry.getKey().equalsIgnoreCase(mappingEntry.getFirst().getText())) {
 					// Unknown values are ignored for fixed lists, as the former combo box did
@@ -264,7 +251,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	private void createMappingString() {
 		mappingString = "";
 
-		for (final Triple<Label, DropDown, DropDown> mappingEntry : mappingEntries) {
+		for (final Triple<JLabel, DropDown, DropDown> mappingEntry : mappingEntries) {
 			final String dataColumn = getValue(mappingEntry.getSecond());
 			if (StringUtilities.isNotBlank(dataColumn)) {
 				mappingString += mappingEntry.getFirst().getText() + "=\"" + dataColumn + "\"";
@@ -370,7 +357,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 			return;
 		}
 		boolean allValid = true;
-		for (final Triple<Label, DropDown, DropDown> mappingEntry : mappingEntries) {
+		for (final Triple<JLabel, DropDown, DropDown> mappingEntry : mappingEntries) {
 			if (getValue(mappingEntry.getSecond()) == null || (mappingEntry.getThird() != null && getValue(mappingEntry.getThird()) == null)) {
 				allValid = false;
 				break;
