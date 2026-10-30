@@ -1191,15 +1191,15 @@ public class DbImportGui extends UpdateableGuiApplication {
 		cardConstraints.weightx = 0;
 		cardsPanel.add(optionsCard, cardConstraints);
 
-		// Action bar: secondary tools on the left, close and the main action on the right
+		// Action bar: secondary tools on the left, the main action and close (rightmost) on the right
 		final JPanel leftActions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
 		leftActions.setOpaque(false);
 		leftActions.add(mappingButton);
 		leftActions.add(migrationButton);
 		final JPanel rightActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
 		rightActions.setOpaque(false);
-		rightActions.add(closeButton);
 		rightActions.add(startButton);
+		rightActions.add(closeButton);
 		final JPanel actionContent = new JPanel(new BorderLayout());
 		actionContent.setOpaque(false);
 		actionContent.add(leftActions, BorderLayout.WEST);
