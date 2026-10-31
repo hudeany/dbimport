@@ -12,7 +12,6 @@ import java.io.FileOutputStream;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -21,6 +20,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import de.soderer.swing.modern.Button;
 import de.soderer.swing.modern.ButtonStyle;
 import de.soderer.swing.modern.DialogStyle;
 import de.soderer.swing.modern.IconKind;
@@ -52,8 +52,8 @@ public class SqlDdlMigrationDialog extends ModalDialog<Boolean> {
 	private final JCheckBox sortByTableCheckBox;
 	private final JCheckBox sortByColumnCheckBox;
 
-	private final JButton generateMigrationButton;
-	private final JButton generateMergeButton;
+	private final Button generateMigrationButton;
+	private final Button generateMergeButton;
 
 	/**
 	 * Creates the dialog.
@@ -181,7 +181,7 @@ public class SqlDdlMigrationDialog extends ModalDialog<Boolean> {
 		fieldConstraints.insets = new Insets(3, 0, 3, 6);
 		formPanel.add(field, fieldConstraints);
 
-		final JButton browseButton = new ModernUi.Button(null, IconKind.FOLDER, ButtonStyle.SECONDARY);
+		final Button browseButton = new Button(null, IconKind.FOLDER, ButtonStyle.SECONDARY);
 		browseButton.setPreferredSize(new Dimension(30, 30));
 		browseButton.setToolTipText(labelText);
 		browseButton.addActionListener(browseAction);

@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.JButton;
+import de.soderer.swing.modern.Button;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -59,7 +59,7 @@ public class DbImportMappingDialog extends ModalDialog<Boolean> {
 	private final List<Triple<JLabel, DropDown, DropDown>> mappingEntries = new ArrayList<>();
 
 	/** Only enabled while all mapping entries are valid */
-	private final JButton okButton;
+	private final Button okButton;
 
 	/**
 	 * Creates the dialog.

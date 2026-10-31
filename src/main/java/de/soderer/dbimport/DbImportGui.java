@@ -37,7 +37,6 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -59,9 +58,12 @@ import de.soderer.dbimport.DbImportDefinition.ImportMode;
 import de.soderer.network.NetworkUtilities;
 import de.soderer.network.trustmanager.TrustManagerUtilities;
 import de.soderer.swing.DualProgressDialog;
+import de.soderer.swing.modern.Button;
 import de.soderer.swing.modern.ButtonStyle;
+import de.soderer.swing.modern.Card;
 import de.soderer.swing.modern.DialogStyle;
 import de.soderer.swing.modern.DropDown;
+import de.soderer.swing.modern.GradientHeader;
 import de.soderer.swing.modern.IconKind;
 import de.soderer.swing.modern.ModernUi;
 import de.soderer.swing.modern.ProgressDialog;
@@ -110,7 +112,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 	/** The database type combo. */
 	private final DropDown dbTypeCombo;
 
-	private final JButton connectionCheckButton;
+	private final Button connectionCheckButton;
 
 	/** The host field. */
 	private final JTextField hostField;
@@ -133,9 +135,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 	/** The trustStorePassword field. */
 	private final JPasswordField trustStorePasswordField;
 
-	private final JButton trustStoreFileButton;
+	private final Button trustStoreFileButton;
 
-	private final JButton createTrustStoreFileButton;
+	private final Button createTrustStoreFileButton;
 
 	/** The batchBlockSize field. */
 	private final JTextField batchBlockSizeField;
@@ -164,13 +166,13 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 	private final JTextField structureFilePathField;
 
-	private final JButton structureFileButton;
+	private final Button structureFileButton;
 
-	private final JButton createCompleteStructureFileButton;
+	private final Button createCompleteStructureFileButton;
 
 	private final JTextField schemaFilePathField;
 
-	private final JButton schemaFileButton;
+	private final Button schemaFileButton;
 
 	/** The separator combo. */
 	private final DropDown separatorCombo;
@@ -236,7 +238,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 	private final DropDown duplicateModeCombo;
 
-	private final JButton mappingButton;
+	private final Button mappingButton;
 
 	/** The field for DateFormat */
 	private final JTextField importDateFormatField;
@@ -319,7 +321,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		dbTypeCombo.addActionListener(event -> checkButtonStatus());
 		dbTypePanel.add(dbTypeCombo, BorderLayout.EAST);
 
-		connectionCheckButton = new ModernUi.Button(LangResources.get("connectionCheck"), IconKind.CHECK, ButtonStyle.SECONDARY);
+		connectionCheckButton = new Button(LangResources.get("connectionCheck"), IconKind.CHECK, ButtonStyle.SECONDARY);
 		connectionCheckButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -548,7 +550,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		importFilePathPanel.add(importFilePathOrDataScrollpane);
 		mandatoryParameterPanel.add(importFilePathPanel);
 
-		final JButton browseButton = createFieldButton(IconKind.FOLDER, LangResources.get("browse"));
+		final Button browseButton = createFieldButton(IconKind.FOLDER, LangResources.get("browse"));
 		browseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1042,7 +1044,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
 
 		// Start Button
-		final JButton startButton = new ModernUi.Button(LangResources.get("import"), IconKind.PLAY, ButtonStyle.PRIMARY);
+		final Button startButton = new Button(LangResources.get("import"), IconKind.PLAY, ButtonStyle.PRIMARY);
 		startButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1058,7 +1060,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Mapping Button
-		mappingButton = new ModernUi.Button(LangResources.get("createMapping"), IconKind.EDIT, ButtonStyle.SECONDARY);
+		mappingButton = new Button(LangResources.get("createMapping"), IconKind.EDIT, ButtonStyle.SECONDARY);
 		mappingButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1074,7 +1076,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Migration Button
-		final JButton migrationButton = new ModernUi.Button(LangResources.get("migration"), IconKind.FILE, ButtonStyle.SECONDARY);
+		final Button migrationButton = new Button(LangResources.get("migration"), IconKind.FILE, ButtonStyle.SECONDARY);
 		migrationButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1086,7 +1088,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Preferences Button
-		final JButton preferencesButton = createHeaderButton(IconKind.LOCK, LangResources.get("preferences"));
+		final Button preferencesButton = createHeaderButton(IconKind.LOCK, LangResources.get("preferences"));
 		preferencesButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1115,7 +1117,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Configuration Button
-		final JButton configurationButton = createHeaderButton(IconKind.GEAR, LangResources.get("configuration"));
+		final Button configurationButton = createHeaderButton(IconKind.GEAR, LangResources.get("configuration"));
 		configurationButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1147,7 +1149,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		// Close Button
-		final JButton closeButton = new ModernUi.Button(LangResources.get("close"), null, ButtonStyle.SECONDARY);
+		final Button closeButton = new Button(LangResources.get("close"), null, ButtonStyle.SECONDARY);
 		closeButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
@@ -1170,12 +1172,12 @@ public class DbImportGui extends UpdateableGuiApplication {
 		formScrollPane.getViewport().setBackground(ModernUi.CARD);
 		ModernUi.styleScrollBars(formScrollPane, ModernUi.CARD);
 		formScrollPane.setPreferredSize(new Dimension(formPanel.getPreferredSize().width + 16, 470));
-		final ModernUi.Card formCard = new ModernUi.Card(null, null, 10);
+		final Card formCard = new Card(null, null, 10);
 		formCard.setContent(formScrollPane);
 
 		optionalParametersPanel.setOpaque(false);
 		ModernUi.blendIntoCard(optionalParametersPanel);
-		final ModernUi.Card optionsCard = new ModernUi.Card(LangResources.get("section_options"), IconKind.CHECK, 10);
+		final Card optionsCard = new Card(LangResources.get("section_options"), IconKind.CHECK, 10);
 		final JPanel optionsContent = new JPanel(new BorderLayout());
 		optionsContent.setOpaque(false);
 		optionsContent.add(optionalParametersPanel, BorderLayout.NORTH);
@@ -1204,7 +1206,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		actionContent.setOpaque(false);
 		actionContent.add(leftActions, BorderLayout.WEST);
 		actionContent.add(rightActions, BorderLayout.EAST);
-		final ModernUi.Card actionCard = new ModernUi.Card(null, null, 6);
+		final Card actionCard = new Card(null, null, 6);
 		actionCard.setContent(actionContent);
 
 		final JPanel mainPanel = new JPanel(new BorderLayout(0, 2));
@@ -1232,8 +1234,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 	/**
 	 * Gradient header with logo, application name, version and the buttons for the preferences and the configuration.
 	 */
-	private JPanel createHeader(final JButton preferencesButton, final JButton configurationButton) {
-		final ModernUi.GradientHeader header = new ModernUi.GradientHeader();
+	private JPanel createHeader(final Button preferencesButton, final Button configurationButton) {
+		final GradientHeader header = new GradientHeader();
 		final java.net.URL iconUrl = getClass().getClassLoader().getResource("DbImport_Icon.png");
 		header.add(ModernUi.createLogo(iconUrl == null ? null : new ImageIcon(iconUrl)), BorderLayout.WEST);
 
@@ -1263,8 +1265,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 	/**
 	 * Transparent icon button for the gradient header; the text is shown as tooltip.
 	 */
-	private static JButton createHeaderButton(final IconKind iconKind, final String text) {
-		final JButton button = new ModernUi.Button(null, iconKind, ButtonStyle.HEADER);
+	private static Button createHeaderButton(final IconKind iconKind, final String text) {
+		final Button button = new Button(null, iconKind, ButtonStyle.HEADER);
 		button.setToolTipText(text);
 		button.getAccessibleContext().setAccessibleName(text);
 		return button;
@@ -1273,8 +1275,8 @@ public class DbImportGui extends UpdateableGuiApplication {
 	/**
 	 * Small square button next to an input field, e.g. to browse for a file.
 	 */
-	private static JButton createFieldButton(final IconKind iconKind, final String toolTipText) {
-		final JButton button = new ModernUi.Button(null, iconKind, ButtonStyle.SECONDARY);
+	private static Button createFieldButton(final IconKind iconKind, final String toolTipText) {
+		final Button button = new Button(null, iconKind, ButtonStyle.SECONDARY);
 		button.setPreferredSize(new Dimension(FIELD_BUTTON_SIZE, FIELD_BUTTON_SIZE));
 		if (toolTipText != null) {
 			button.setToolTipText(toolTipText);
