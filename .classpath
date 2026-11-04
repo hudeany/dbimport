@@ -15,7 +15,7 @@
 	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.26.1.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-api-2.26.1.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-core-2.26.1.jar"/>
-	<classpathentry kind="lib" path="lib/network-26.0.40.jar"/>
+	<classpathentry kind="lib" path="lib/network-26.0.41.jar"/>
 	<classpathentry kind="lib" path="lib/poi-5.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-5.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-full-5.5.1.jar"/>
@@ -24,7 +24,7 @@
 	<classpathentry kind="lib" path="lib/xmlbeans-5.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/zip4j-2.11.6.jar"/>
 	<classpathentry kind="lib" path="lib/dbutilities-26.1.8.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.58.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.60.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-console-26.0.15.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-swing-26.0.44.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-utilities-26.3.7.jar"/>
