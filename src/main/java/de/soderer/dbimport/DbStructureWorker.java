@@ -13,13 +13,11 @@ import de.soderer.json.JsonNode;
 import de.soderer.json.JsonObject;
 import de.soderer.json.JsonReader;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbUtilities;
 import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbSimpleDataType;
 import de.soderer.utilities.db.data.DbVendor;
-import de.soderer.utilities.db.exception.DbNotExistsException;
 import de.soderer.utilities.db.utilities.CaseInsensitiveSet;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
@@ -76,15 +74,7 @@ public class DbStructureWorker extends WorkerSimple<Boolean> {
 		Connection connection = null;
 		boolean previousAutoCommit = false;
 		try (JsonReader jsonReader = new JsonReader(jsonStructureDataInputStream)) {
-			if (dbDefinition.getDbVendor() == DbVendor.Derby || (dbDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(dbDefinition.getHostnameAndPort())) || dbDefinition.getDbVendor() == DbVendor.SQLite) {
-				try {
-					connection = DbUtilities.createConnection(dbDefinition, true);
-				} catch (@SuppressWarnings("unused") final DbNotExistsException e) {
-					connection = DbUtilities.createNewDatabase(dbDefinition.getDbVendor(), dbDefinition.getDbName());
-				}
-			} else {
-				connection = DbUtilities.createConnection(dbDefinition, false);
-			}
+			connection = DbImportWorker.createDatabaseConnection(dbDefinition);
 
 			previousAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);

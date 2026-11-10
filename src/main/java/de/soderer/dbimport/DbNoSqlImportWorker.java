@@ -94,7 +94,7 @@ public class DbNoSqlImportWorker extends DbImportWorker {
 			Connection connection = null;
 			boolean previousAutoCommit = false;
 			try {
-				connection = DbUtilities.createConnection(dbDefinition, false);
+				connection = createDatabaseConnection(dbDefinition);
 
 				previousAutoCommit = connection.getAutoCommit();
 				connection.setAutoCommit(false);

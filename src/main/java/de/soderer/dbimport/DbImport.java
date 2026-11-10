@@ -51,6 +51,7 @@ import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
 import de.soderer.utilities.db.DbUtilities;
+import de.soderer.utilities.db.data.DbConnectionDefinition;
 import de.soderer.utilities.db.data.DbVendor;
 import de.soderer.utilities.db.exception.DbNotExistsException;
 import de.soderer.utilities.worker.WorkerParentDual;
@@ -58,12 +59,6 @@ import de.soderer.utilities.worker.WorkerParentDual;
 /**
  * The Main-Class of DbImport.
  */
-// TODO: Missing mapping for not null column => error message
-// TODO: Check for string too large
-// TODO: Errorhandling on createConnection (dbconnection error detection and help messages in errors)
-// TODO: Multiple file blob import export
-// TODO: Get a list of tables
-// TODO: Single Blob Upload GUI
 public class DbImport extends UpdateableConsoleApplication implements WorkerParentDual {
 	/** The Constant APPLICATION_NAME. */
 	public static final String APPLICATION_NAME = "DbImport";
@@ -143,6 +138,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 	/** Lower case flags only known by the connection test parameters (see menu mode parsing in _main) */
 	private static final Set<String> CONNECTION_TEST_FLAGS = Set.of("-iter", "-sleep", "-check");
 
+	/** Default table name pattern of the table list: all tables */
+	private static final String DEFAULT_TABLE_PATTERN = "*";
+
 	/** The database import definition. */
 	private DbImportDefinition dbImportDefinitionToExecute;
 
@@ -205,6 +203,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			boolean connectionTest = false;
 			boolean blobImport = false;
 			boolean createTrustStore = false;
+			boolean listTables = false;
+			String tablePattern = DEFAULT_TABLE_PATTERN;
 
 			if (arguments.length == 0) {
 				// If started without any parameter we check for headless mode and show the console menu or the GUI
@@ -242,6 +242,10 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				} else if ("connectiontest".equals(modeKeyword)) {
 					connectionTest = true;
 					arguments = Utilities.removeItemAtIndex(arguments, 0);
+				} else if ("listtables".equals(modeKeyword)) {
+					// Uses the same connection parameters as the connection test
+					listTables = true;
+					arguments = Utilities.removeItemAtIndex(arguments, 0);
 				} else if ("importblob".equals(modeKeyword)) {
 					blobImport = true;
 					arguments = Utilities.removeItemAtIndex(arguments, 0);
@@ -269,7 +273,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				boolean importFlagHandled = false;
 				boolean blobImportFlagHandled = false;
 
-				if (openGui || openMenu || (!blobImport && !connectionTest && !createTrustStore)) {
+				if (openGui || openMenu || (!blobImport && !connectionTest && !createTrustStore && !listTables)) {
 					boolean positionalParameter = false;
 					if ("-x".equalsIgnoreCase(arguments[i])) {
 						i++;
@@ -694,8 +698,20 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					blobImportFlagHandled = wasAllowedParam && !positionalParameter;
 				}
 
-				if ((openMenu || connectionTest) && i == startIndex && !importFlagHandled && !blobImportFlagHandled) {
-					if ("-iter".equalsIgnoreCase(arguments[i])) {
+				if ((openMenu || connectionTest || listTables) && i == startIndex && !importFlagHandled && !blobImportFlagHandled) {
+					if (listTables && isConnectionTestFlag) {
+						throw new ParameterException(arguments[i], "Parameter is not supported by listtables");
+					} else if (listTables && "-pattern".equalsIgnoreCase(arguments[i])) {
+						i++;
+						if (i >= arguments.length) {
+							throw new ParameterException(arguments[i - 1], "Missing parameter value for table name pattern");
+						} else if (StringUtilities.isBlank(arguments[i])) {
+							throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter value for table name pattern");
+						} else {
+							tablePattern = arguments[i];
+						}
+						wasAllowedParam = true;
+					} else if ("-iter".equalsIgnoreCase(arguments[i])) {
 						i++;
 						if (i >= arguments.length) {
 							throw new ParameterException(arguments[i - 1], "Missing parameter for connectiontest iterations");
@@ -806,15 +822,14 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 						System.err.println(e.getMessage());
 						return 1;
 					} catch (final Exception e) {
-						e.printStackTrace();
+						printError(e, dbImportDefinition.isVerbose());
 						return 1;
 					}
 				} else if (consoleMenuExecutionCode == -2) {
 					// Validate all given parameters
 					blobImportDefinition.checkParameters();
 
-					DbUtilities.updateBlob(blobImportDefinition, blobImportDefinition.getBlobImportStatement(), blobImportDefinition.getImportFilePath());
-					return 0;
+					return importBlob(blobImportDefinition);
 				} else if (consoleMenuExecutionCode == -3) {
 					// Validate all given parameters
 					connectionTestDefinition.checkParameters();
@@ -831,6 +846,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					System.out.println();
 					System.out.println("Created TrustStore in file '" + connectionTestDefinition.getTrustStoreFile().getAbsolutePath() + "'");
 					return 0;
+				} else if (consoleMenuExecutionCode == -6) {
+					// List tables with the connection parameters of the connection test menu
+					return listTables(connectionTestDefinition, DEFAULT_TABLE_PATTERN);
 				} else {
 					System.out.println();
 					System.out.println("Bye");
@@ -868,9 +886,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					blobImportDefinition.setPassword(passwordArray);
 				}
 
-				DbUtilities.updateBlob(blobImportDefinition, blobImportDefinition.getBlobImportStatement(), blobImportDefinition.getImportFilePath());
-				return 0;
-			} else if (connectionTest) {
+				return importBlob(blobImportDefinition);
+			} else if (connectionTest || listTables) {
 				LangResources.enforceDefaultLocale();
 
 				// If started without GUI we may enter the missing password via the terminal
@@ -884,7 +901,11 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					connectionTestDefinition.setPassword(passwordArray);
 				}
 
-				return connectionTest(connectionTestDefinition);
+				if (listTables) {
+					return listTables(connectionTestDefinition, tablePattern);
+				} else {
+					return connectionTest(connectionTestDefinition);
+				}
 			} else {
 				LangResources.enforceDefaultLocale();
 
@@ -910,7 +931,7 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 					System.err.println(e.getMessage());
 					return 1;
 				} catch (final Exception e) {
-					e.printStackTrace();
+					printError(e, dbImportDefinition.isVerbose());
 					return 1;
 				}
 			}
@@ -1082,6 +1103,78 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 		}
 	}
 
+	/**
+	 * Prints an error of the import. A stack trace is only printed in verbose mode, because the message of
+	 * connection errors already contains the cause and help texts.
+	 *
+	 * @param exception the error
+	 * @param verbose true to also print the stack trace
+	 */
+	private static void printError(final Exception exception, final boolean verbose) {
+		System.err.println(exception.getMessage() != null ? exception.getMessage() : exception.toString());
+		if (verbose) {
+			exception.printStackTrace();
+		}
+	}
+
+	/**
+	 * Imports a single file into a blob or clob column and prints the number of updated rows.
+	 *
+	 * @param blobImportDefinition the blob import parameters
+	 * @return the exit code: 0 for success, 1 if no row was updated
+	 * @throws Exception if the file cannot be imported
+	 */
+	private static int importBlob(final BlobImportDefinition blobImportDefinition) throws Exception {
+		final int updatedRows = DbUtilities.updateBlobData(blobImportDefinition, blobImportDefinition.getBlobImportStatement(), blobImportDefinition.getImportFilePath());
+		System.out.println("Updated rows: " + updatedRows);
+		if (updatedRows == 0) {
+			// Most likely the WHERE clause of the update statement matches no row
+			System.err.println("No row was updated: Check the WHERE clause of the update statement");
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	/**
+	 * Prints the names of the tables of a database, which match a table name pattern.
+	 *
+	 * @param connectionDefinition the connection parameters
+	 * @param tablePattern comma separated table name patterns with the wildcards "*" and "?", a leading "!" excludes tables
+	 * @return the exit code (0 for success, 1 for errors)
+	 */
+	private static int listTables(final DbConnectionDefinition connectionDefinition, final String tablePattern) {
+		Connection connection = null;
+		try {
+			connection = DbUtilities.createConnection(connectionDefinition, false);
+			final List<String> tableNames = DbUtilities.getAvailableTables(connection, tablePattern);
+			for (final String tableName : tableNames) {
+				System.out.println(tableName);
+			}
+			System.out.println();
+			System.out.println("Tables: " + tableNames.size());
+			return 0;
+		} catch (final Exception e) {
+			System.err.println(e.getMessage() != null ? e.getMessage() : e.toString());
+			return 1;
+		} finally {
+			if (connection != null) {
+				try {
+					connection.close();
+				} catch (@SuppressWarnings("unused") final SQLException e) {
+					// Nothing more to do
+				}
+			}
+			if (connectionDefinition.getDbVendor() == DbVendor.Derby) {
+				try {
+					DbUtilities.shutDownDerbyDb(connectionDefinition.getDbName());
+				} catch (@SuppressWarnings("unused") final Exception e) {
+					// Nothing more to do
+				}
+			}
+		}
+	}
+
 	private static int connectionTest(final ConnectionTestDefinition connectionTestDefinition) {
 		int returnCode = 0;
 		int connectionCheckCount = 0;
@@ -1124,8 +1217,8 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": SQL-Error creating database connection: " + sqle.getMessage() + " (" + sqle.getErrorCode() + " / " + sqle.getSQLState() + ")");
 				returnCode = 1;
 			} catch (final Exception e) {
-				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Error creating database connection: " + e.getClass().getSimpleName() + ":" + e.getMessage());
-				e.printStackTrace();
+				// The message contains the cause and help texts (see DbUtilities.getConnectionErrorHelpText())
+				System.out.println(DateUtilities.formatDate(DateUtilities.YYYY_MM_DD_HHMMSS, LocalDateTime.now()) + ": Error creating database connection: " + e.getMessage());
 				returnCode = 1;
 			} finally {
 				if (testConnection != null) {
@@ -1292,6 +1385,9 @@ public class DbImport extends UpdateableConsoleApplication implements WorkerPare
 			} else if (returnValue == -5) {
 				// create TrustStore
 				return -5;
+			} else if (returnValue == -6) {
+				// List tables
+				return -6;
 			} else {
 				System.out.println();
 				System.out.println("Bye");

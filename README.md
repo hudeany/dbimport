@@ -16,9 +16,9 @@ DbImport reads CSV, JSON, YAML, XML, Excel, ODS, vCard, KeePass and SQL files (o
 - **Table creation**: scans the data and creates a suitable table (and SQLite, Derby or HSQL database), or uses a JSON structure file
 - **Fast and robust**: batch updates with automatic fallback to single item mode, so only the erroneous items are skipped
 - **Multiple files at once**: wildcards in the file name, each file imported into the table named like the file
-- **Error handling**: logging of the import and of the erroneous data items in separate files
+- **Error handling**: logging of the import and of the erroneous data items in separate files, clear messages for unmapped NOT NULL columns, too long values and connection problems (with hints what to check)
 - **Secure connections**: TLS/SSL with your own TrustStore, which DbImport can also create for you
-- **Extras**: blob import of single files, database connection test and SQL DDL migration/merge script generation (GUI)
+- **Extras**: blob import of single files (also in the GUI), list of tables, database connection test and SQL DDL migration/merge script generation (GUI)
 - **Three ways to use it**: command line, console menu (also in headless environments) and GUI
 
 ## Supported data formats
@@ -196,6 +196,8 @@ Example: `'db1="def 1" ,;db2="def 2" .;db3="def 3" dd.MM.yyyy HH:mm:ss;db4="def 
 | `-batchBlockSize size` | Number of items per batch update (default: 1000) |
 | `-noSingleMode` | Do not repeat a failed batch item by item to find the erroneous items |
 
+Before inserting, DbImport checks that every NOT NULL column without default value gets a value from the mapping or from `-insvalues`, and stops with a list of the missing columns otherwise. Columns filled automatically (auto increment, identity, generated columns) are not affected. The check is skipped where the database itself would not reject such inserts (MySQL and MariaDB without strict SQL mode) and for tables with active insert triggers, which may fill the columns. Text values longer than their column are reported per data item with the column name and the lengths.
+
 ### Logging and output
 
 | Parameter | Description |
@@ -272,9 +274,25 @@ java -jar DbImport.jar importblob postgresql localhost mydb myuser \
   -updatesql "UPDATE documents SET content = ? WHERE id = 42" -blobfile ./contract.pdf
 ```
 
+The number of updated rows is shown. If no row was updated (e.g. the `WHERE` clause matches no row), the exit code is 1. In the GUI, the button "Blob upload" opens the same function with the connection parameters of the main window.
+
+### List tables
+
+Shows the tables of a database, optionally filtered by table name patterns:
+
+```
+java -jar DbImport.jar listtables dbtype hostname[:port] dbname username [-pattern tablepattern] [password]
+```
+
+| Parameter | Description |
+|---|---|
+| `-pattern tablepattern` | Comma separated table names with the wildcards `*` and `?`, `!` as prefix excludes tables (default: `*`) |
+
+The console menu offers the table list in the connection test menu (`tables`).
+
 ### Connection test
 
-Connects to the database repeatedly and optionally executes a check statement:
+Connects to the database repeatedly and optionally executes a check statement. If the connection fails, the message names the probable cause (e.g. unknown host, server not reachable, rejected login, unknown database, untrusted server certificate, missing JDBC driver) and what to check:
 
 ```
 java -jar DbImport.jar connectiontest dbtype hostname[:port] dbname username [-iter n] [-sleep n] [-check checksql] [password]

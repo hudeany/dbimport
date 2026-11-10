@@ -89,6 +89,7 @@ Blob import:
 	
 	-updatesql sqlUpdateStatementWithPlaceholder: Import a single file as BLOB into a DB. (Placeholder for filedata is '?' like in prepared statements)
 	-blobfile filePath: Import blob file path
+	The number of updated rows is shown, the exit code is 1 if no row was updated
 	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, derby and hsql file databases)
 
 Connection test:
@@ -97,6 +98,12 @@ Connection test:
 	-iter n: Iterations to execute. Default = 1, 0 = unlimited
 	-sleep n: Sleep for n seconds after each check. Default = 1
 	-check checksql: SQL statement to check or the keyword "vendor" for the vendors default check statement
+	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, derby and hsql file databases)
+
+List tables:
+	Usage: java -jar DbImport.jar listtables dbtype hostname[:port] dbname username [-pattern tablepattern] [password]
+	
+	-pattern tablepattern: Comma-separated list of tablenames with wildcards *? and !(= not, use as tablename prefix), default is '*' for all tables
 	password: Is asked interactivly, if not given as parameter (Not needed for sqlite, derby and hsql file databases)
 
 Create TrustStore:

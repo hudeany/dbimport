@@ -638,15 +638,7 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			boolean constraintsWereDeactivated = false;
 			boolean triggersWereDeactivated = false;
 			try {
-				if (dbDefinition.getDbVendor() == DbVendor.Derby || (dbDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(dbDefinition.getHostnameAndPort())) || dbDefinition.getDbVendor() == DbVendor.SQLite) {
-					try {
-						connection = DbUtilities.createConnection(dbDefinition, true);
-					} catch (@SuppressWarnings("unused") final DbNotExistsException e) {
-						connection = DbUtilities.createNewDatabase(dbDefinition.getDbVendor(), dbDefinition.getDbName());
-					}
-				} else {
-					connection = DbUtilities.createConnection(dbDefinition, false);
-				}
+				connection = createDatabaseConnection(dbDefinition);
 
 				previousAutoCommit = connection.getAutoCommit();
 				connection.setAutoCommit(false);
@@ -685,6 +677,16 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 
 				if (dbTableColumnsListToInsert.size() == 0) {
 					throw new DbImportException("Invalid empty mapping");
+				}
+
+				if (importMode != ImportMode.UPDATE) {
+					// Fail early with a clear message instead of a database error for each single item
+					final List<String> missingNotNullColumns = DbUtilities.getMissingNotNullColumnsForInsert(connection, tableName, dbTableColumnsListToInsert, additionalInsertValues, deactivateTriggers);
+					if (!missingNotNullColumns.isEmpty()) {
+						final boolean multipleColumns = missingNotNullColumns.size() > 1;
+						throw new DbImportException("Missing mapping for NOT NULL column" + (multipleColumns ? "s" : "") + " without default value in table '" + tableName + "': " + StringUtilities.join(missingNotNullColumns, ", ") + "\n"
+								+ "Map " + (multipleColumns ? "these columns" : "this column") + " to data properties of the import data or set " + (multipleColumns ? "their values" : "its value") + " with the additional insert values (\"-insvalues\")");
+					}
 				}
 
 				if (!DbUtilities.checkTableAndColumnsExist(connection, tableName, keyColumns == null ? null : keyColumns.toArray(new String[0]))) {
@@ -969,6 +971,31 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 		}
 
 		return !cancel;
+	}
+
+	/**
+	 * Opens the database connection. A missing file database (Derby, SQLite or HSQL file database) is created.
+	 * A failed connection is reported as {@link DbImportException}, so the GUI and the console only show its message,
+	 * which already contains the cause and help texts (see DbUtilities.getConnectionErrorHelpText()), instead of a stack trace.
+	 *
+	 * @param connectionDefinition the connection parameters
+	 * @return the database connection
+	 * @throws DbImportException if the connection cannot be created
+	 */
+	protected static Connection createDatabaseConnection(final DbConnectionDefinition connectionDefinition) throws DbImportException {
+		try {
+			if (connectionDefinition.getDbVendor() == DbVendor.Derby || (connectionDefinition.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(connectionDefinition.getHostnameAndPort())) || connectionDefinition.getDbVendor() == DbVendor.SQLite) {
+				try {
+					return DbUtilities.createConnection(connectionDefinition, true);
+				} catch (@SuppressWarnings("unused") final DbNotExistsException e) {
+					return DbUtilities.createNewDatabase(connectionDefinition.getDbVendor(), connectionDefinition.getDbName());
+				}
+			} else {
+				return DbUtilities.createConnection(connectionDefinition, false);
+			}
+		} catch (final Exception e) {
+			throw new DbImportException(e.getMessage() != null ? e.getMessage() : e.toString(), e);
+		}
 	}
 
 	/**
@@ -1293,9 +1320,13 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 						final Object dataValue = itemData.get(mappingToUse.get(unescapedDbColumnToInsert).getFirst());
 						final String formatInfo = mappingToUse.get(unescapedDbColumnToInsert).getSecond();
 
+						final int valuesBefore = batchValueEntry.size();
 						final Closeable itemToClose = validateAndSetParameter(preparedStatement, i++, dbColumnToInsert, simpleDataType, dbColumns.get(dbColumnToInsert).isNullable(), dataValue, formatInfo, batchValueEntry, maxBlobSize);
 						if (itemToClose != null) {
 							itemsToCloseAfterwards.add(itemToClose);
+						}
+						if (batchValueEntry.size() > valuesBefore) {
+							checkStringLength(unescapedDbColumnToInsert, dbColumns.get(dbColumnToInsert), batchValueEntry.get(valuesBefore));
 						}
 					}
 
@@ -1419,6 +1450,31 @@ public class DbImportWorker extends WorkerSimple<Boolean> {
 			itemsToCloseAfterwards.clear();
 			if (preparedStatement != null) {
 				preparedStatement.close();
+			}
+		}
+	}
+
+	/**
+	 * Checks whether a text value fits into a string column, so a too long value is reported with the column name and
+	 * the lengths instead of a vendor specific database error. Only values, which are too long for sure, are rejected:
+	 * the length in characters is compared with the column size, which is the maximum number of characters or (e.g.
+	 * Oracle byte semantics) the maximum number of bytes, which is never less than the maximum number of characters.
+	 * SQLite ignores the declared column sizes, so there is no check.
+	 *
+	 * @param columnName the name of the column (for the error message)
+	 * @param columnType the type of the column
+	 * @param value the value set for the column
+	 * @throws DbImportException if the value is too long for the column
+	 */
+	protected void checkStringLength(final String columnName, final DbColumnType columnType, final Object value) throws DbImportException {
+		if (value instanceof String && columnType != null && columnType.getSimpleDataType() == DbSimpleDataType.String && columnType.getCharacterByteSize() > 0 && dbDefinition.getDbVendor() != DbVendor.SQLite) {
+			final String stringValue = (String) value;
+			// Fast check first: the number of characters (code points) is never larger than the number of UTF-16 chars
+			if (stringValue.length() > columnType.getCharacterByteSize()) {
+				final long numberOfCharacters = stringValue.codePointCount(0, stringValue.length());
+				if (numberOfCharacters > columnType.getCharacterByteSize()) {
+					throw new DbImportException("Value for column '" + columnName + "' is too long: " + numberOfCharacters + " characters, maximum is " + columnType.getCharacterByteSize());
+				}
 			}
 		}
 	}

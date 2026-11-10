@@ -61,7 +61,7 @@ public class ConnectionTestMenu extends ConsoleMenu {
 	/**
 	 * Shows the menu in a loop until the user leaves it or starts the connection test.
 	 *
-	 * @return -3 to start the connection test, or 0 to return to the parent menu
+	 * @return -3 to start the connection test, -6 to list the tables of the database, or 0 to return to the parent menu
 	 * @throws Exception if the console input or output fails
 	 */
 	@Override
@@ -227,6 +227,8 @@ public class ConnectionTestMenu extends ConsoleMenu {
 				autoCompletionStrings.add("params");
 				System.out.println("  " + Utilities.rightPad("start)", bulletSize) + " " + "Start connection test");
 				autoCompletionStrings.add("start");
+				System.out.println("  " + Utilities.rightPad("tables)", bulletSize) + " " + "List the tables of the database");
+				autoCompletionStrings.add("tables");
 				System.out.println("  " + Utilities.rightPad("cancel)", bulletSize) + " " + "Cancel");
 				autoCompletionStrings.add("cancel");
 
@@ -311,6 +313,8 @@ public class ConnectionTestMenu extends ConsoleMenu {
 					return 0;
 				} else if ("start".equalsIgnoreCase(choice)) {
 					return -3;
+				} else if ("tables".equalsIgnoreCase(choice)) {
+					return -6;
 				} else {
 					System.out.println(ConsoleUtilities.getAnsiColoredText("Invalid selection: " + choice, TextColor.Light_red));
 				}

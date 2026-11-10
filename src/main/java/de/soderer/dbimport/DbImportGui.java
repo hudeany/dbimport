@@ -1087,6 +1087,23 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
+		// Blob upload Button
+		final Button blobUploadButton = new Button(LangResources.get("blobUpload"), IconKind.FILE, ButtonStyle.SECONDARY);
+		blobUploadButton.setToolTipText(LangResources.get("blobUpload_help"));
+		blobUploadButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent event) {
+				try {
+					new BlobUploadDialog(dbImportGui, getConfigurationAsDefinition()).setVisible(true);
+				} catch (final Exception e) {
+					new QuestionDialog(dbImportGui, DbImport.APPLICATION_NAME + " ERROR", "ERROR:\n" + e.getMessage()).withDialogStyle(DialogStyle.ERROR).open();
+				}
+			}
+		});
+		buttonPanel.add(blobUploadButton);
+
+		buttonPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+
 		// Preferences Button
 		final Button preferencesButton = createHeaderButton(IconKind.LOCK, LangResources.get("preferences"));
 		preferencesButton.addActionListener(new ActionListener() {
@@ -1198,6 +1215,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 		leftActions.setOpaque(false);
 		leftActions.add(mappingButton);
 		leftActions.add(migrationButton);
+		leftActions.add(blobUploadButton);
 		final JPanel rightActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
 		rightActions.setOpaque(false);
 		rightActions.add(startButton);

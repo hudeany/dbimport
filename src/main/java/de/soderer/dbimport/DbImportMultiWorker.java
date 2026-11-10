@@ -14,8 +14,6 @@ import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.db.DbUtilities;
-import de.soderer.utilities.db.data.DbVendor;
-import de.soderer.utilities.db.exception.DbNotExistsException;
 import de.soderer.utilities.worker.WorkerDual;
 import de.soderer.utilities.worker.WorkerParentSimple;
 
@@ -219,15 +217,7 @@ public class DbImportMultiWorker extends WorkerDual<Boolean> implements WorkerPa
 	}
 
 	private static Connection getDatabaseConnection(final DbImportDefinition dbImportDefinitionParam) throws Exception {
-		if (dbImportDefinitionParam.getDbVendor() == DbVendor.Derby || (dbImportDefinitionParam.getDbVendor() == DbVendor.HSQL && StringUtilities.isBlank(dbImportDefinitionParam.getHostnameAndPort())) || dbImportDefinitionParam.getDbVendor() == DbVendor.SQLite) {
-			try {
-				return DbUtilities.createConnection(dbImportDefinitionParam, true);
-			} catch (@SuppressWarnings("unused") final DbNotExistsException e) {
-				return DbUtilities.createNewDatabase(dbImportDefinitionParam.getDbVendor(), dbImportDefinitionParam.getDbName());
-			}
-		} else {
-			return DbUtilities.createConnection(dbImportDefinitionParam, false);
-		}
+		return DbImportWorker.createDatabaseConnection(dbImportDefinitionParam);
 	}
 
 	/**
