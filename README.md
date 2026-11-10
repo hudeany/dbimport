@@ -33,7 +33,7 @@ DbImport reads CSV, JSON, YAML, XML, Excel, ODS, vCard, KeePass and SQL files (o
 | Excel | `.xls` (≤ 2003), `.xlsx` (2007+) | Optional sheet name (`-dp`) |
 | OpenDocument Spreadsheet | `.ods` | Optional sheet name (`-dp`) |
 | vCard | `.vcf` | One data item per vCard |
-| KeePass | `.kdbx` | Password via `-kdbxpassword` |
+| KeePass | `.kdbx` | Password via `-kdbxpassword`, optional group path of each entry as data property via `-kdbxgrouppath` |
 
 The format is detected by the file extension. If it cannot be detected, CSV is used. You can always set it explicitly with `-x`.
 
@@ -99,6 +99,13 @@ Import all CSV files of a directory, each into the table named like the file:
 java -jar DbImport.jar -create postgresql localhost mydb myuser -table '*' -import './export/*.csv'
 ```
 
+Import a KeePass file including the group path of each entry into the column `kdbx_group`:
+
+```bash
+java -jar DbImport.jar -kdbxpassword 'secret' -kdbxgrouppath kdbx_group -create \
+  postgresql localhost mydb myuser -table accounts -import ./accounts.kdbx
+```
+
 Import with an explicit mapping and formats:
 
 ```bash
@@ -144,6 +151,8 @@ java -jar DbImport.jar [optional parameters] dbtype hostname[:port] dbname usern
 | `-t` | Trim data values |
 | `-zippassword 'password'` | Password of a zip file |
 | `-kdbxpassword 'password'` | Password of a KeePass file |
+| `-kdbxgrouppath 'name'` | Provide the group path of each KeePass entry as additional data property with this name, e.g. `Internet/Mail`. The single root group of a standard KeePass file is not part of the path, entries in the root group get an empty path. |
+| `-kdbxgroupseparator 'separator'` | Separator of group names in the KeePass group path (default: `/`) |
 | `-dbtz 'timezone'` | Time zone of the database (default: system time zone, e.g. `Europe/Berlin`) |
 | `-idtz 'timezone'` | Time zone of the import data (default: system time zone) |
 | `-dateFormat 'pattern'` | Fallback date format, overridden by mapping formats (Java format characters) |
@@ -283,4 +292,3 @@ DbImport stores its files in `~/.DbImport/`:
 |---|---|
 | `.DbImport.config` | Application configuration, e.g. the locations of JDBC driver files |
 | `.DbImport.secpref` | Encrypted connection preferences of the GUI and console menu |
-

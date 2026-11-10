@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -24,21 +25,41 @@ import de.soderer.utilities.kdbx.KdbxDatabase;
 import de.soderer.utilities.kdbx.KdbxReader;
 import de.soderer.utilities.kdbx.KdbxWriter;
 import de.soderer.utilities.kdbx.data.KdbxEntry;
+import de.soderer.utilities.kdbx.data.KdbxGroup;
 import de.soderer.zip.TarGzUtilities;
 import de.soderer.zip.Zip4jUtilities;
 import de.soderer.zip.ZipUtilities;
 
-// TODO: Export/Import KDBX entry path
 /**
  * Data provider for KeePass database files (KDBX format). The data items are the entries of the database.
+ * <p>
+ * Optionally the group path of each entry is provided as additional data property (e.g. "Internet/Mail").
+ * If the database has a single top level group and no entries on root level (the standard KeePass structure),
+ * this root group is not part of the path, matching the group path column of DbExport.
  */
 public class KdbxDataProvider extends DataProvider {
+	/** Default separator of group names within a group path */
+	public static final String DEFAULT_GROUP_PATH_SEPARATOR = "/";
+
+	/**
+	 * Entry of the database together with the chain of its parent groups, from the top level group down to the direct parent group.
+	 */
+	private record KdbxEntryWithGroups(KdbxEntry entry, List<KdbxGroup> groupChain) {
+	}
+
 	private KdbxDatabase kdbxDatabase = null;
-	private Iterator<KdbxEntry> kdbxEntryIterator = null;
+	private Iterator<KdbxEntryWithGroups> kdbxEntryIterator = null;
+	/** True if the single top level group is the root group, which is not part of the group path */
+	private boolean hasSingleRootGroup = false;
 	private List<String> dataPropertyNames = null;
 	private Map<String, DbColumnType> dataTypes = null;
 	private Integer itemsAmount = null;
 	private char[] password = null;
+
+	/** Name of the additional data property containing the group path of each entry, null for none */
+	private String groupPathPropertyName = null;
+	/** Separator of group names within a group path */
+	private String groupPathSeparator = DEFAULT_GROUP_PATH_SEPARATOR;
 
 	/**
 	 * Creates the data provider.
@@ -51,10 +72,37 @@ public class KdbxDataProvider extends DataProvider {
 		this.password = password;
 	}
 
+	/**
+	 * Sets the name of the additional data property containing the group path of each entry.
+	 *
+	 * @param groupPathPropertyName name of the data property, or null or blank for no group path property
+	 */
+	public void setGroupPathPropertyName(final String groupPathPropertyName) {
+		this.groupPathPropertyName = groupPathPropertyName == null || groupPathPropertyName.isBlank() ? null : groupPathPropertyName.trim();
+	}
+
+	/**
+	 * Sets the separator of group names within a group path.
+	 *
+	 * @param groupPathSeparator the separator, default "/"
+	 */
+	public void setGroupPathSeparator(final String groupPathSeparator) {
+		if (groupPathSeparator == null || groupPathSeparator.isEmpty()) {
+			throw new IllegalArgumentException("Group path separator must not be empty");
+		} else {
+			this.groupPathSeparator = groupPathSeparator;
+		}
+	}
+
 	@Override
 	public String getConfigurationLogString() {
-		return super.getConfigurationLogString()
+		String configurationLogString = super.getConfigurationLogString()
 				+ "Format: Kdbx" + "\n";
+		if (groupPathPropertyName != null) {
+			configurationLogString += "KdbxGroupPathProperty: " + groupPathPropertyName + "\n"
+					+ "KdbxGroupPathSeparator: " + groupPathSeparator + "\n";
+		}
+		return configurationLogString;
 	}
 
 	@Override
@@ -195,19 +243,46 @@ public class KdbxDataProvider extends DataProvider {
 			return null;
 		}
 
-		final KdbxEntry kdbxEntry = kdbxEntryIterator.next();
+		final KdbxEntryWithGroups kdbxEntryWithGroups = kdbxEntryIterator.next();
+		final KdbxEntry kdbxEntry = kdbxEntryWithGroups.entry();
 
 		final Map<String, Object> returnMap = new HashMap<>();
 		for (final Entry<String, Object> itemEntry : kdbxEntry.getItems().entrySet()) {
 			returnMap.put(itemEntry.getKey(), itemEntry.getValue());
 		}
+
+		if (groupPathPropertyName != null) {
+			if (returnMap.containsKey(groupPathPropertyName)) {
+				throw new Exception("Entry '" + kdbxEntry.getTitle() + "' (" + kdbxEntry.getUuid().toHex() + ") already contains a field named like the group path property '" + groupPathPropertyName + "'");
+			}
+			returnMap.put(groupPathPropertyName, getGroupPath(kdbxEntryWithGroups.groupChain()));
+		}
+
 		return returnMap;
+	}
+
+	/**
+	 * Creates the group path of an entry, leaving out the root group of a standard KeePass structure.
+	 *
+	 * @param groupChain parent groups of the entry from top level down to the direct parent group
+	 * @return the group path, empty for entries in the root group or on root level of the database
+	 */
+	private String getGroupPath(final List<KdbxGroup> groupChain) {
+		final StringBuilder groupPath = new StringBuilder();
+		for (int i = hasSingleRootGroup ? 1 : 0; i < groupChain.size(); i++) {
+			if (groupPath.length() > 0) {
+				groupPath.append(groupPathSeparator);
+			}
+			groupPath.append(groupChain.get(i).getName() == null ? "" : groupChain.get(i).getName());
+		}
+		return groupPath.toString();
 	}
 
 	@Override
 	public void close() {
 		kdbxDatabase = null;
 		kdbxEntryIterator = null;
+		hasSingleRootGroup = false;
 		super.close();
 	}
 
@@ -243,12 +318,14 @@ public class KdbxDataProvider extends DataProvider {
 			}
 
 			final KdbxDatabase filteredKdbxDatabase = new KdbxDatabase();
+			// Copies of the original groups, so the filtered entries keep their group structure
+			final Map<KdbxGroup, KdbxGroup> groupCopies = new IdentityHashMap<>();
 			// The item indices are 1-based (like in the other data providers), so count before checking
 			int count = 0;
-			for (final KdbxEntry entry : kdbxDatabase.getAllEntries()) {
+			for (final KdbxEntryWithGroups entryWithGroups : collectEntriesWithGroups(kdbxDatabase)) {
 				count++;
 				if (indexList.contains(count)) {
-					filteredKdbxDatabase.getEntries().add(entry);
+					getOrCreateGroupCopy(filteredKdbxDatabase, groupCopies, entryWithGroups.groupChain()).add(entryWithGroups.entry());
 				}
 			}
 
@@ -275,6 +352,73 @@ public class KdbxDataProvider extends DataProvider {
 		}
 	}
 
+	/**
+	 * Returns the entry list of the copied group chain in the filtered database, creating missing group copies on the way.
+	 *
+	 * @param filteredKdbxDatabase the filtered database
+	 * @param groupCopies already created group copies by original group
+	 * @param groupChain parent groups of the entry in the original database
+	 * @return the list to add the entry to
+	 */
+	private static List<KdbxEntry> getOrCreateGroupCopy(final KdbxDatabase filteredKdbxDatabase, final Map<KdbxGroup, KdbxGroup> groupCopies, final List<KdbxGroup> groupChain) {
+		List<KdbxGroup> siblings = filteredKdbxDatabase.getGroups();
+		List<KdbxEntry> entries = filteredKdbxDatabase.getEntries();
+		for (final KdbxGroup originalGroup : groupChain) {
+			KdbxGroup groupCopy = groupCopies.get(originalGroup);
+			if (groupCopy == null) {
+				// Only the descriptive group data is copied, not the subgroups and entries
+				groupCopy = new KdbxGroup()
+						.withName(originalGroup.getName())
+						.withUuid(originalGroup.getUuid())
+						.withNotes(originalGroup.getNotes())
+						.withIconID(originalGroup.getIconID())
+						.withExpanded(originalGroup.isExpanded());
+				siblings.add(groupCopy);
+				groupCopies.put(originalGroup, groupCopy);
+			}
+			siblings = groupCopy.getGroups();
+			entries = groupCopy.getEntries();
+		}
+		return entries;
+	}
+
+	/**
+	 * Collects all entries of the database with their parent groups.
+	 * The order is the same as in {@link KdbxDatabase#getAllEntries()}, so item indices stay comparable.
+	 *
+	 * @param database the database
+	 * @return all entries with their group chains
+	 */
+	private static List<KdbxEntryWithGroups> collectEntriesWithGroups(final KdbxDatabase database) {
+		final List<KdbxEntryWithGroups> result = new ArrayList<>();
+		for (final KdbxEntry entry : database.getEntries()) {
+			result.add(new KdbxEntryWithGroups(entry, List.of()));
+		}
+		for (final KdbxGroup group : database.getGroups()) {
+			collectEntriesWithGroups(group, new ArrayList<>(), result);
+		}
+		return result;
+	}
+
+	/**
+	 * Collects the entries of a group and its subgroups recursively: first the entries of the group itself, then those of the subgroups.
+	 *
+	 * @param group the group
+	 * @param parentChain parent groups of this group
+	 * @param result list to add the entries to
+	 */
+	private static void collectEntriesWithGroups(final KdbxGroup group, final List<KdbxGroup> parentChain, final List<KdbxEntryWithGroups> result) {
+		final List<KdbxGroup> groupChain = new ArrayList<>(parentChain);
+		groupChain.add(group);
+		final List<KdbxGroup> unmodifiableGroupChain = List.copyOf(groupChain);
+		for (final KdbxEntry entry : group.getEntries()) {
+			result.add(new KdbxEntryWithGroups(entry, unmodifiableGroupChain));
+		}
+		for (final KdbxGroup subGroup : group.getGroups()) {
+			collectEntriesWithGroups(subGroup, groupChain, result);
+		}
+	}
+
 	private void openKdbxDatabase() throws Exception {
 		if (kdbxEntryIterator != null) {
 			throw new Exception("KdbxDatabase was already opened before");
@@ -282,7 +426,8 @@ public class KdbxDataProvider extends DataProvider {
 
 		try (KdbxReader kdbxReader = new KdbxReader(getInputStream())) {
 			kdbxDatabase = kdbxReader.readKdbxDatabase(password);
-			kdbxEntryIterator = kdbxDatabase.getAllEntries().iterator();
+			hasSingleRootGroup = kdbxDatabase.getEntries().isEmpty() && kdbxDatabase.getGroups().size() == 1;
+			kdbxEntryIterator = collectEntriesWithGroups(kdbxDatabase).iterator();
 		} catch (final Exception e) {
 			close();
 			throw e;

@@ -63,6 +63,9 @@ Optional parameters for database import
 	-logerrors: Log error data items in file
 	-zippassword '<zippassword>' (Only for .zip files)
 	-kdbxpassword '<kdbxpassword>' (Only for .kdbx files)
+	-kdbxgrouppath '<propertyname>': Provide the group path of each KDBX entry as additional data property with this name, e.g. 'Internet/Mail' (Only for .kdbx files)
+		The single root group of a standard KeePass file is not part of the path, entries in the root group get an empty path
+	-kdbxgroupseparator '<separator>': Separator of group names in the KDBX group path, default '/'
 	-dbtz '<databaseTimeZone>' (Default is systems default timezone, e.g. Europe/Berlin or Europe/Dublin)
 	-idtz '<importDataTimeZone>' (Default is systems default timezone, e.g. Europe/Berlin or Europe/Dublin)
 	-dateFormat: set fallback date format, especially for multiple file imports, can be overridden by mapping formats, use Java format characters (YMdhmsS) 
