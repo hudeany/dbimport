@@ -17,6 +17,7 @@ Optional parameters for database import
 	-x importDataFormat: Data import format, default format is detected by file extension or, if it cannot be detected, default is CSV
 		importDataFormat: CSV | JSON | YAML | XML | SQL | EXCEL | ODS | VCF | KDBX
 	-dp <datapath>: Optional datapath within the XML-Data (XPath), JSON-Data, YAML-Data or EXCEL/ODS-Data (Sheetname)
+		Excel/ODS data starts at the first non empty row and ends at the first empty row, only columns with a header name are imported
 	-sp <schemaFilePath>: Optional path to schema file for XML (XSD) or JSON
 	-m: Column mappings (Separated by semicolon or linebreak): When not configured a simple mapping by column names is used (Automapping)
 		Mapping entry format: dbcolumnname="data column name" <formatinfo>
@@ -30,13 +31,13 @@ Optional parameters for database import
 	-s: Separator character, default ';', encapsulate by ' (for CSV)
 	-q: String quote character, default '"', encapsulate by ', 'null' or 'none' for empty (for CSV)
 	-qe: String quote escape character, default '"', encapsulate by ' (for CSV)
-	-noheaders: First csv line is data and not headers
+	-noheaders: First csv line or first non empty excel/ods row is data and not headers
 	-noescapesequences: Do not interpret escape sequences (e.g. \n or \t) in csv string values, use them as plain text (Default is to interpret them)
 	-c: Complete commit only (Takes more time and makes rollback on any error)
 	-nonewindex: Do not create new indexes on destination table, even if they are helpful (By default new indexes are created, which saves time)
 	-deactivatefk: Deactivate foreign key constraints during import
 	-deactivatetriggers: Deactivate triggers during import
-	-a: Allow underfilled lines (for CSV)
+	-a: Allow underfilled lines (for CSV, missing excel/ods cells are always allowed)
 	-r: Allow lines with surplus empty trailing columns (for CSV)
 	-t: Trim data values
 	-i 'importmode':

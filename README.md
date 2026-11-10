@@ -30,8 +30,8 @@ DbImport reads CSV, JSON, YAML, XML, Excel, ODS, vCard, KeePass and SQL files (o
 | YAML | `.yaml`, `.yml` | List of objects, optional data path (`-dp`) |
 | XML | `.xml` | Optional XPath (`-dp`) and XSD validation (`-sp`) |
 | SQL | `.sql` | The statements of the script are executed one after another |
-| Excel | `.xls` (≤ 2003), `.xlsx` (2007+) | Optional sheet name (`-dp`) |
-| OpenDocument Spreadsheet | `.ods` | Optional sheet name (`-dp`) |
+| Excel | `.xls` (≤ 2003), `.xlsx` (2007+) | Optional sheet name (`-dp`), see [Spreadsheets](#spreadsheets-excel-and-ods) |
+| OpenDocument Spreadsheet | `.ods` | Optional sheet name (`-dp`), see [Spreadsheets](#spreadsheets-excel-and-ods) |
 | vCard | `.vcf` | One data item per vCard |
 | KeePass | `.kdbx` | Password via `-kdbxpassword`, optional group path of each entry as data property via `-kdbxgrouppath` |
 
@@ -143,10 +143,10 @@ java -jar DbImport.jar [optional parameters] dbtype hostname[:port] dbname usern
 | `-s separator` | CSV separator character (default: `;`) |
 | `-q quote` | CSV string quote character (default: `"`), `null` or `none` for no quote |
 | `-qe escape` | CSV string quote escape character (default: `"`) |
-| `-noheaders` | The first CSV line contains data instead of the column names |
+| `-noheaders` | The first CSV line or the first non empty spreadsheet row contains data instead of the column names |
 | `-noescapesequences` | Do not interpret escape sequences like `\n` or `\t` in CSV string values |
 | `-n 'NULL'` | Text for null values (CSV, XML, Excel and ODS, default: empty text) |
-| `-a` | Allow underfilled lines (CSV) |
+| `-a` | Allow underfilled lines (CSV, missing spreadsheet cells are always allowed) |
 | `-r` | Allow lines with surplus empty trailing columns (CSV) |
 | `-t` | Trim data values |
 | `-zippassword 'password'` | Password of a zip file |
@@ -244,6 +244,16 @@ Example: `'db1="def 1" ,;db2="def 2" .;db3="def 3" dd.MM.yyyy HH:mm:ss;db4="def 
 | `MAKE_UNIQUE_DROP` / `_JOIN` | import data and database | duplicate occurrences are removed |
 
 > **Cassandra** only supports the duplicate mode `UPDATE_ALL_JOIN`, updates with null values and commits without `-c`.
+
+## Spreadsheets (Excel and ODS)
+
+- The data starts at the first non empty row of the sheet. This row contains the column names, unless `-noheaders` is set.
+- The data ends at the first empty row. Rows below it are not imported. Cells, which only carry formatting, count as empty.
+- Only columns with a header name are imported. Data in columns without header is ignored, and duplicate header names are rejected.
+- Without headers, the columns are named `column_1`, `column_2` and so on.
+- Numbers, dates and booleans keep their type. Cells formatted as time only are imported as text `HH:mm:ss`. Formulas are imported by their last calculated result.
+- Merged cells: only the top left cell contains the value, the other cells are empty.
+- Empty cells are imported as null (Excel) or empty text (ODS). Use `-n ''` to import empty ODS cells as null.
 
 ## Further tools
 

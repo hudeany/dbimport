@@ -2,13 +2,17 @@ package de.soderer.dbimport.dataprovider;
 
 import java.io.File;
 import java.io.InputStream;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -21,11 +25,28 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.db.data.DbColumnType;
+import de.soderer.utilities.db.data.DbSimpleDataType;
 
 /**
  * Data provider for OpenDocument spreadsheet data (ODS format).
+ * <p>
+ * Repeated cells and rows (attributes "number-columns-repeated" and "number-rows-repeated") are expanded,
+ * covered cells of merged areas occupy their column, and the text of a cell is read including formatted parts,
+ * links, spaces, tabs and line breaks. Multiple paragraphs of a cell are joined by line breaks.
+ * The data starts at the first non empty row and ends at the first empty row after it or at the end of the sheet.
+ * <p>
+ * With headers, only columns with a header name are imported, data in columns without header is ignored and duplicate header names are rejected.
  */
 public class OdsDataProvider extends DataProvider {
+	private static final String NAMESPACE_OFFICE = "urn:oasis:names:tc:opendocument:xmlns:office:1.0";
+	private static final String NAMESPACE_TABLE = "urn:oasis:names:tc:opendocument:xmlns:table:1.0";
+	private static final String NAMESPACE_TEXT = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
+
+	/** Maximum number of columns of a spreadsheet (LibreOffice and Excel limit), to protect against huge repeat attributes */
+	private static final int MAXIMUM_NUMBER_OF_COLUMNS = 16384;
+	/** Maximum number of rows of a spreadsheet (LibreOffice and Excel limit) */
+	private static final int MAXIMUM_NUMBER_OF_ROWS = 1048576;
+
 	private String sheetname = null;
 	private InputStream contentXmlZipInputStream = null;
 	private XMLStreamReader xmlReader = null;
@@ -39,7 +60,18 @@ public class OdsDataProvider extends DataProvider {
 	private Map<String, DbColumnType> dataTypes = null;
 
 	private List<String> columnNames = null;
+	/** Sheet column positions of the columns in columnNames (only with headers, null for positional columns without headers) */
+	private List<Integer> columnIndices = null;
 	private int currentRowNumber;
+
+	/** Values of a row with "number-rows-repeated", which still has to be delivered again */
+	private List<Object> repeatedRowValues = null;
+	/** Number of further deliveries of repeatedRowValues */
+	private int repeatedRowCount = 0;
+	/** True after the end of the selected sheet was reached, so no rows of the following sheets are read */
+	private boolean endOfSheetReached = false;
+	/** True after the first non empty row was read, so leading empty rows are skipped and the next empty row ends the data */
+	private boolean dataStarted = false;
 
 	/**
 	 * Creates the data provider.
@@ -75,37 +107,37 @@ public class OdsDataProvider extends DataProvider {
 	@Override
 	public Map<String, DbColumnType> scanDataPropertyTypes(final Map<String, Tuple<String, String>> mapping) throws Exception {
 		if (dataTypes == null) {
-			try {
-				if (xmlReader == null) {
-					openReader();
-				}
-				currentRowNumber = 0;
+			if (xmlReader == null) {
+				openReader();
+			}
+			currentRowNumber = 0;
 
-				if (!noHeaders) {
-					// Read headers from file
-					columnNames = readNextRow().stream().map(x -> x.toString()).collect(Collectors.toList());
+			if (!noHeaders) {
+				columnNames = readHeaderRow();
+			}
 
-					// Remove empty trailing headernames
-					while (columnNames.size() > 0 && StringUtilities.isBlank(columnNames.get(columnNames.size() - 1))) {
-						columnNames.remove(columnNames.get(columnNames.size() - 1));
+			dataTypes = new HashMap<>();
+
+			// Scan all data for maximum
+			List<Object> values;
+			while ((values = readNextRow()) != null) {
+				final int numberOfColumns = columnIndices != null ? columnIndices.size() : values.size();
+				for (int i = 0; i < numberOfColumns; i++) {
+					final String columnName;
+					final Object currentValue;
+					if (columnIndices != null) {
+						columnName = columnNames.get(i);
+						currentValue = columnIndices.get(i) < values.size() ? values.get(columnIndices.get(i)) : null;
+					} else {
+						columnName = (columnNames == null || columnNames.size() <= i ? "column_" + Integer.toString(i + 1) : columnNames.get(i));
+						currentValue = values.get(i);
+					}
+					if (currentValue instanceof String) {
+						detectNextDataType(mapping, dataTypes, columnName, (String) currentValue);
+					} else if (currentValue != null) {
+						detectNextTypedDataType(dataTypes, columnName, currentValue);
 					}
 				}
-
-				dataTypes = new HashMap<>();
-
-				// Scan all data for maximum
-				List<Object> values;
-				while ((values = readNextRow()) != null) {
-					for (int i = 0; i < values.size(); i++) {
-						final String columnName = (columnNames == null || columnNames.size() <= i ? "column_" + Integer.toString(i + 1) : columnNames.get(i));
-						final Object currentValue = values.get(i);
-						if (currentValue != null && currentValue instanceof String) {
-							detectNextDataType(mapping, dataTypes, columnName, (String) currentValue);
-						}
-					}
-				}
-			} catch (final Exception e) {
-				throw e;
 			}
 
 			close();
@@ -114,48 +146,95 @@ public class OdsDataProvider extends DataProvider {
 		return dataTypes;
 	}
 
+	/**
+	 * Detects the data type of a column for values, which are already typed in the ODS data (numbers, dates and booleans).
+	 * Values of different kinds in one column result in a VARCHAR column, string and blob columns are kept.
+	 *
+	 * @param dataTypes the data types detected so far
+	 * @param columnName name of the column
+	 * @param value the typed value
+	 */
+	private static void detectNextTypedDataType(final Map<String, DbColumnType> dataTypes, final String columnName, final Object value) {
+		final DbColumnType currentColumnType = dataTypes.get(columnName);
+		final DbSimpleDataType currentType = currentColumnType == null ? null : currentColumnType.getSimpleDataType();
+
+		if (currentType == DbSimpleDataType.Blob) {
+			return;
+		} else if (currentType == DbSimpleDataType.String) {
+			// Keep the string column, but make sure the value fits into it
+			dataTypes.put(columnName, createVarcharType(currentColumnType, value));
+		} else if (value instanceof Double) {
+			final double doubleValue = (Double) value;
+			final boolean isIntegerValue = doubleValue == Math.rint(doubleValue) && Math.abs(doubleValue) <= Integer.MAX_VALUE;
+			if ((currentType == null || currentType == DbSimpleDataType.Integer) && isIntegerValue) {
+				dataTypes.put(columnName, new DbColumnType("INTEGER", -1, -1, -1, true, false, null));
+			} else if (currentType == null || currentType == DbSimpleDataType.Integer || currentType == DbSimpleDataType.BigInteger || currentType == DbSimpleDataType.Float) {
+				dataTypes.put(columnName, new DbColumnType("DOUBLE", -1, -1, -1, true, false, null));
+			} else {
+				dataTypes.put(columnName, createVarcharType(currentColumnType, value));
+			}
+		} else if (value instanceof ZonedDateTime) {
+			final boolean isDateOnly = ((ZonedDateTime) value).toLocalTime().equals(LocalTime.MIDNIGHT);
+			if ((currentType == null || currentType == DbSimpleDataType.Date) && isDateOnly) {
+				dataTypes.put(columnName, new DbColumnType("DATE", -1, -1, -1, true, false, null));
+			} else if (currentType == null || currentType == DbSimpleDataType.Date || currentType == DbSimpleDataType.DateTime) {
+				dataTypes.put(columnName, new DbColumnType("TIMESTAMP", -1, -1, -1, true, false, null));
+			} else {
+				dataTypes.put(columnName, createVarcharType(currentColumnType, value));
+			}
+		} else if (value instanceof Boolean) {
+			if (currentType == null || (currentType != DbSimpleDataType.Float && currentType != DbSimpleDataType.Integer && currentType != DbSimpleDataType.BigInteger && currentType != DbSimpleDataType.Date && currentType != DbSimpleDataType.DateTime)) {
+				dataTypes.put(columnName, new DbColumnType("BOOLEAN", -1, -1, -1, true, false, null));
+			} else {
+				dataTypes.put(columnName, createVarcharType(currentColumnType, value));
+			}
+		} else {
+			dataTypes.put(columnName, createVarcharType(currentColumnType, value));
+		}
+	}
+
+	/**
+	 * Creates a VARCHAR column type, which is large enough for the current column type and the given value.
+	 */
+	private static DbColumnType createVarcharType(final DbColumnType currentColumnType, final Object value) {
+		final int valueByteSize = value.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+		final boolean isCurrentVarchar = currentColumnType != null && currentColumnType.getSimpleDataType() == DbSimpleDataType.String;
+		return new DbColumnType("VARCHAR", Math.max(isCurrentVarchar ? currentColumnType.getCharacterByteSize() : 0, valueByteSize), -1, -1, true, false, null);
+	}
+
 	@Override
 	public List<String> getAvailableDataPropertyNames() throws Exception {
 		if (columnNames == null) {
-			try {
-				if (xmlReader == null) {
-					openReader();
-				}
-				currentRowNumber = 0;
+			if (xmlReader == null) {
+				openReader();
+			}
+			currentRowNumber = 0;
 
-				columnNames = new ArrayList<>();
-				if (noHeaders) {
-					final List<String> returnList = new ArrayList<>();
-					if (allowUnderfilledLines) {
-						// Scan all data for maximum
-						List<Object> values;
-						int maxColumns = 0;
-						while ((values = readNextRow()) != null) {
-							maxColumns = Math.max(maxColumns, values.size());
-						}
-						for (int i = 0; i < maxColumns; i++) {
-							returnList.add("column_" + Integer.toString(i + 1));
-						}
-						columnNames = returnList;
-					} else {
-						// Only take first data as example for all other data
-						final List<Object> values = readNextRow();
+			columnNames = new ArrayList<>();
+			if (noHeaders) {
+				final List<String> returnList = new ArrayList<>();
+				if (allowUnderfilledLines) {
+					// Scan all data for maximum
+					List<Object> values;
+					int maxColumns = 0;
+					while ((values = readNextRow()) != null) {
+						maxColumns = Math.max(maxColumns, values.size());
+					}
+					for (int i = 0; i < maxColumns; i++) {
+						returnList.add("column_" + Integer.toString(i + 1));
+					}
+				} else {
+					// Only take first data as example for all other data
+					final List<Object> values = readNextRow();
+					if (values != null) {
 						for (int i = 0; i < values.size(); i++) {
 							returnList.add("column_" + Integer.toString(i + 1));
 						}
-						columnNames = returnList;
-					}
-				} else {
-					// Read headers from file
-					columnNames = readNextRow().stream().map(x -> x.toString()).collect(Collectors.toList());
-
-					// Remove empty trailing headernames
-					while (columnNames.size() > 0 && StringUtilities.isBlank(columnNames.get(columnNames.size() - 1))) {
-						columnNames.remove(columnNames.get(columnNames.size() - 1));
 					}
 				}
-			} catch (final Exception e) {
-				throw e;
+				columnNames = returnList;
+			} else {
+				columnNames = readHeaderRow();
 			}
 
 			close();
@@ -164,87 +243,282 @@ public class OdsDataProvider extends DataProvider {
 		return columnNames;
 	}
 
+	/**
+	 * Reads the header row with the column names. Only columns with a non blank header name are used, their sheet positions are stored in columnIndices.
+	 *
+	 * @return the column names, empty if there is no data at all
+	 * @throws Exception if the XML data cannot be read or a header name is duplicate
+	 */
+	private List<String> readHeaderRow() throws Exception {
+		final List<String> headerNames = new ArrayList<>();
+		final List<Integer> headerColumnIndices = new ArrayList<>();
+
+		final List<Object> headerValues = readNextRow();
+		if (headerValues != null) {
+			final Map<String, Integer> columnIndexByName = new HashMap<>();
+			for (int columnIndex = 0; columnIndex < headerValues.size(); columnIndex++) {
+				final String headerName = headerValues.get(columnIndex) == null ? "" : headerValues.get(columnIndex).toString();
+				if (StringUtilities.isNotBlank(headerName)) {
+					final Integer previousColumnIndex = columnIndexByName.put(headerName, columnIndex);
+					if (previousColumnIndex != null) {
+						throw new DbImportException("Duplicate column header '" + headerName + "' in columns " + ExcelDataProvider.columnIndexToLetters(previousColumnIndex) + " and " + ExcelDataProvider.columnIndexToLetters(columnIndex));
+					}
+					headerNames.add(headerName);
+					headerColumnIndices.add(columnIndex);
+				}
+			}
+		}
+
+		columnIndices = headerColumnIndices;
+		return headerNames;
+	}
+
+	/**
+	 * Reads the values of the next row of the selected sheet.
+	 * <p>
+	 * Empty cells are delivered as empty text, empty trailing cells are left out.
+	 *
+	 * @return the values of the next row, or null at the first empty row after the data or at the end of the sheet
+	 * @throws Exception if the XML data cannot be read
+	 */
 	private List<Object> readNextRow() throws Exception {
-		List<Object> returnList = null;
-		while (xmlReader.hasNext() && xmlReader.next() > 0) {
-			if (xmlReader.isStartElement() && xmlReader.getLocalName().equals("table-row")) {
+		if (repeatedRowCount > 0) {
+			repeatedRowCount--;
+			currentRowNumber++;
+			return new ArrayList<>(repeatedRowValues);
+		}
+
+		if (endOfSheetReached) {
+			return null;
+		}
+
+		while (xmlReader.hasNext()) {
+			final int eventType = xmlReader.next();
+			if (eventType == XMLStreamConstants.START_ELEMENT && isElement(NAMESPACE_TABLE, "table-row")) {
+				final int rowsRepeated = getRepeatAttribute("number-rows-repeated", MAXIMUM_NUMBER_OF_ROWS);
+				final List<Object> rowValues = readRowCells();
 				currentRowNumber++;
-				returnList = new ArrayList<>();
 
-				while (xmlReader.next() > 0) {
-					if (xmlReader.isStartElement() && xmlReader.getLocalName().equals("table-cell")) {
-						if (xmlReader.getAttributeValue("xxxurn:oasis:names:tc:opendocument:xmlns:table:1.0", "number-columns-repeated") != null) {
-							// TODO
-							System.out.println("TODO");
+				if (rowValues.isEmpty()) {
+					if (!dataStarted) {
+						// Skip empty rows before the data
+						continue;
+					}
+					// Empty row: end of data (also the typical huge repeated empty row at the end of a sheet)
+					endOfSheetReached = true;
+					return null;
+				}
+				dataStarted = true;
 
-							while (xmlReader.next() > 0) {
-								if (!xmlReader.isEndElement() || !xmlReader.getLocalName().equals("table-cell")) {
-									break;
-								}
-							}
-						} else if (xmlReader.getAttributeValue("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "value-type") != null && !"string".equalsIgnoreCase(xmlReader.getAttributeValue("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "value-type"))) {
-							final String dataType = xmlReader.getAttributeValue("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "value-type");
-							if ("float".equalsIgnoreCase(dataType)) {
-								final String floatValue = xmlReader.getAttributeValue("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "value");
-								returnList.add(Double.parseDouble(floatValue));
-							} else if ("date".equalsIgnoreCase(dataType)) {
-								final String dateAttributeValue = xmlReader.getAttributeValue("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "date-value");
-								final ZonedDateTime dateValue = DateUtilities.parseIso8601DateTimeString(dateAttributeValue);
-								returnList.add(dateValue);
-							} else {
-								throw new DbImportException("Unsupported datatype: " + dataType);
-							}
+				if (rowsRepeated > 1) {
+					repeatedRowValues = Collections.unmodifiableList(new ArrayList<>(rowValues));
+					repeatedRowCount = rowsRepeated - 1;
+				}
+				return rowValues;
+			} else if (eventType == XMLStreamConstants.END_ELEMENT && isElement(NAMESPACE_TABLE, "table")) {
+				endOfSheetReached = true;
+				return null;
+			}
+		}
 
-							while (xmlReader.next() > 0) {
-								if (!xmlReader.isEndElement() || !xmlReader.getLocalName().equals("table-cell")) {
-									break;
-								}
-							}
-						} else {
-							boolean isEmptyCell = true;
-							while (xmlReader.next() > 0) {
-								if (xmlReader.isStartElement() && xmlReader.getLocalName().equals("p")) {
-									String value = "";
-									while (true) {
-										xmlReader.next();
-										if (xmlReader.isCharacters()) {
-											value += xmlReader.getText().trim();
-											isEmptyCell = false;
-										} else if (xmlReader.isStartElement() && xmlReader.getLocalName().equals("s")) {
-											value += " ";
-											xmlReader.next();
-										} else {
-											break;
-										}
-									}
+		endOfSheetReached = true;
+		return null;
+	}
 
-									if (nullValueText != null && nullValueText.equals(value)) {
-										value = null;
-									}
-									returnList.add(value);
+	/**
+	 * Reads all cells of the current row. The reader is positioned at the start element of the row and afterwards at its end element.
+	 *
+	 * @return the cell values without empty trailing cells
+	 * @throws Exception if the XML data cannot be read
+	 */
+	private List<Object> readRowCells() throws Exception {
+		final List<Object> rowValues = new ArrayList<>();
+		// Empty cells are only added, when a non empty cell follows, so empty trailing cells (often thousands) are never created
+		int pendingEmptyCells = 0;
 
-									if (!xmlReader.isEndElement() || !xmlReader.getLocalName().equals("p")) {
-										throw new DbImportException("Invalid xml data. Missing closing tag 'p'");
-									}
-								} else if (xmlReader.isEndElement() && xmlReader.getLocalName().equals("table-cell")) {
-									if (isEmptyCell) {
-										returnList.add("");
-									}
-									break;
-								}
-							}
-						}
-					} else if (xmlReader.isEndElement() && xmlReader.getLocalName().equals("table-row")) {
-						break;
+		while (xmlReader.hasNext()) {
+			final int eventType = xmlReader.next();
+			if (eventType == XMLStreamConstants.START_ELEMENT && (isElement(NAMESPACE_TABLE, "table-cell") || isElement(NAMESPACE_TABLE, "covered-table-cell"))) {
+				final int columnsRepeated = getRepeatAttribute("number-columns-repeated", MAXIMUM_NUMBER_OF_COLUMNS);
+				final Object cellValue = readCellValue();
+
+				if (cellValue == null || "".equals(cellValue)) {
+					pendingEmptyCells = Math.min(pendingEmptyCells + columnsRepeated, MAXIMUM_NUMBER_OF_COLUMNS);
+				} else {
+					for (int i = 0; i < pendingEmptyCells && rowValues.size() < MAXIMUM_NUMBER_OF_COLUMNS; i++) {
+						rowValues.add("");
+					}
+					pendingEmptyCells = 0;
+					for (int i = 0; i < columnsRepeated && rowValues.size() < MAXIMUM_NUMBER_OF_COLUMNS; i++) {
+						rowValues.add(cellValue);
 					}
 				}
+			} else if (eventType == XMLStreamConstants.END_ELEMENT && isElement(NAMESPACE_TABLE, "table-row")) {
 				break;
 			}
 		}
-		if (returnList != null && returnList.size() == 1 && returnList.get(0).equals("")) {
-			return null;
+
+		return rowValues;
+	}
+
+	/**
+	 * Reads the value of the current cell. The reader is positioned at the start element of the cell and afterwards at its end element.
+	 *
+	 * @return the typed value (Double, ZonedDateTime, Boolean) or the text of the cell (empty text for empty cells)
+	 * @throws Exception if the XML data cannot be read
+	 */
+	private Object readCellValue() throws Exception {
+		// Attributes must be read before moving on to the cell content
+		final String valueType = xmlReader.getAttributeValue(NAMESPACE_OFFICE, "value-type");
+		final String numberValue = xmlReader.getAttributeValue(NAMESPACE_OFFICE, "value");
+		final String dateValue = xmlReader.getAttributeValue(NAMESPACE_OFFICE, "date-value");
+		final String timeValue = xmlReader.getAttributeValue(NAMESPACE_OFFICE, "time-value");
+		final String booleanValue = xmlReader.getAttributeValue(NAMESPACE_OFFICE, "boolean-value");
+		final String stringValue = xmlReader.getAttributeValue(NAMESPACE_OFFICE, "string-value");
+
+		final String cellText = readCellText();
+
+		if (valueType == null) {
+			return cellText;
+		}
+
+		switch (valueType.toLowerCase()) {
+			case "float":
+			case "percentage":
+			case "currency":
+				return numberValue == null ? cellText : (Object) Double.parseDouble(numberValue);
+			case "date":
+				return dateValue == null ? cellText : parseDateValue(dateValue);
+			case "time":
+				return timeValue == null ? cellText : formatTimeValue(timeValue);
+			case "boolean":
+				return booleanValue == null ? cellText : (Object) Boolean.parseBoolean(booleanValue);
+			case "string":
+				return stringValue != null ? stringValue : cellText;
+			default:
+				// Unknown value types are imported by their displayed text
+				return cellText;
+		}
+	}
+
+	/**
+	 * Reads the text content of the current cell including formatted parts and links.
+	 * Paragraphs are joined by line breaks, "text:s", "text:tab" and "text:line-break" are converted,
+	 * annotations (comments) are skipped. The reader is positioned at the start element of the cell and afterwards at its end element.
+	 *
+	 * @return the text of the cell, empty for an empty cell
+	 * @throws Exception if the XML data cannot be read
+	 */
+	private String readCellText() throws Exception {
+		final StringBuilder text = new StringBuilder();
+		int depth = 0;
+		int paragraphDepth = -1;
+		int skippedElementDepth = -1;
+		boolean isFirstParagraph = true;
+
+		while (xmlReader.hasNext()) {
+			final int eventType = xmlReader.next();
+			if (eventType == XMLStreamConstants.START_ELEMENT) {
+				depth++;
+				if (skippedElementDepth >= 0) {
+					continue;
+				}
+
+				if (isElement(NAMESPACE_OFFICE, "annotation")) {
+					skippedElementDepth = depth;
+				} else if (paragraphDepth < 0 && (isElement(NAMESPACE_TEXT, "p") || isElement(NAMESPACE_TEXT, "h"))) {
+					if (!isFirstParagraph) {
+						text.append('\n');
+					}
+					isFirstParagraph = false;
+					paragraphDepth = depth;
+				} else if (paragraphDepth >= 0 && isElement(NAMESPACE_TEXT, "s")) {
+					final String countAttribute = xmlReader.getAttributeValue(NAMESPACE_TEXT, "c");
+					int numberOfSpaces = 1;
+					if (countAttribute != null) {
+						try {
+							numberOfSpaces = Math.max(1, Math.min(Integer.parseInt(countAttribute.trim()), 10000));
+						} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+							numberOfSpaces = 1;
+						}
+					}
+					text.append(" ".repeat(numberOfSpaces));
+				} else if (paragraphDepth >= 0 && isElement(NAMESPACE_TEXT, "tab")) {
+					text.append('\t');
+				} else if (paragraphDepth >= 0 && isElement(NAMESPACE_TEXT, "line-break")) {
+					text.append('\n');
+				}
+			} else if (eventType == XMLStreamConstants.END_ELEMENT) {
+				if (depth == 0) {
+					// End element of the cell itself
+					break;
+				}
+				if (depth == skippedElementDepth) {
+					skippedElementDepth = -1;
+				} else if (depth == paragraphDepth) {
+					paragraphDepth = -1;
+				}
+				depth--;
+			} else if ((eventType == XMLStreamConstants.CHARACTERS || eventType == XMLStreamConstants.CDATA) && paragraphDepth >= 0 && skippedElementDepth < 0) {
+				// Whitespace characters in ODF text are collapsed to single blanks, real multiple spaces are stored as "text:s"
+				text.append(xmlReader.getText().replaceAll("[ \\t\\r\\n]+", " "));
+			}
+		}
+
+		return text.toString();
+	}
+
+	/**
+	 * Parses an ODF date value, which may be a date only ("2024-01-31") or a date time ("2024-01-31T10:15:00").
+	 */
+	private static ZonedDateTime parseDateValue(final String dateValue) throws Exception {
+		final String value = dateValue.trim();
+		if (value.indexOf('T') < 0) {
+			return LocalDate.parse(value).atStartOfDay(ZoneId.systemDefault());
 		} else {
-			return returnList;
+			return DateUtilities.parseIso8601DateTimeString(value);
+		}
+	}
+
+	/**
+	 * Formats an ODF time value (ISO 8601 duration like "PT12H30M00S") as "HH:mm:ss". Hours may exceed 23 for durations.
+	 */
+	private static String formatTimeValue(final String timeValue) {
+		try {
+			final Duration duration = Duration.parse(timeValue.trim());
+			final long totalSeconds = duration.getSeconds();
+			final String sign = totalSeconds < 0 ? "-" : "";
+			final long absoluteSeconds = Math.abs(totalSeconds);
+			return String.format("%s%02d:%02d:%02d", sign, absoluteSeconds / 3600, (absoluteSeconds % 3600) / 60, absoluteSeconds % 60);
+		} catch (@SuppressWarnings("unused") final Exception e) {
+			// Keep unparsable values as they are
+			return timeValue;
+		}
+	}
+
+	/**
+	 * Checks whether the current element of the reader has the given namespace and local name.
+	 */
+	private boolean isElement(final String namespace, final String localName) {
+		return localName.equals(xmlReader.getLocalName()) && namespace.equals(xmlReader.getNamespaceURI());
+	}
+
+	/**
+	 * Reads a repeat attribute of the table namespace from the current element.
+	 *
+	 * @param attributeName "number-columns-repeated" or "number-rows-repeated"
+	 * @param maximum upper limit of the returned value
+	 * @return the repeat count, at least 1
+	 */
+	private int getRepeatAttribute(final String attributeName, final int maximum) {
+		final String value = xmlReader.getAttributeValue(NAMESPACE_TABLE, attributeName);
+		if (value == null) {
+			return 1;
+		}
+		try {
+			return Math.max(1, Math.min(Integer.parseInt(value.trim()), maximum));
+		} catch (@SuppressWarnings("unused") final NumberFormatException e) {
+			return 1;
 		}
 	}
 
@@ -256,19 +530,15 @@ public class OdsDataProvider extends DataProvider {
 			}
 			currentRowNumber = 0;
 
-			try {
-				int numberOfRows = 0;
-				while (readNextRow() != null) {
-					numberOfRows++;
-				}
+			int numberOfRows = 0;
+			while (readNextRow() != null) {
+				numberOfRows++;
+			}
 
-				if (noHeaders) {
-					itemsAmount = numberOfRows;
-				} else {
-					itemsAmount = numberOfRows - 1;
-				}
-			} catch (final Exception e) {
-				throw e;
+			if (noHeaders) {
+				itemsAmount = numberOfRows;
+			} else {
+				itemsAmount = Math.max(0, numberOfRows - 1);
 			}
 
 			close();
@@ -328,6 +598,11 @@ public class OdsDataProvider extends DataProvider {
 		if (xmlReader != null) {
 			throw new Exception("Reader was already opened before");
 		}
+
+		repeatedRowValues = null;
+		repeatedRowCount = 0;
+		endOfSheetReached = false;
+		dataStarted = false;
 
 		@SuppressWarnings("resource")
 		ZipInputStream zipInputStream = null;
@@ -414,14 +689,13 @@ public class OdsDataProvider extends DataProvider {
 			final Map<String, Object> returnMap = new HashMap<>();
 			for (int i = 0; i < getAvailableDataPropertyNames().size(); i++) {
 				final String columnName = getAvailableDataPropertyNames().get(i);
-				if (values.size() > i) {
-					if (nullValueText != null && nullValueText.equals(values.get(i))) {
-						returnMap.put(columnName, null);
-					} else {
-						returnMap.put(columnName, values.get(i));
-					}
-				} else {
+				// Empty trailing cells are not part of the row values, but are empty cells like all others
+				final int valueIndex = columnIndices != null ? columnIndices.get(i) : i;
+				final Object value = values.size() > valueIndex ? values.get(valueIndex) : "";
+				if (nullValueText != null && nullValueText.equals(value)) {
 					returnMap.put(columnName, null);
+				} else {
+					returnMap.put(columnName, value);
 				}
 			}
 			return returnMap;
@@ -448,6 +722,10 @@ public class OdsDataProvider extends DataProvider {
 			}
 			xmlReader = null;
 		}
+		repeatedRowValues = null;
+		repeatedRowCount = 0;
+		endOfSheetReached = false;
+		dataStarted = false;
 		super.close();
 	}
 
