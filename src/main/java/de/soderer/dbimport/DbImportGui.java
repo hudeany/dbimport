@@ -1151,7 +1151,7 @@ public class DbImportGui extends UpdateableGuiApplication {
 
 					final List<String> appParameters = new ArrayList<>();
 					appParameters.add("gui");
-					final ApplicationConfigurationDialog applicationConfigurationDialog = new ApplicationConfigurationDialog(dbImportGui, DbImport.APPLICATION_NAME, DbImport.APPLICATION_STARTUPCLASS_NAME, DbImport.VERSION, DbImport.VERSION_BUILDTIME, applicationConfiguration, iconData, iconImage, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, appParameters);
+					final ApplicationConfigurationDialog applicationConfigurationDialog = new ApplicationConfigurationDialog(dbImportGui, DbImport.APPLICATION_NAME, DbImport.APPLICATION_STARTUPCLASS_NAME, DbImport.VERSION, DbImport.VERSION_BUILDTIME, applicationConfiguration, iconData, iconImage, DbImport.VERSIONINFO_DOWNLOAD_URL, DbImport.TRUSTED_UPDATE_CA_CERTIFICATES, appParameters, false);
 					final Result result = applicationConfigurationDialog.open();
 					if (result == Result.OK) {
 						applicationConfiguration.save();
