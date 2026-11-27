@@ -112,27 +112,27 @@ public class BlobImportDefinition extends DbConnectionDefinition {
 			// HSQL: hostname only for a server database. A file database path is marked by a path separator, so it is
 			// not taken as hostname when the parameters are read again (see DbImport.isHsqlFileDatabasePath()).
 			if (StringUtilities.isNotBlank(getHostnameAndPort())) {
-				params += " " + getHostnameAndPort();
-				params += " " + getDbName();
+				params += " " + DbImport.quoteCommandLineArgument(getHostnameAndPort());
+				params += " " + DbImport.quoteCommandLineArgument(getDbName());
 			} else {
-				params += " " + (DbImport.isHsqlFileDatabasePath(getDbName()) ? getDbName() : "." + File.separator + getDbName());
+				params += " " + DbImport.quoteCommandLineArgument(DbImport.isHsqlFileDatabasePath(getDbName()) ? getDbName() : "." + File.separator + getDbName());
 			}
 		} else {
 			if (getDbVendor() != DbVendor.SQLite && getDbVendor() != DbVendor.Derby) {
-				params += " " + getHostnameAndPort();
+				params += " " + DbImport.quoteCommandLineArgument(getHostnameAndPort());
 			}
-			params += " " + getDbName();
+			params += " " + DbImport.quoteCommandLineArgument(getDbName());
 		}
 		if (getDbVendor() != DbVendor.SQLite && getDbVendor() != DbVendor.Derby) {
 			if (getUsername() != null) {
-				params += " " + getUsername();
+				params += " " + DbImport.quoteCommandLineArgument(getUsername());
 			}
 		}
 		// With their flags (before, they were output as positional parameters, which the command line does not accept)
-		params += " -updatesql '" + getBlobImportStatement().replace("'", "\\'") + "'";
-		params += " -blobfile '" + getImportFilePath().replace("'", "\\'") + "'";
+		params += " -updatesql " + DbImport.quoteCommandLineArgument(getBlobImportStatement());
+		params += " -blobfile " + DbImport.quoteCommandLineArgument(getImportFilePath());
 		if (getPassword() != null) {
-			params += " '" + new String(getPassword()).replace("'", "\\'") + "'";
+			params += " " + DbImport.quoteCommandLineArgument(new String(getPassword()));
 		}
 		return params;
 	}

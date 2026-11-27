@@ -5,7 +5,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -1396,26 +1395,26 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			// HSQL: hostname only for a server database. A file database path is marked by a path separator, so it is
 			// not taken as hostname when the parameters are read again (see DbImport.isHsqlFileDatabasePath()).
 			if (StringUtilities.isNotBlank(getHostnameAndPort())) {
-				params += " " + getHostnameAndPort();
-				params += " " + getDbName();
+				params += " " + DbImport.quoteCommandLineArgument(getHostnameAndPort());
+				params += " " + DbImport.quoteCommandLineArgument(getDbName());
 			} else {
-				params += " " + (DbImport.isHsqlFileDatabasePath(getDbName()) ? getDbName() : "." + File.separator + getDbName());
+				params += " " + DbImport.quoteCommandLineArgument(DbImport.isHsqlFileDatabasePath(getDbName()) ? getDbName() : "." + File.separator + getDbName());
 			}
 		} else {
 			if (getDbVendor() != DbVendor.SQLite && getDbVendor() != DbVendor.Derby) {
-				params += " " + getHostnameAndPort();
+				params += " " + DbImport.quoteCommandLineArgument(getHostnameAndPort());
 			}
-			params += " " + getDbName();
+			params += " " + DbImport.quoteCommandLineArgument(getDbName());
 		}
 		if (getDbVendor() != DbVendor.SQLite && getDbVendor() != DbVendor.Derby) {
 			if (getUsername() != null) {
-				params += " " + getUsername();
+				params += " " + DbImport.quoteCommandLineArgument(getUsername());
 			}
 		}
-		params += " -table '" + getTableName().replace("'", "\\'") + "'";
-		params += " -import '" + getImportFilePathOrData().replace("'", "\\'") + "'";
+		params += " -table " + DbImport.quoteCommandLineArgument(getTableName());
+		params += " -import " + DbImport.quoteCommandLineArgument(getImportFilePathOrData());
 		if (getPassword() != null) {
-			params += " '" + new String(getPassword()).replace("'", "\\'") + "'";
+			params += " " + DbImport.quoteCommandLineArgument(new String(getPassword()));
 		}
 
 		if (isInlineData()) {
@@ -1431,25 +1430,25 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			params += " " + "-v";
 		}
 		if (getZipPassword() != null) {
-			params += " " + "-zippassword" + " '" + new String(getZipPassword()).replace("'", "\\'") + "'";
+			params += " " + "-zippassword" + " " + DbImport.quoteCommandLineArgument(new String(getZipPassword()));
 		}
 		if (getKdbxPassword() != null && getKdbxPassword().length > 0) {
-			params += " " + "-kdbxpassword" + " '" + new String(getKdbxPassword()).replace("'", "\\'") + "'";
+			params += " " + "-kdbxpassword" + " " + DbImport.quoteCommandLineArgument(new String(getKdbxPassword()));
 		}
 		if (getEncoding() != StandardCharsets.UTF_8) {
 			params += " " + "-e" + " " + getEncoding().name();
 		}
 		if (getSeparator() != ';') {
-			params += " " + "-s" + " '" + Character.toString(getSeparator()).replace("'", "\\'") + "'";
+			params += " " + "-s" + " " + DbImport.quoteCommandLineArgument(Character.toString(getSeparator()));
 		}
 		if (getStringQuote() == null) {
 			// Unboxing the null value for the comparison below threw a NullPointerException
 			params += " " + "-q" + " none";
 		} else if (getStringQuote() != '"') {
-			params += " " + "-q" + " '" + Character.toString(getStringQuote()).replace("'", "\\'") + "'";
+			params += " " + "-q" + " " + DbImport.quoteCommandLineArgument(Character.toString(getStringQuote()));
 		}
 		if (getEscapeStringQuote() != '"') {
-			params += " " + "-qe" + " '" + Character.toString(getEscapeStringQuote()).replace("'", "\\'") + "'";
+			params += " " + "-qe" + " " + DbImport.quoteCommandLineArgument(Character.toString(getEscapeStringQuote()));
 		}
 		if (isNoHeaders()) {
 			params += " " + "-noheaders";
@@ -1458,7 +1457,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			params += " " + "-noescapesequences";
 		}
 		if (!"".equals(getNullValueString())) {
-			params += " " + "-n" + " '" + getNullValueString().replace("'", "\\'") + "'";
+			params += " " + "-n" + " " + DbImport.quoteCommandLineArgument(getNullValueString());
 		}
 		if (isCompleteCommit()) {
 			params += " " + "-c";
@@ -1476,7 +1475,7 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			params += " " + "-create";
 		}
 		if (getStructureFilePath() != null && getStructureFilePath().length() > 0) {
-			params += " " + "-structure '" + getStructureFilePath().replace("'", "\\'") + "'";
+			params += " " + "-structure " + DbImport.quoteCommandLineArgument(getStructureFilePath());
 		}
 		if (isTrimData()) {
 			params += " " + "-t";
@@ -1500,41 +1499,38 @@ public class DbImportDefinition extends DbConnectionDefinition {
 			params += " " + "-d " + getDuplicateMode().name();
 		}
 		if (getKeycolumns() != null && getKeycolumns().size() > 0) {
-			final List<String> escapedKeyColumns = new ArrayList<>();
-			for (final String keyColumn : getKeycolumns()) {
-				escapedKeyColumns.add(keyColumn.replace("'", "\\'"));
-			}
-			params += " " + "-k '" + StringUtilities.join(escapedKeyColumns, ", ") + "'";
+			params += " " + "-k " + DbImport.quoteCommandLineArgument(StringUtilities.join(getKeycolumns(), ", "));
 		}
 		if (getMapping() != null && getMapping().length() > 0) {
-			params += " " + "-m '" + getMapping().replace("'", "\\'") + "'";
+			params += " " + "-m " + DbImport.quoteCommandLineArgument(getMapping());
 		}
 		if (getAdditionalInsertValues() != null && getAdditionalInsertValues().length() > 0) {
-			params += " " + "-insvalues '" + getAdditionalInsertValues().replace("'", "\\'") + "'";
+			params += " " + "-insvalues " + DbImport.quoteCommandLineArgument(getAdditionalInsertValues());
 		}
 		if (getAdditionalUpdateValues() != null && getAdditionalUpdateValues().length() > 0) {
-			params += " " + "-updvalues '" + getAdditionalUpdateValues().replace("'", "\\'") + "'";
+			params += " " + "-updvalues " + DbImport.quoteCommandLineArgument(getAdditionalUpdateValues());
 		}
 		if (getDataPath() != null && getDataPath().length() > 0) {
-			params += " " + "-dp '" + getDataPath().replace("'", "\\'") + "'";
+			params += " " + "-dp " + DbImport.quoteCommandLineArgument(getDataPath());
 		}
 		if (getSchemaFilePath() != null && getSchemaFilePath().length() > 0) {
-			params += " " + "-sp '" + getSchemaFilePath().replace("'", "\\'") + "'";
+			params += " " + "-sp " + DbImport.quoteCommandLineArgument(getSchemaFilePath());
 		}
 		if (!TimeZone.getDefault().getID().equals(getDatabaseTimeZone())) {
-			params += " " + "-dbtz " + getDatabaseTimeZone() + "";
+			params += " " + "-dbtz " + DbImport.quoteCommandLineArgument(getDatabaseTimeZone());
 		}
 		if (!TimeZone.getDefault().getID().equals(getImportDataTimeZone())) {
-			params += " " + "-idtz " + getImportDataTimeZone() + "";
+			params += " " + "-idtz " + DbImport.quoteCommandLineArgument(getImportDataTimeZone());
 		}
 		if (StringUtilities.isNotBlank(getDateFormat())) {
-			params += " " + "-dateFormat" + " " + getDateFormat();
+			// Quoted, because date patterns usually contain blanks ("dd.MM.yyyy HH:mm:ss")
+			params += " " + "-dateFormat" + " " + DbImport.quoteCommandLineArgument(getDateFormat());
 		}
 		if (StringUtilities.isNotBlank(getDateTimeFormat())) {
-			params += " " + "-dateTimeFormat" + " " + getDateTimeFormat();
+			params += " " + "-dateTimeFormat" + " " + DbImport.quoteCommandLineArgument(getDateTimeFormat());
 		}
 		if (batchBlockSize != 1000) {
-			params += " " + "-batchBlockSize" + " '" + getBatchBlockSize() + "'";
+			params += " " + "-batchBlockSize" + " " + getBatchBlockSize();
 		}
 		if (isPreventBatchFallbackToSingleLineOnErrors()) {
 			params += " " + "-noSingleMode";
