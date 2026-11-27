@@ -1111,9 +1111,9 @@ public class DbImportGui extends UpdateableGuiApplication {
 			public void actionPerformed(final ActionEvent event) {
 				try {
 					final SecurePreferencesDialog credentialsDialog = new SecurePreferencesDialog(dbImportGui, DbImport.APPLICATION_NAME + " " + LangResources.get("preferences"),
-							LangResources.get("preferences_text"), DbImport.SECURE_PREFERENCES_FILE, LangResources.get("load"), LangResources.get("create"), LangResources.get("update"),
-							LangResources.get("delete"), LangResources.get("preferences_save"), LangResources.get("cancel"), LangResources.get("preferences_password_text"),
-							LangResources.get("password"), LangResources.get("ok"), LangResources.get("cancel"));
+						LangResources.get("preferences_text"), DbImport.SECURE_PREFERENCES_FILE, LangResources.get("load"), LangResources.get("create"), LangResources.get("update"),
+						LangResources.get("delete"), LangResources.get("preferences_save"), LangResources.get("preferences_saveWithNewPassword"), LangResources.get("cancel"),
+						LangResources.get("preferences_password_text"), LangResources.get("password"), LangResources.get("ok"), LangResources.get("cancel"));
 
 					credentialsDialog.setCurrentDataEntry(getConfigurationAsDefinition());
 					credentialsDialog.setPassword(temporaryPreferencesPassword);
